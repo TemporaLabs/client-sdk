@@ -3,13 +3,18 @@ name: Dependabot PRs go to the cycle branch
 # Dependabot opens its PRs against main, so a bump could be released without first running with the
 # rest of the cycle's changes. This moves each one onto the current cycle branch (the newest vX.Y.Z or
 # release/vX.Y.Z). If that branch is already released (its vX.Y.Z or vX.Y.Z-alpha tag exists, next cycle
-# not cut), the PR stays on main; cutting the next cycle branch is when it moves.
+# not cut), the PR stays on main.
 #
-# A moved PR's checks were computed against main: a base change made with this token starts no
+# Three triggers:
+# - a Dependabot PR opened (or put back) on main: that PR moves;
+# - a new version branch created: every open Dependabot PR on main or on an older version branch moves to it;
+# - run by hand (workflow_dispatch): the same sweep, for PRs that were open before this existed.
+#
+# A moved PR's checks were computed against its old base: a base change made with this token starts no
 # workflow, so close and reopen the PR (or push to it) before trusting them. A lockfile conflict on
 # the new base means regenerating the lockfile by hand.
 #
-# GitHub runs pull_request_target from the default branch only, so this takes effect once on main.
+# pull_request_target runs from the default branch only, so the first trigger takes effect once on main.
 # It never checks out or runs the PR's code.
 
 on:
@@ -17,48 +22,79 @@ on:
     types: [opened, reopened, edited, synchronize]
     branches:
       - main
+  create:
+  workflow_dispatch:
 
 permissions:
   pull-requests: write
   contents: read
 
 concurrency:
-  group: dependabot-to-cycle-${{ github.event.pull_request.number }}
+  group: dependabot-to-cycle-${{ github.event.pull_request.number || 'sweep' }}
 
 jobs:
   retarget:
     # edited and synchronize catch a PR that Dependabot put back on main, for example on a recreate.
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.base.ref == 'main'
+    if: >-
+      (github.event_name == 'pull_request_target' && github.event.pull_request.user.login == 'dependabot[bot]'
+        && github.event.pull_request.base.ref == 'main')
+      || (github.event_name == 'create' && github.event.ref_type == 'branch'
+        && (startsWith(github.event.ref, 'v') || startsWith(github.event.ref, 'release/v')))
+      || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Move the PR to the cycle branch
+      - name: Move Dependabot PRs to the cycle branch
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
           PR: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
+          version_re='^(release/)?v[0-9]+\.[0-9]+\.[0-9]+$'
           names=$(gh api --paginate "repos/$REPO/branches?per_page=100" --jq '.[].name')
           # Rank on the version alone, so a vX.Y.Z and a release/vX.Y.Z branch sort together. If both forms of one
           # version exist, the tie goes to the bare vX.Y.Z: equal versions
           # fall back to comparing whole lines, where release/ sorts before v, and the last line wins.
-          cycle=$(printf '%s\n' "$names" | { grep -E '^(release/)?v[0-9]+\.[0-9]+\.[0-9]+$' || true; } \
+          cycle=$(printf '%s\n' "$names" | { grep -E "$version_re" || true; } \
             | awk '{ v = $0; sub(/^release\//, "", v); print v "\t" $0 }' | sort -V -k1,1 | tail -n 1 | cut -f2)
           if [ -z "$cycle" ]; then
-            echo "No version branch exists; PR #$PR stays on main."
+            echo "No version branch exists; nothing moves."
             exit 0
           fi
           # Released means its release tag exists, however the release reached main. Only a 404 means "not released": any
-          # other failure (a 5xx, a rate limit) stops the step rather than move the PR onto a branch that may have shipped.
+          # other failure (a 5xx, a rate limit) stops the step rather than move a PR onto a branch that may have shipped.
           version=${cycle#release/}
           for tag in "$version" "$version-alpha"; do
             if out=$(gh api "repos/$REPO/git/ref/tags/$tag" --silent 2>&1); then
-              echo "$cycle is already released to main (tag $tag); PR #$PR stays on main."
+              echo "$cycle is already released to main (tag $tag); nothing moves until the next cycle branch exists."
               exit 0
             elif ! printf '%s' "$out" | grep -q 'HTTP 404'; then
               echo "Could not tell whether $cycle is released: $out" >&2
               exit 1
             fi
           done
-          gh api -X PATCH "repos/$REPO/pulls/$PR" -f base="$cycle" --jq '"PR #\(.number) now targets \(.base.ref)"'
+          if [ "$EVENT" = "pull_request_target" ]; then
+            prs="$PR"
+          else
+            # Every open Dependabot PR on main or on another version branch.
+            prs=$(gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
+              --jq ".[] | select(.user.login == \"dependabot[bot]\") | select(.base.ref != \"$cycle\") | \"\(.number) \(.base.ref)\"" \
+              | while read -r n base; do
+                  if [ "$base" = "main" ] || printf '%s' "$base" | grep -qE "$version_re"; then echo "$n"; fi
+                done)
+          fi
+          if [ -z "$prs" ]; then
+            echo "No Dependabot PR to move; the cycle branch is $cycle."
+            exit 0
+          fi
+          for n in $prs; do
+            # Read the base again just before the change: another run may have moved this PR already.
+            base=$(gh api "repos/$REPO/pulls/$n" --jq '.base.ref')
+            if [ "$base" = "$cycle" ]; then
+              echo "PR #$n already targets $cycle."
+              continue
+            fi
+            gh api -X PATCH "repos/$REPO/pulls/$n" -f base="$cycle" --jq '"PR #\(.number) now targets \(.base.ref)"'
+          done
