@@ -1,0 +1,218 @@
+# Publishes @temporalabs/client to npm.
+#
+# workflow_dispatch ONLY, deliberately not triggered by pushing a tag. Tagging and publishing are two
+# separate acts: a tag can be moved or deleted, but an npm version can never be reused, so publishing
+# is the point of no return. Someone chooses the tag, looks at it, and then chooses to publish it.
+#
+# Run it FROM the tag (the "Use workflow from" choice is the tag itself), so this file is the copy the
+# tag holds, which the gates below require to be on main. It runs only on the public repository,
+# TemporaLabs/client-sdk; a copy anywhere else skips both jobs.
+#
+# Two jobs, so that nothing but the publish holds the publishing identity:
+#   - verify: every gate, the full check and the build, run from the tag with no id-token. It packs
+#     the tarball once and hands it on with its sha256. The check runs devDependency code, and none of
+#     it can mint a token.
+#   - publish: runs in the npm-publish environment, which is limited to release tags and needs a
+#     maintainer's approval. It checks out nothing and installs nothing from the package: it checks
+#     the tarball's sha256 and publishes exactly that file. On a dry run it does all of that and
+#     stops at `npm publish --dry-run`.
+#
+# Authentication is npm trusted publishing: the publish job's GitHub OIDC identity, with no long-lived
+# token, and npm attaches provenance. It needs npm 11.5.1 or later and a trusted publisher on the
+# package's npm settings naming this repository, this workflow file and the npm-publish environment, so
+# a job outside that environment cannot publish. NPM_TOKEN is read only as a fallback for a first
+# publish: leave the secret unset and the publish uses OIDC alone.
+#
+# Every action is pinned to a full commit SHA, with its release in a comment.
+
+name: publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "the existing tag to publish, e.g. v0.1.0. Run the workflow from that same tag."
+        type: string
+        required: true
+      dry_run:
+        description: "pack and run every gate WITHOUT publishing (use this first)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    # Started from the tag named, so the workflow that runs is the one the tag holds.
+    if: github.repository == 'TemporaLabs/client-sdk' && github.ref == format('refs/tags/{0}', inputs.tag)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      file: ${{ steps.pack.outputs.file }}
+      sha256: ${{ steps.pack.outputs.sha256 }}
+      name: ${{ steps.pack.outputs.name }}
+      version: ${{ steps.pack.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The TAG is what gets published, never a branch head: a branch can move between the
+          # moment someone reads it and the moment this runs.
+          ref: refs/tags/${{ inputs.tag }}
+          persist-credentials: false
+
+      - name: the tag must agree with package.json, or this is the wrong one-shot version
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          want="${TAG#v}"
+          got="$(node -p 'require("./package.json").version')"
+          [ "$want" = "$got" ] || {
+            echo "::error::tag ${TAG} carries version ${want} but package.json at that tag says ${got}; publishing would spend the wrong version number, permanently"; exit 1; }
+          echo "tag ${TAG} == package.json ${got}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: package.json must not be private
+        run: |
+          set -euo pipefail
+          [ "$(node -p 'String(require("./package.json").private === true)')" = "false" ] || {
+            echo "::error::package.json is \"private\": true at this tag, so npm refuses to publish it"; exit 1; }
+
+      - name: this version must not already exist on the registry
+        run: |
+          set -euo pipefail
+          name="$(node -p 'require("./package.json").name')"
+          ver="$(node -p 'require("./package.json").version')"
+          # `npm view` exits non-zero with E404 when the package does not exist at all, which is the
+          # expected state for a first publish: that is a pass. Only an existing matching version is fatal.
+          if npm view "${name}@${ver}" version 2>/dev/null | grep -q .; then
+            echo "::error::${name}@${ver} is already published and npm versions are immutable; bump the version instead"; exit 1
+          fi
+          echo "${name}@${ver} is not on the registry" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: the tag must be an ancestor of main — never publish off a branch that did not ship
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=200 origin main
+          git merge-base --is-ancestor HEAD FETCH_HEAD || {
+            echo "::error::this tag is not reachable from origin/main; it names a tree that was never merged"; exit 1; }
+          echo "tag is an ancestor of main" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - run: npm ci --ignore-scripts
+
+      # The full gate, not a subset: the same checks CI runs on every push (source, generation,
+      # typecheck, tests, public text, and the package check that packs and installs the client in a
+      # clean project). A publish is the one action that cannot be rolled back.
+      - run: npm run check
+
+      # There is no prepack script, so build here, from this tag, and pack once. The publish job
+      # publishes this file and nothing else.
+      - run: npm run build
+
+      - name: pack, and prove the tarball holds the built client
+        id: pack
+        run: |
+          set -euo pipefail
+          mkdir -p dist-pack
+          file="$(npm pack --ignore-scripts --pack-destination dist-pack --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s)[0].filename))')"
+          files="$(tar -tzf "dist-pack/${file}" | sed 's|^package/||' | sort)"
+          echo "$files"
+          for f in build/index.js build/index.d.ts build/mcp.js build/mcp.d.ts; do
+            grep -qx "$f" <<<"$files" || { echo "::error::the tarball is missing $f"; exit 1; }
+          done
+          sum="$(sha256sum "dist-pack/${file}" | cut -d' ' -f1)"
+          {
+            echo "file=${file}"
+            echo "sha256=${sum}"
+            echo "name=$(node -p 'require("./package.json").name')"
+            echo "version=$(node -p 'require("./package.json").version')"
+          } >> "$GITHUB_OUTPUT"
+          echo "packed ${file}, sha256 ${sum}" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package
+          path: dist-pack/${{ steps.pack.outputs.file }}
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    # Runs on a dry run too, so the environment, the hand-over and the sha256 check are exercised before
+    # the one run that cannot be undone; only the publish step itself differs.
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Limited to release tags and a maintainer's approval in the repository's settings; npm's trusted
+    # publisher names this environment, so only a job in it can publish.
+    environment: npm-publish
+    permissions:
+      contents: read
+      # Trusted publishing and npm provenance are both minted from this OIDC identity.
+      id-token: write
+    steps:
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1 or later; Node 22 ships npm 10. Pinned exactly.
+      - run: npm install -g npm@11.21.1 --ignore-scripts
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: package
+          path: pkg
+
+      - name: the tarball is the one verify packed
+        env:
+          FILE: ${{ needs.verify.outputs.file }}
+          SUM: ${{ needs.verify.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          echo "${SUM}  pkg/${FILE}" | sha256sum -c -
+
+      - name: dry run — nothing is published
+        if: ${{ inputs.dry_run }}
+        env:
+          FILE: ${{ needs.verify.outputs.file }}
+        run: |
+          set -euo pipefail
+          npm publish "pkg/${FILE}" --access public --dry-run
+          echo "dry_run was true: every gate passed and nothing was published." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: publish (trusted publishing; provenance from this job's OIDC identity)
+        if: ${{ !inputs.dry_run }}
+        env:
+          FILE: ${{ needs.verify.outputs.file }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish "pkg/${FILE}" --access public --provenance
+
+      # The registry can take minutes to serve a freshly published scoped package. This step polls for
+      # ten minutes and, if the version has still not resolved, records a WARNING rather than a failure:
+      # the publish step above is the only step whose exit says whether the publish happened, and a
+      # re-run after a false failure would hard-fail on the "not already on the registry" gate.
+      - name: wait for the published version to resolve (advisory — the publish step above is the verdict)
+        if: ${{ !inputs.dry_run }}
+        timeout-minutes: 12
+        continue-on-error: true
+        env:
+          NAME: ${{ needs.verify.outputs.name }}
+          VER: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 40); do
+            got="$(timeout 30 npm view "${NAME}@${VER}" version 2>/dev/null || true)"
+            if [ "$got" = "$VER" ]; then
+              echo "published ${NAME}@${VER}, resolved after about $(( (i - 1) * 15 ))s" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::warning::${NAME}@${VER} did not resolve within 10 minutes; the publish step succeeded, so check the registry by hand: npm view ${NAME}@${VER} version"
+          echo "published ${NAME}@${VER}, NOT yet resolving after 10 minutes; check by hand" >> "$GITHUB_STEP_SUMMARY"
