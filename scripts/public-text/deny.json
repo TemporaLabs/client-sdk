@@ -1,0 +1,11 @@
+{
+  "comment": "Generic patterns that must never appear in this repo's files or commit messages: issue and pull-request references (bare, or after a name such as owner/name or PR), full pull-request and issue links, section references, and session trailers. Matched case-insensitively, not inside a longer word or number: a hyphen or underscore after a reference does not hide it. Each pattern is written so it does not match its own text here. A consumer may run a stricter list over this repo as well.",
+  "patterns": [
+    "#[0-9]+",
+    "[A-Za-z0-9_.-]+#[0-9]+",
+    "github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(?:pull|issues)/[0-9]+",
+    "\u00a7 ?[0-9]+",
+    "Claude-Sessio[n]",
+    "session_[0-9A-Za-z]+"
+  ]
+}
