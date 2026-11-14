@@ -1,0 +1,69 @@
+{
+  "name": "@temporalabs/client",
+  "version": "0.1.0",
+  "description": "The typed client for the Tempora API, over HTTP and MCP.",
+  "keywords": ["tempora", "api-client", "mcp", "typescript"],
+  "homepage": "https://github.com/TemporaLabs/client-sdk#readme",
+  "bugs": "https://github.com/TemporaLabs/client-sdk/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TemporaLabs/client-sdk.git"
+  },
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.3"
+  },
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "import": "./build/index.js",
+      "default": "./build/index.js"
+    },
+    "./mcp": {
+      "types": "./build/mcp.d.ts",
+      "import": "./build/mcp.js",
+      "default": "./build/mcp.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "build",
+    "llms.txt",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "generate": "node --experimental-strip-types --no-warnings scripts/generate.ts",
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "jest --maxWorkers=1",
+    "check:generated": "node --experimental-strip-types --no-warnings scripts/check-generated.ts",
+    "check:source": "node scripts/check-source.mjs",
+    "check:public-text": "node scripts/public-text/scan.mjs --tracked",
+    "check:client-pack": "node scripts/client-pack.mjs",
+    "check": "npm run check:source && npm run check:generated && npm run typecheck && npm test && npm run check:public-text && npm run check:client-pack"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@swc/core": "1.16.20",
+    "@swc/jest": "0.2.39",
+    "@types/jest": "30.0.0",
+    "@types/node": "26.6.5",
+    "esbuild": "0.28.2",
+    "jest": "30.5.2",
+    "rollup": "4.65.1",
+    "rollup-plugin-dts": "6.5.1",
+    "typescript": "6.0.3"
+  },
+  "overrides": {
+    "glob": "14.0.4",
+    "minimatch": "11.0.6"
+  }
+}
