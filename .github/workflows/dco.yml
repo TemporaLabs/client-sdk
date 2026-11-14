@@ -1,0 +1,57 @@
+name: DCO
+
+# Every commit on a pull request must carry a Signed-off-by trailer matching its author, per
+# CONTRIBUTING.md and DCO.md, unless it is exempt: a merge that only merges (its tree is exactly the
+# clean merge of its two parents), or, on a pull request the dependency bot opened, that bot's own
+# commits. The check reads the commits from git (.github/scripts/dco-check.sh), so the size of a pull
+# request cannot stop it from running.
+#
+# The checker is never the pull request's own copy. This runs on pull_request_target, so GitHub takes
+# this file from the default branch, and the checkout below is the default branch too: a pull request
+# that edits the checker or this workflow is checked by the version already on main. The pull
+# request's commits are fetched as data and read with git; none of its code runs, and the job holds no
+# secret and a read-only token.
+#
+# It enforces only on the public repository, TemporaLabs/client-sdk, which starts from one signed-off
+# commit. A copy of this file in any other repository skips the job, because a history written before
+# the sign-off rule cannot be rewritten to meet it.
+#
+# Every run first proves the checker can fail (dco-check.test.sh), because a gate that only ever
+# prints green is indistinguishable from one that stopped checking.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  dco:
+    if: github.repository == 'TemporaLabs/client-sdk'
+    runs-on: ubuntu-latest
+    name: DCO
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: the checker discriminates (fails on an unsigned commit, exempts only a clean merge)
+        run: bash .github/scripts/dco-check.test.sh
+
+      - name: every commit is signed off, or exempt
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          # GitHub sets who opened the pull request; a commit's author field is whatever its writer typed.
+          OPENED_BY: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+          # The pull request's commits, fetched by SHA as data: nothing from them is run.
+          git fetch --no-tags origin "$BASE" "$HEAD"
+          if [ "$OPENED_BY" = "dependabot[bot]" ]; then
+            export DCO_EXEMPT_AUTHOR_EMAIL='49699333+dependabot[bot]@users.noreply.github.com'
+          fi
+          bash .github/scripts/dco-check.sh "$BASE" "$HEAD"
