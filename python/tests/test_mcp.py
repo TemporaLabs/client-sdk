@@ -794,3 +794,26 @@ class TestToolTextAsJavaScriptReadsIt:
             client, _ = make(respond)
             r = client.products()
             assert (isinstance(r, Err) and r.error.code == "rate_limited") is is_error
+
+
+class TestNumbersPastWhatTheClientCanConvertStayResults:
+    ERR: ClassVar[dict[str, Any]] = {"code": "rate_limited", "message": "Slow down.", "outcome": "refused"}
+
+    def test_a_tool_error_status_past_a_doubles_range_is_ignored_and_the_error_returned(self) -> None:
+        huge = int("4" + "0" * 399)
+        client, _ = make(lambda _: tool_text({"error": self.ERR, "status": huge}, True))
+        e = err(client.products())
+        assert (e.status, e.error.code) == (200, "rate_limited")
+
+    def test_a_tool_text_that_is_a_number_past_a_doubles_range_is_unreadable_answer(self) -> None:
+        huge = int("9" * 400)
+        client, _ = make(lambda _: rpc_result({"content": [{"type": "text", "text": huge}]}))
+        assert (err(client.products()).error.code) == "unreadable_answer"
+
+    def test_a_retry_after_too_long_to_read_is_left_out_from_the_header_or_the_body(self) -> None:
+        refusal = {"jsonrpc": "2.0", "id": 1, "error": {"code": -32000, "data": self.ERR}}
+        r = make(lambda _: json_response(refusal, 429, headers={"retry-after": "9" * 4301}))[0].products()
+        assert (err(r).error.code, err(r).retry_after) == ("rate_limited", None)
+        said = {"error": self.ERR, "status": 429, "retryAfter": "9" * 4301}
+        r = make(lambda _: tool_text(said, True))[0].products()
+        assert (err(r).error.code, err(r).retry_after) == ("rate_limited", None)

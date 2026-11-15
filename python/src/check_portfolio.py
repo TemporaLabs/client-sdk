@@ -50,7 +50,18 @@ from datetime import UTC, datetime
 from typing import Any, Final, Literal, NotRequired, TypedDict
 
 from .abi.calldata import decode_call
-from .check import PAYLOAD_FIELDS, UNDEFINED, get, is_address, js_json, js_str, payload_of, plain
+from .check import (
+    PAYLOAD_FIELDS,
+    UNDEFINED,
+    exact_int,
+    exact_str,
+    get,
+    is_address,
+    js_json,
+    js_str,
+    payload_of,
+    plain,
+)
 
 __all__ = [
     "PortfolioDepositCheck",
@@ -235,7 +246,7 @@ def _read_plan(plan: Any) -> Amounts | None:
         raw = get(p, "amountRaw")
         if k is None or k in out or not isinstance(raw, str) or not _DIGITS.fullmatch(raw):
             return None
-        out[k] = (p["assetId"], int(raw))
+        out[k] = (p["assetId"], exact_int(raw))
     return out
 
 
@@ -244,7 +255,7 @@ def _expiry_of(raw: Any) -> int | None:
     if _is_number(raw):
         n: float = raw
     elif isinstance(raw, str) and _DIGITS.fullmatch(raw):
-        n = int(raw)
+        n = exact_int(raw)
     else:
         return None
     if isinstance(n, float) and (not math.isfinite(n) or not n.is_integer()):
@@ -409,7 +420,7 @@ def check_portfolio_withdrawal(
                 return refuse("it names the same asset twice")
             if not sale and key != settlement:
                 return refuse("it would move a holding other than the settlement asset without selling it")
-            signed[key] = (x["assetId"], int(raw))
+            signed[key] = (x["assetId"], exact_int(raw))
 
         # The API's own plan for this batch: what it asked the provider for. The signed batch must be exactly
         # that, both ways. A batch with no plan is refused (the API attaches one to every batch).
@@ -440,7 +451,7 @@ def check_portfolio_withdrawal(
     for asset_id, raw in holdings.items() if isinstance(holdings, Mapping) else []:
         k = _asset_key(asset_id)
         if k and isinstance(raw, str) and _DIGITS.fullmatch(raw):
-            held[k] = int(raw)
+            held[k] = exact_int(raw)
     out: list[PortfolioTotal] = []
     for k, (asset_id, total) in totals.items():
         h = held.get(k, 0)
@@ -452,9 +463,10 @@ def check_portfolio_withdrawal(
                 "the account holds" if get(amount, "kind") == "all" else "the fraction asked of what it holds"
             )
             return whole(
-                f"the withdrawal asks for {total} units of {asset_id}, more than {what} ({allowed} of {h})"
+                f"the withdrawal asks for {exact_str(total)} units of {asset_id}, more than {what} "
+                f"({exact_str(allowed)} of {exact_str(h)})"
             )
-        out.append(PortfolioTotal(asset_id=asset_id, amount=str(total), held=str(h)))
+        out.append(PortfolioTotal(asset_id=asset_id, amount=exact_str(total), held=exact_str(h)))
     expires = datetime.fromtimestamp(0 if earliest == math.inf else earliest, tz=UTC)
     return PortfolioWithdrawalCheck(
         ok=True, kinds=tuple(kinds), totals=tuple(out), expires_at=expires, pending=tuple(pending)
@@ -557,6 +569,6 @@ def check_portfolio_deposit(
         recipient, sent = d.words[0], d.words[1]
         if not isinstance(recipient, str) or not _same(recipient, smart_account):
             return refuse(f"the transfer pays {recipient}, not the smart account {smart_account}")
-        if no_amount or sent != int(amount):
+        if no_amount or sent != exact_int(amount):
             return refuse("the transfer's amount is not exactly the one asked for")
     return PortfolioDepositCheck(ok=True, pending=tuple(pending))

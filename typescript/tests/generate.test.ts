@@ -76,6 +76,8 @@ describe('the generator fails closed', () => {
     fails((s) => (s.paths['/v1/positions']!.get!.parameters = [{ name: 'x-tenant', in: 'header', required: true, schema: { type: 'string' } }]), /required header x-tenant/))
   it('on a request body that is not JSON', () =>
     fails((s) => (s.paths['/v1/deposits']!.post!.requestBody = { required: true, content: { 'text/plain': { schema: { type: 'string' } } } }), /no application\/json schema/))
+  it('on a keyword it cannot type inside the items of a schema with no type', () =>
+    fails((s) => (s.components.schemas.ReviewProbe = { items: { not: {} } }), /unsupported keyword not/))
   it('on a keyword it cannot type inside an open object\'s other fields', () =>
     fails((s) => (s.components.schemas.Tvl = { type: 'object', properties: { usd: { type: 'number' } }, additionalProperties: { not: {} } }), /unsupported keyword not/))
   it.each([['//collector.example/v1/positions'], ['/v1/../../x'], ['https://collector.example/v1/positions'], ['/v1\\positions']])(
@@ -168,7 +170,8 @@ describe('what is committed is what the document generates', () => {
 
   // The two checks CI runs, against a planted defect in a scratch copy of the repo.
   const scratch = () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'client-check-'))
+    // A space in the path: the scripts must read file paths, not URL paths with %20 in them.
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'client check '))
     for (const rel of ['spec', 'scripts']) fs.cpSync(path.join(repo, rel), path.join(dir, rel), { recursive: true })
     for (const rel of ['src', 'scripts']) fs.cpSync(path.join(root, rel), path.join(dir, 'typescript', rel), { recursive: true })
     fs.copyFileSync(path.join(root, 'llms.txt'), path.join(dir, 'typescript', 'llms.txt'))

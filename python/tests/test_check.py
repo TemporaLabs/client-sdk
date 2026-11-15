@@ -435,3 +435,16 @@ class TestAVaultStepCarriesOnlyThePayloadFieldsTheApiDefines:
         s = step(ASSET, DATA["approve"])
         poisoned = {**s, "payload": json.loads(json.dumps(s["payload"]).replace("{", '{"__proto__":{},', 1))}
         assert "payload" in reason_of(check_step(poisoned, deposit))
+
+
+HUGE = "9" * 4301  # past Python's 4,300-digit int() limit
+
+
+class TestAmountsPastPythonsDigitLimitAreReadExactly:
+    def test_an_amount_asked_for_too_long_for_int_is_a_refusal_not_an_exception(self) -> None:
+        r = check_step(step(ASSET, DATA["approve"]), {**deposit, "assets": HUGE})
+        assert r.ok is False and r.reason
+        r = check_step(
+            step(VAULT, DATA["withdraw"]), {**withdraw_assets, "amount": {"kind": "assets", "raw": HUGE}}
+        )
+        assert r.ok is False and r.reason

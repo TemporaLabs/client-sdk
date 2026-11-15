@@ -158,6 +158,11 @@ class TestTheGeneratorFailsClosed:
             "no application/json schema",
         )
 
+    def test_on_a_keyword_it_cannot_type_inside_the_items_of_a_schema_with_no_type(self) -> None:
+        fails(
+            lambda s: schemas(s).__setitem__("ReviewProbe", {"items": {"not": {}}}), "unsupported keyword not"
+        )
+
     def test_on_a_keyword_it_cannot_type_inside_an_open_objects_other_fields(self) -> None:
         tvl = {
             "type": "object",

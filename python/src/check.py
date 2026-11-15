@@ -33,6 +33,7 @@ import json
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any, Final, Literal, NotRequired, TypedDict
 
 from pydantic import BaseModel
@@ -182,6 +183,20 @@ _ARGS: Final[Mapping[VaultCall, tuple[Word, ...]]] = {
 _CALLS: Final = {selector: _ARGS[call] for selector, call in _SELECTORS.items()}
 ADDRESS: Final = re.compile(r"0x[0-9a-fA-F]{40}", re.ASCII)
 _RAW: Final = re.compile(r"0|[1-9][0-9]*", re.ASCII)
+
+
+def exact_int(digits: str) -> int:
+    """A string of decimal digits as an exact int at any length, as JavaScript's BigInt reads it. `int()`
+    refuses more than 4,300 digits, and that limit is process-wide, so it is left alone."""
+    return int(Decimal(digits))
+
+
+def exact_str(n: int) -> str:
+    """An int as its decimal digits at any length, as JavaScript's BigInt prints it (`str()` has the same
+    4,300-digit limit as `int()`)."""
+    return str(Decimal(n))
+
+
 # An approval this large is unlimited in effect, whatever the intent says: never admitted.
 _UNLIMITED_APPROVAL: Final = 2**128
 _AMOUNT_KINDS: Final = ("assets", "shares", "all")
@@ -234,7 +249,12 @@ def _intent_problem(intent: Any) -> str | None:
 
 
 def _exact(raw: Any, n: int | str | None) -> bool:
-    return isinstance(raw, str) and _RAW.fullmatch(raw) is not None and isinstance(n, int) and n == int(raw)
+    return (
+        isinstance(raw, str)
+        and _RAW.fullmatch(raw) is not None
+        and isinstance(n, int)
+        and n == exact_int(raw)
+    )
 
 
 def check_step(
@@ -267,7 +287,9 @@ def check_step(
     # An amount of nothing is never asked for: refused before any step is read, so no zero-amount call is
     # admitted.
     asked = get(intent, "assets") if action == "deposit" else (None if kind == "all" else get(amount, "raw"))
-    if asked is not None and (not isinstance(asked, str) or not _RAW.fullmatch(asked) or int(asked) == 0):
+    if asked is not None and (
+        not isinstance(asked, str) or not _RAW.fullmatch(asked) or exact_int(asked) == 0
+    ):
         return _refuse("the amount asked for is zero or not a raw amount")
     step_kind = get(step, "kind")
     if step_kind != "send_transaction":

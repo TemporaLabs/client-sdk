@@ -614,3 +614,23 @@ class TestAPortfolioStepCarriesOnlyThePayloadFieldsTheApiDefines:
     def test_refuses_typed_data_with_another_top_level_field(self, key: str) -> None:
         r = check_portfolio_withdrawal([batch({**sale_auth(), key: "0x00"})], withdraw)
         assert (r.ok, r.step) == (False, 0)
+
+
+HUGE = "9" * 4301  # past Python's 4,300-digit int() limit
+
+
+class TestAmountsPastPythonsDigitLimitAreReadExactly:
+    def test_a_signed_amount_too_long_for_int_is_a_refusal_not_an_exception(self) -> None:
+        signed = transfer_auth({}, {"assets": [{"assetId": USDT, "amountRaw": HUGE}]})
+        r = check_portfolio_withdrawal([batch(signed, plan_of(transfer_auth()))], withdraw)
+        assert r.ok is False and r.reason
+
+    def test_holdings_too_long_for_int_are_read_exactly(self) -> None:
+        r = check_portfolio_withdrawal(
+            [batch(transfer_auth()), batch(sale_auth())], {**withdraw, "holdings": {USDT: HUGE, TOKEN: "400"}}
+        )
+        assert r.ok is True and r.totals[0].held == HUGE
+
+    def test_a_deposit_amount_too_long_for_int_is_compared_not_raised_on(self) -> None:
+        r = check_portfolio_deposit([send(USDT_ADDR, TRANSFER)], {**deposit, "amount": HUGE})
+        assert r.ok is False and "amount" in reason_of(r)

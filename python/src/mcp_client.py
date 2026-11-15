@@ -62,14 +62,25 @@ def _is_number(v: Any) -> bool:
     return isinstance(v, int | float) and not isinstance(v, bool)
 
 
+def _finite(v: Any) -> bool:
+    """A JSON number JavaScript reads as finite: an int past a double's range reads as Infinity there."""
+    if isinstance(v, int):
+        try:
+            float(v)
+        except OverflowError:
+            return False
+        return True
+    return math.isfinite(v)
+
+
 def _seconds(v: Any) -> float | None:
     if _is_number(v):
-        n: float = v
-    elif isinstance(v, str) and re.fullmatch(r"[0-9]+", v, re.ASCII):
-        n = int(v)
+        n: float | None = v if _finite(v) else None
+    elif isinstance(v, str):
+        n = internal.small_int(v)
     else:
         return None
-    return n if 0 <= n <= internal.MAX_RETRY_AFTER_S else None
+    return n if n is not None and 0 <= n <= internal.MAX_RETRY_AFTER_S else None
 
 
 def _unreadable(method: str, name: str) -> ApiError:
@@ -145,7 +156,7 @@ def _text_value(text: Any) -> Any:
         return _U
     if isinstance(text, str):
         return internal.parse_json_text(text)
-    if text is None or isinstance(text, bool) or (_is_number(text) and math.isfinite(text)):
+    if text is None or isinstance(text, bool) or (_is_number(text) and _finite(text)):
         return text
     return _U
 
@@ -205,7 +216,13 @@ def _call_tool(
             # A non-2xx HTTP status stands; otherwise the body's status is used only when it is an error
             # status.
             status = res.status
-            if res.ok and _is_number(said) and float(said).is_integer() and 400 <= said <= 599:
+            if (
+                res.ok
+                and _is_number(said)
+                and _finite(said)
+                and float(said).is_integer()
+                and 400 <= said <= 599
+            ):
                 status = int(said)
             wait = _seconds(_get(v, "retryAfter"))
             if api is None:

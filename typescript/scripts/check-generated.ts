@@ -2,11 +2,12 @@
 // a hand edit, a spec copied in without regenerating, or a file in src/generated/ the generator does not write.
 import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { generate, readToolDoc, type Spec } from './generate.ts'
 
 // The package is typescript/; the API document is spec/ at the repository root.
-const root = join(dirname(new URL(import.meta.url).pathname), '..')
+const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const repo = join(root, '..')
 const spec = JSON.parse(readFileSync(join(repo, 'spec', 'openapi.json'), 'utf8')) as Spec
 const stale: string[] = []
