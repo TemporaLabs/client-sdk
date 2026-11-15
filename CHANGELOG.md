@@ -16,6 +16,9 @@ All notable changes to `@temporalabs/client` are recorded here. The format follo
 
 - `spec/` is the API 0.1.2 document as released. The copy 0.1.0 shipped with was taken before the API's
   0.1.2 release and lacked the three additions above.
+- `vault.shareSymbol` is required, as the API document says, so this client reads an answer from an API
+  older than 0.1.2 that carries a vault product as `unreadable_answer` (`product`, `products`). Use it with an
+  API at 0.1.2 or later.
 
 - The repository holds one folder per language. The npm package moved to `typescript/`; the API document
   (`spec/`) and shared test fixtures (`cases/`) stay at the root. The published files are unchanged apart from
