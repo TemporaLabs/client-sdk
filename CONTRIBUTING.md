@@ -7,22 +7,23 @@ Thanks for considering a contribution. This client is licensed under the Apache 
 
 Most of the client is generated. `spec/openapi.json` is a copy of the Tempora API's own OpenAPI
 document, taken at a release, and `spec/SOURCE` records its API version and sha256.
-`npm run generate` writes `src/generated/` and `llms.txt` from it. Never edit those by hand: CI
+`npm run generate`, run in `typescript/`, writes `typescript/src/generated/` and `typescript/llms.txt` from it. Never edit those by hand: CI
 regenerates them and fails on any difference.
 
 A change to what the API accepts or returns is a change to the API, not to this repository. A change
-here is to the hand-written client in `src/` (every file outside `src/generated/`), or to the generator,
-`scripts/generate.ts`. [How the client is made](docs/how-it-is-made.md) shows how the two fit together, and
+here is to the hand-written client in `typescript/src/` (every file outside `typescript/src/generated/`), or to the generator,
+`typescript/scripts/generate.ts`. [How the client is made](docs/how-it-is-made.md) shows how the two fit together, and
 [One call traced](docs/one-call-traced.md) follows one call end to end.
 
 ## Before you open a pull request
 
-Work with the Node.js version in `.nvmrc` (22). The generator and checks need Node.js 22.6 or later, since they
-run TypeScript directly with `--experimental-strip-types`. The `engines` range in `package.json` (20.3 or later) is
+Work with the Node.js version in `typescript/.nvmrc` (22). The generator and checks need Node.js 22.6 or later, since they
+run TypeScript directly with `--experimental-strip-types`. The `engines` range in `typescript/package.json` (20.3 or later) is
 for the published client, not for these scripts.
 
-`npm run check` must pass. It runs the source and generation checks, the typecheck, the tests (one
-worker), the public-text scan and the package check. Add a test for any behaviour you change.
+`npm run check`, run in `typescript/`, must pass. It runs the source and generation checks, the typecheck, the
+tests (one worker), the public-text scan, the package check, and that each package folder's `LICENSE` and
+`NOTICE` match the root's. Add a test for any behaviour you change.
 
 ## Sign off every commit
 

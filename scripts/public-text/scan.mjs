@@ -9,6 +9,8 @@ import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
+// The repository root: `--tracked` covers the whole repository whichever folder it is run from.
+const top = join(here, '..', '..')
 const { patterns } = JSON.parse(readFileSync(join(here, 'deny.json'), 'utf8'))
 // Not inside a longer word before it; not followed by a letter or digit. A hyphen or underscore after a reference
 // ends it rather than hiding it, as in a number followed by "-related".
@@ -22,7 +24,7 @@ const args = process.argv.slice(2)
 const tracked = args[0] === '--tracked'
 const commits = args[0] === '--commits'
 const dirs = commits ? ['(commits)'] : tracked
-  ? execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter((f) => f && !TRACKED_SKIP.has(f))
+  ? execFileSync('git', ['ls-files', '-z'], { cwd: top, encoding: 'utf8' }).split('\0').filter((f) => f && !TRACKED_SKIP.has(f)).map((f) => join(top, f))
   : args
 if (dirs.length === 0) {
   console.error('usage: scan.mjs --tracked | --commits | <dir> [<dir> ...]')

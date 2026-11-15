@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-const scan = path.resolve(__dirname, '..', 'scripts', 'public-text', 'scan.mjs')
+const scan = path.resolve(__dirname, '..', '..', 'scripts', 'public-text', 'scan.mjs')
 const run = (text: string) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scan-'))
   fs.writeFileSync(path.join(dir, 'a.txt'), text)

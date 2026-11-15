@@ -2,7 +2,7 @@
 
 **The typed TypeScript client for the Tempora API.** Built by Tempora Labs and contributors.
 
-[![ci](https://github.com/TemporaLabs/client-sdk/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TemporaLabs/client-sdk/actions/workflows/ci.yml)
+[![ci](https://github.com/TemporaLabs/client-sdk/actions/workflows/ci-typescript.yml/badge.svg?branch=main)](https://github.com/TemporaLabs/client-sdk/actions/workflows/ci-typescript.yml)
 
 `@temporalabs/client` lets an application read Tempora Labs' products, sign a wallet owner in, and take that
 owner's deposits and withdrawals into its vaults and portfolios. It is generated from the API's own OpenAPI
@@ -54,7 +54,7 @@ when it sent one. On an error, `error.outcome` says what happened:
 
 A bad option, such as a `baseUrl` that is not an absolute URL, throws a `TypeError` from `createClient`, so no
 call throws for it. Reads of products (`products`, `product`, `product_read`, `products_route`) need no owner
-token. Every call, its input and the error codes are listed in [`llms.txt`](https://github.com/TemporaLabs/client-sdk/blob/main/llms.txt).
+token. Every call, its input and the error codes are listed in [`llms.txt`](https://github.com/TemporaLabs/client-sdk/blob/main/typescript/llms.txt).
 
 ## Sign in an owner
 

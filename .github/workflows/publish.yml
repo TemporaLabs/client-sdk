@@ -50,6 +50,10 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    # The npm package is typescript/; every step below runs there.
+    defaults:
+      run:
+        working-directory: typescript
     outputs:
       file: ${{ steps.pack.outputs.file }}
       sha256: ${{ steps.pack.outputs.sha256 }}
@@ -138,7 +142,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package
-          path: dist-pack/${{ steps.pack.outputs.file }}
+          path: typescript/dist-pack/${{ steps.pack.outputs.file }}
           if-no-files-found: error
           retention-days: 7
 

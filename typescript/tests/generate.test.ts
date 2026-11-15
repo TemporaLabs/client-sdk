@@ -9,8 +9,10 @@ import { errorCodes, generate, operationsOf, readToolDoc, tsType, type Spec } fr
 import { DEFS, ERROR_BODY, OPERATIONS } from '../src/generated/spec'
 import { createClient } from '../src/index'
 
+// The package (typescript/) and the repository root, which holds spec/ and the repository-wide scripts/.
 const root = path.resolve(__dirname, '..')
-const SPEC = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'openapi.json'), 'utf8')) as Spec
+const repo = path.resolve(root, '..')
+const SPEC = JSON.parse(fs.readFileSync(path.join(repo, 'spec', 'openapi.json'), 'utf8')) as Spec
 const clone = (): Spec => JSON.parse(JSON.stringify(SPEC)) as Spec
 const toZod = (schema: unknown) => z.fromJSONSchema({ ...(schema as object), $defs: DEFS } as never)
 
@@ -161,21 +163,22 @@ describe('llms.txt', () => {
 
 describe('what is committed is what the document generates', () => {
   it('src/generated/ and llms.txt match spec/openapi.json and spec/tools.json', () => {
-    for (const [rel, text] of Object.entries(generate(SPEC, readToolDoc(root)))) expect(fs.readFileSync(path.join(root, rel), 'utf8')).toBe(text)
+    for (const [rel, text] of Object.entries(generate(SPEC, readToolDoc(repo)))) expect(fs.readFileSync(path.join(root, rel), 'utf8')).toBe(text)
   })
 
   // The two checks CI runs, against a planted defect in a scratch copy of the repo.
   const scratch = () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'client-check-'))
-    for (const rel of ['spec', 'src', 'scripts']) fs.cpSync(path.join(root, rel), path.join(dir, rel), { recursive: true })
-    fs.copyFileSync(path.join(root, 'llms.txt'), path.join(dir, 'llms.txt'))
+    for (const rel of ['spec', 'scripts']) fs.cpSync(path.join(repo, rel), path.join(dir, rel), { recursive: true })
+    for (const rel of ['src', 'scripts']) fs.cpSync(path.join(root, rel), path.join(dir, 'typescript', rel), { recursive: true })
+    fs.copyFileSync(path.join(root, 'llms.txt'), path.join(dir, 'typescript', 'llms.txt'))
     return dir
   }
   it('check-generated fails on a hand edit in src/generated/', () => {
     const dir = scratch()
     try {
-      fs.appendFileSync(path.join(dir, 'src', 'generated', 'spec.ts'), '// edited\n')
-      const r = spawnSync(process.execPath, ['--experimental-strip-types', '--no-warnings', path.join(dir, 'scripts', 'check-generated.ts')], { encoding: 'utf8' })
+      fs.appendFileSync(path.join(dir, 'typescript', 'src', 'generated', 'spec.ts'), '// edited\n')
+      const r = spawnSync(process.execPath, ['--experimental-strip-types', '--no-warnings', path.join(dir, 'typescript', 'scripts', 'check-generated.ts')], { encoding: 'utf8' })
       expect(r.status).toBe(1)
       expect(r.stderr).toMatch(/src\/generated\/spec\.ts/)
     } finally {
@@ -185,9 +188,9 @@ describe('what is committed is what the document generates', () => {
   it('check-generated fails on a file in src/generated/ the generator does not write', () => {
     const dir = scratch()
     try {
-      const run = () => spawnSync(process.execPath, ['--experimental-strip-types', '--no-warnings', path.join(dir, 'scripts', 'check-generated.ts')], { encoding: 'utf8' })
+      const run = () => spawnSync(process.execPath, ['--experimental-strip-types', '--no-warnings', path.join(dir, 'typescript', 'scripts', 'check-generated.ts')], { encoding: 'utf8' })
       expect(run().status).toBe(0)
-      fs.writeFileSync(path.join(dir, 'src', 'generated', 'stale.ts'), 'export const STALE = 1\n')
+      fs.writeFileSync(path.join(dir, 'typescript', 'src', 'generated', 'stale.ts'), 'export const STALE = 1\n')
       const r = run()
       expect(r.status).toBe(1)
       expect(r.stderr).toMatch(/src\/generated\/stale\.ts/)
@@ -200,7 +203,7 @@ describe('what is committed is what the document generates', () => {
     try {
       const run = () => spawnSync(process.execPath, [path.join(dir, 'scripts', 'check-source.mjs')], { encoding: 'utf8' })
       expect(run().status).toBe(0)
-      fs.copyFileSync(path.join(root, 'spec', 'SOURCE'), path.join(dir, 'spec', 'SOURCE'))
+      fs.copyFileSync(path.join(repo, 'spec', 'SOURCE'), path.join(dir, 'spec', 'SOURCE'))
       const f = path.join(dir, 'spec', 'openapi.json')
       fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('"Tempora API"', '"Tempora APJ"'))
       const r = run()
@@ -214,7 +217,7 @@ describe('what is committed is what the document generates', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'client-gen-'))
     try {
       fs.mkdirSync(path.join(dir, 'spec'))
-      fs.copyFileSync(path.join(root, 'spec', 'openapi.json'), path.join(dir, 'spec', 'openapi.json'))
+      fs.copyFileSync(path.join(repo, 'spec', 'openapi.json'), path.join(dir, 'spec', 'openapi.json'))
       execFileSync(process.execPath, ['--experimental-strip-types', '--no-warnings', path.join(root, 'scripts', 'generate.ts'), '--out', dir])
       expect(fs.readFileSync(path.join(dir, 'src', 'generated', 'types.ts'), 'utf8')).toBe(fs.readFileSync(path.join(root, 'src', 'generated', 'types.ts'), 'utf8'))
     } finally {
@@ -297,7 +300,7 @@ describe('the MCP tool list', () => {
 describe('check-source and the tool list', () => {
   const scratch = () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'client-tools-'))
-    for (const rel of ['spec', 'scripts']) fs.cpSync(path.join(root, rel), path.join(dir, rel), { recursive: true })
+    for (const rel of ['spec', 'scripts']) fs.cpSync(path.join(repo, rel), path.join(dir, rel), { recursive: true })
     // Each case starts from the document alone: no tool list and none recorded.
     fs.rmSync(path.join(dir, 'spec', 'tools.json'), { force: true })
     const source = path.join(dir, 'spec', 'SOURCE')

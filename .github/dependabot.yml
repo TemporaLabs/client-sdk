@@ -1,11 +1,11 @@
 # Dependabot reads this file only from the default branch (main). No `target-branch`: a config that sets it is not
 # used for security updates. Dependabot PRs open on main, and .github/workflows/dependabot-to-cycle-branch.yml moves
-# each one to the current version branch (the newest vX.Y.Z not yet released to main). The repository is one npm
-# package, at the root.
+# each one to the current version branch (the newest vX.Y.Z not yet released to main). The npm package is in
+# typescript/.
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/typescript"
     schedule:
       interval: "weekly"
       day: "monday"
