@@ -5,7 +5,17 @@ All notable changes to `@temporalabs/client` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Added
+
+- `vault.shareSymbol` on a vault product: the vault's share ticker, as the API returns it.
+- `depositAssets` on a product: the tokens it takes for a deposit, each with its chain, address and decimals.
+- A product can be named by its id, its share ticker, its vault address, or that address with its chain
+  (`eip155:<chain>:<address>`), wherever a call takes a product (`ProductRef`), and in the MCP `product` tool.
+
 ### Changed
+
+- `spec/` is the API 0.1.2 document as released. The copy 0.1.0 shipped with was taken before the API's
+  0.1.2 release and lacked the three additions above.
 
 - The repository holds one folder per language. The npm package moved to `typescript/`; the API document
   (`spec/`) and shared test fixtures (`cases/`) stay at the root. The published files are unchanged apart from
