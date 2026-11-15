@@ -85,10 +85,15 @@ dictionaries with the names the docs use. The owner's wallet signs or sends each
 ## The MCP version
 
 ```python
+from temporalabs_client import Ok, create_client, sign_in
 from temporalabs_client.mcp import create_mcp_client
 
-tempora = create_mcp_client("https://<mcp origin>/mcp", owner_token=owner_token)
-r = tempora.products()
+# Sign in over HTTP, with a token made for the MCP endpoint.
+client = create_client("https://api.temporalabs.com")
+signed_in = sign_in(client, owner=owner, sign_message=sign_message, audience="mcp")
+if isinstance(signed_in, Ok):
+    tempora = create_mcp_client("https://api.temporalabs.com/mcp", owner_token=signed_in.body.token)
+    r = tempora.positions()
 ```
 
 - **Same calls:** the same names, inputs and results as `create_client`, except sign-in and sign-out, which are not

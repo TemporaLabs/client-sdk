@@ -34,9 +34,13 @@ concurrency:
 
 jobs:
   retarget:
-    # edited and synchronize catch a PR that Dependabot put back on main, for example on a recreate.
+    # edited and synchronize catch a PR that Dependabot put back on main, for example on a recreate. A PR moves
+    # only when Dependabot opened it from a branch of this repository, and a push to it counts only when
+    # Dependabot made the push: a fork cannot be opened as Dependabot, and a push by anyone else is not its.
     if: >-
       (github.event_name == 'pull_request_target' && github.event.pull_request.user.login == 'dependabot[bot]'
+        && github.event.pull_request.head.repo.full_name == github.repository
+        && (github.event.action != 'synchronize' || github.actor == 'dependabot[bot]')
         && github.event.pull_request.base.ref == 'main')
       || (github.event_name == 'create' && github.event.ref_type == 'branch'
         && (startsWith(github.event.ref, 'v') || startsWith(github.event.ref, 'release/v')))
@@ -80,7 +84,8 @@ jobs:
           else
             # Every open Dependabot PR on main or on another version branch.
             prs=$(gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
-              --jq ".[] | select(.user.login == \"dependabot[bot]\") | select(.base.ref != \"$cycle\") | \"\(.number) \(.base.ref)\"" \
+              --jq ".[] | select(.user.login == \"dependabot[bot]\") | select(.head.repo.full_name == \"$REPO\")
+                | select(.base.ref != \"$cycle\") | \"\(.number) \(.base.ref)\"" \
               | while read -r n base; do
                   if [ "$base" = "main" ] || printf '%s' "$base" | grep -qE "$version_re"; then echo "$n"; fi
                 done)
@@ -90,8 +95,14 @@ jobs:
             exit 0
           fi
           for n in $prs; do
-            # Read the base again just before the change: another run may have moved this PR already.
-            base=$(gh api "repos/$REPO/pulls/$n" --jq '.base.ref')
+            # Read the PR again just before the change: another run may have moved it already, and only
+            # Dependabot's own PR from this repository ever moves.
+            read -r base author head_repo < <(gh api "repos/$REPO/pulls/$n" \
+              --jq '"\(.base.ref) \(.user.login) \(.head.repo.full_name)"')
+            if [ "$author" != "dependabot[bot]" ] || [ "$head_repo" != "$REPO" ]; then
+              echo "PR #$n is not Dependabot's own PR from $REPO; it does not move."
+              continue
+            fi
             if [ "$base" = "$cycle" ]; then
               echo "PR #$n already targets $cycle."
               continue

@@ -25,6 +25,12 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ### Changed
 
+- **The MCP client names itself by its own package and version.** `clientInfo` was the npm package name with the
+  API version; it is now each package's own name and version (`@temporalabs/client` or `temporalabs-client`, and
+  `0.1.1`).
+- **An MCP call never throws for what it was given.** An input that is not an object (`null`, a string), or a `path`
+  or `query` that is not one, is read as empty instead of raising, and a string is never spread into the tool's
+  arguments.
 - **The client needs Node.js 22 or later** (`engines.node` is `>=22`, was `>=20.3`). Node.js 20 is past its end
   of life. The built files are unchanged.
 - The package is built and type-checked with TypeScript 6.0.3, and its tests with `@types/node` 22.20.5. The

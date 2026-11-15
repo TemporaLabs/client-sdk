@@ -6,11 +6,14 @@ from __future__ import annotations
 import json
 import threading
 import time
+import tomllib
 from collections.abc import Callable, Iterator
+from pathlib import Path
 from typing import Any, ClassVar
 
 import httpx
 import pytest
+import temporalabs_client
 from temporalabs_client import Err, Ok
 from temporalabs_client import _internal as internal
 from temporalabs_client.generated.spec import API_VERSION
@@ -243,13 +246,24 @@ class TestCreateMcpClient:
         e = err(client.list_tools())
         assert (e.status, dump(e), e.trace_id, e.retry_after) == (429, data, "t-3", 2)
 
-    def test_names_itself_to_the_endpoint_with_the_api_version_it_was_generated_from(self) -> None:
+    def test_names_itself_to_the_endpoint_with_its_own_package_name_and_version(self) -> None:
         client, seen = make(lambda _: tool_text(PRODUCTS))
         client.products()
+        version = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text())["project"][
+            "version"
+        ]
         assert body(seen[0])["params"]["_meta"]["io.modelcontextprotocol/clientInfo"] == {
-            "name": "@temporalabs/client",
-            "version": API_VERSION,
+            "name": "temporalabs-client",
+            "version": version,
         }
+        assert temporalabs_client.__version__ == version
+
+    def test_never_raises_for_a_path_or_query_that_is_not_a_mapping(self) -> None:
+        client, seen = make(lambda _: tool_text(PRODUCTS))
+        for bad in ("ab", 7, ["a"]):
+            assert isinstance(client.product_read(path=bad).ok, bool)
+            assert isinstance(client.products(query=bad).ok, bool)
+        assert [body(r)["params"]["arguments"] for r in seen.requests] == [{}] * 6
 
     def test_a_lost_answer_follows_the_underlying_call_a_read_failed_a_money_call_unknown(self) -> None:
         def down(_: httpx.Request) -> httpx.Response:

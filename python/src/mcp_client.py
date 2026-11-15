@@ -11,14 +11,15 @@ from typing import Any, Final
 
 from . import _internal as internal
 from ._result import Err, Ok, Result
+from ._version import VERSION
 from .generated.models import ApiError
-from .generated.spec import API_VERSION, CLIENT_KEY_HEADER, OPERATIONS, Operation
+from .generated.spec import CLIENT_KEY_HEADER, OPERATIONS, Operation
 
 __all__ = ["PROTOCOL_VERSION", "is_tool", "mcp_client_for"]
 
 # The protocol revision this client speaks.
 PROTOCOL_VERSION: Final = "2026-07-28"
-CLIENT_INFO: Final = {"name": "@temporalabs/client", "version": API_VERSION}
+CLIENT_INFO: Final = {"name": "temporalabs-client", "version": VERSION}
 # The protocol's code for a revision the server does not serve; its data names the ones it does.
 UNSUPPORTED_PROTOCOL: Final = -32022
 META: Final = {
@@ -177,7 +178,11 @@ def _call_tool(
         body: Any = _NOT_SET,
         owner_token: str | None = None,
     ) -> Result[Any]:
-        args: dict[str, Any] = {**(path or {}), **(query or {})}
+        # Only mappings are read: a call never raises for what it was given.
+        args: dict[str, Any] = {
+            **(path if isinstance(path, Mapping) else {}),
+            **(query if isinstance(query, Mapping) else {}),
+        }
         if body is not _NOT_SET and body is not None:
             args["body"] = body
         headers = _headers(opts, "tools/call", tool["name"], tool["exposure"] == "owner", owner_token)
