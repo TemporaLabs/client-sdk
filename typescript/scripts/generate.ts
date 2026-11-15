@@ -366,7 +366,7 @@ function llms(spec: Spec, ops: Operation[], err: Schema, tools: ToolDoc['tools']
   ].join('\n')
 }
 
-/** spec/tools.json when the API has published a tool list, otherwise none. */
+/** spec/tools.json under the repository root `root` when the API has published a tool list, otherwise none. */
 export function readToolDoc(root: string): ToolDoc | undefined {
   try {
     return JSON.parse(readFileSync(join(root, 'spec', 'tools.json'), 'utf8')) as ToolDoc
@@ -378,9 +378,11 @@ export function readToolDoc(root: string): ToolDoc | undefined {
 
 // Run as a script: write the files.
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+  // The package is typescript/; the API document it reads is spec/ at the repository root, shared with python/.
   const root = join(dirname(new URL(import.meta.url).pathname), '..')
-  const spec = JSON.parse(readFileSync(join(root, 'spec', 'openapi.json'), 'utf8')) as Spec
-  const tools = readToolDoc(root)
+  const repo = join(root, '..')
+  const spec = JSON.parse(readFileSync(join(repo, 'spec', 'openapi.json'), 'utf8')) as Spec
+  const tools = readToolDoc(repo)
   const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1]! : root
   for (const [rel, text] of Object.entries(generate(spec, tools))) {
     mkdirSync(dirname(join(out, rel)), { recursive: true })

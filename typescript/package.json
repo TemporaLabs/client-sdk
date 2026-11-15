@@ -7,7 +7,8 @@
   "bugs": "https://github.com/TemporaLabs/client-sdk/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TemporaLabs/client-sdk.git"
+    "url": "git+https://github.com/TemporaLabs/client-sdk.git",
+    "directory": "typescript"
   },
   "type": "module",
   "license": "Apache-2.0",
@@ -43,8 +44,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "jest --maxWorkers=1",
     "check:generated": "node --experimental-strip-types --no-warnings scripts/check-generated.ts",
-    "check:source": "node scripts/check-source.mjs",
-    "check:public-text": "node scripts/public-text/scan.mjs --tracked",
+    "check:source": "node ../scripts/check-source.mjs",
+    "check:public-text": "node ../scripts/public-text/scan.mjs --tracked",
     "check:client-pack": "node scripts/client-pack.mjs",
     "check": "npm run check:source && npm run check:generated && npm run typecheck && npm test && npm run check:public-text && npm run check:client-pack"
   },

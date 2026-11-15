@@ -5,6 +5,12 @@ All notable changes to `@temporalabs/client` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Changed
+
+- The repository holds one folder per language. The npm package moved to `typescript/`; the API document
+  (`spec/`) and shared test fixtures (`cases/`) stay at the root. The published files are unchanged apart from
+  `package.json` (`repository.directory`, script paths) and two README links that now point into `typescript/`.
+
 ## [v0.1.0] - 2026-11-15
 
 The first public release of `@temporalabs/client`, the typed client for the Tempora API 0.1.2. Published to npm

@@ -32,7 +32,7 @@ try {
   const extracted = join(work, 'extracted')
   run('mkdir', ['-p', extracted], work)
   run('tar', ['-xzf', join(work, packed.filename), '-C', extracted, '--strip-components=1'], work)
-  run('node', [join(root, 'scripts', 'public-text', 'scan.mjs'), extracted], root)
+  run('node', [join(root, '..', 'scripts', 'public-text', 'scan.mjs'), extracted], root)
   for (const f of BUILT) {
     if (/^\s*(\/\/|\/\*)/m.test(readFileSync(join(extracted, f), 'utf8'))) fail(`${f} carries a comment`)
   }

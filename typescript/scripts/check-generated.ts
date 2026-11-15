@@ -5,10 +5,12 @@ import { dirname, join, relative } from 'node:path'
 
 import { generate, readToolDoc, type Spec } from './generate.ts'
 
+// The package is typescript/; the API document is spec/ at the repository root.
 const root = join(dirname(new URL(import.meta.url).pathname), '..')
-const spec = JSON.parse(readFileSync(join(root, 'spec', 'openapi.json'), 'utf8')) as Spec
+const repo = join(root, '..')
+const spec = JSON.parse(readFileSync(join(repo, 'spec', 'openapi.json'), 'utf8')) as Spec
 const stale: string[] = []
-const written = generate(spec, readToolDoc(root))
+const written = generate(spec, readToolDoc(repo))
 // A file in src/generated/ the generator no longer writes is stale too: it would ship, and nothing would update it.
 const generatedDir = join(root, 'src', 'generated')
 for (const e of readdirSync(generatedDir, { recursive: true, withFileTypes: true })) {

@@ -131,7 +131,7 @@ describe('checkSteps: the request as a whole', () => {
 // Steps in the shape the API returns at 0.1.2, with placeholder addresses, each as its step's payload: what a client
 // receives must pass, unchanged.
 describe("the API's own vault steps pass", () => {
-  const fx = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'vault-steps.json'), 'utf8')) as {
+  const fx = JSON.parse(readFileSync(join(__dirname, '..', '..', 'cases', 'vault-steps.json'), 'utf8')) as {
     vault: { chain: string; vaultAddress: string; assetAddress: string }
     owner: string
     deposit: { to: string; data: string; value: string }[]

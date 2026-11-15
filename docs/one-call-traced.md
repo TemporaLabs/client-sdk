@@ -7,12 +7,12 @@ const client = createClient({ baseUrl: 'https://api.example', clientKey: 'ck', o
 const r = await client.withdraw({ body: { product: 'example-product', amount: { kind: 'all' } } })
 ```
 
-Everything below happens in `src/index.ts`, with the helpers it shares with the MCP client in `src/internal.ts`
-(the answer check, the origin refusal, the option checks), using values from `src/generated/spec.ts`.
+Everything below happens in `typescript/src/index.ts`, with the helpers it shares with the MCP client in `typescript/src/internal.ts`
+(the answer check, the origin refusal, the option checks), using values from `typescript/src/generated/spec.ts`.
 
 ## 1. Compile time: the input is checked against the document
 
-`client.withdraw` exists because `withdraw` is a key of `Operations` in `src/generated/types.ts`. Its
+`client.withdraw` exists because `withdraw` is a key of `Operations` in `typescript/src/generated/types.ts`. Its
 input type is `InputOf<'withdraw'>`: the call takes no path and no query, and its body is required, so the
 input is exactly `{ body: WithdrawBody }`. `amount: { kind: 'everything' }` would not compile, because
 `Amount` is a union of the five amount shapes the document names. The answer type is
@@ -83,5 +83,5 @@ pairing, or an error body that does not match, is `unreadable_answer`.
 Every path above ends in a `Result`; none throws. Configuration is checked earlier: `createClient` throws a
 `TypeError` for a `baseUrl` that is not an absolute URL, so a client that was made never throws on a call.
 
-The tests that pin each step are in `tests/client.test.ts`: the URL and headers, the owner token, the
+The tests that pin each step are in `typescript/tests/client.test.ts`: the URL and headers, the owner token, the
 answer checks, `product_read`, the outcome rule, the origin, path values and redirects.
