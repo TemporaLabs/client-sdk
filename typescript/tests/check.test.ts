@@ -204,6 +204,16 @@ describe('an intent outside the documented shape is refused, never read loosely'
     expect(checkSteps([step(VAULT, DATA.deposit)], intent).ok).toBe(false)
   })
 
+  it.each([[undefined], [{}], [{ ...vault, chain: '' }], [{ ...vault, vaultAddress: '0x12' }], [{ ...vault, assetAddress: null }]])(
+    'a request whose intent has vault %j is refused, not thrown, even with nothing to sign yet',
+    (bad) => {
+      // A deposit's second step waits on its approval: it has no payload, and no chain to compare.
+      const waiting = { kind: 'send_transaction' } as never
+      const intent = { action: 'deposit', owner: OWNER, assets: '2000000', ...(bad === undefined ? {} : { vault: bad }) } as unknown as VaultIntent
+      expect(checkSteps([step(ASSET, DATA.approve), waiting], intent)).toEqual({ ok: false, step: null, reason: 'the vault record is not complete' })
+    },
+  )
+
   it('a withdrawal with no amount is refused, not thrown', () => {
     const intent = { action: 'withdraw', vault, owner: OWNER } as unknown as VaultIntent
     expect(checkStep(step(VAULT, DATA.withdraw), intent).ok).toBe(false)

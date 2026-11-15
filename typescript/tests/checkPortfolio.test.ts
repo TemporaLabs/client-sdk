@@ -192,6 +192,11 @@ describe('checkPortfolioDeposit', () => {
     expect(reasonOf(checkPortfolioDeposit([ENROL, send(USDT_ADDR, TRANSFER)], enrolOnly))).toMatch(/steps/)
   })
 
+  it('an amount of null is not an enrol-only request', () => {
+    // Only an amount left out asks for enrolment alone; null is an amount that is not a raw amount.
+    expect(reasonOf(checkPortfolioDeposit([ENROL], { ...deposit, amount: null } as never))).toMatch(/zero or not a raw amount/)
+  })
+
   it('refuses an intent for a zero amount or a smart account that is not an address', () => {
     expect(reasonOf(checkPortfolioDeposit([send(USDT_ADDR, TRANSFER)], { ...deposit, amount: '0' }))).toMatch(/zero/)
     expect(reasonOf(checkPortfolioDeposit([send(USDT_ADDR, TRANSFER)], { ...deposit, smartAccount: '0x12' }))).toMatch(/smart account/)
