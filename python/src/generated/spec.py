@@ -8,7 +8,7 @@ from typing import Any, Final, Literal
 from . import models
 
 # The API version this client was generated from.
-API_VERSION: Final = '0.1.2'
+API_VERSION: Final = '0.1.3'
 # The header that carries the client key.
 CLIENT_KEY_HEADER: Final = 'Tempora-Client-Key'
 # The codes whose error outcome is always `unknown`: a request may have moved.
@@ -35,6 +35,7 @@ OPERATIONS: Final[dict[str, Operation]] = {
     'account': Operation(method='GET', path='/v1/accounts/{product}', auth='owner', response=models.AccountAnswer, outputs=None),
     'account_performance': Operation(method='GET', path='/v1/accounts/{product}/performance', auth='owner', response=models.AccountPerformanceAnswer, outputs=None),
     'cancel': Operation(method='POST', path='/v1/requests/{requestId}/cancel', auth='owner', response=models.CancelAnswer, outputs=None),
+    'chains': Operation(method='GET', path='/v1/chains', auth='none', response=models.ChainsAnswer, outputs=None),
     'deposit': Operation(method='POST', path='/v1/deposits', auth='owner', response=models.DepositAnswer, outputs=None),
     'positions': Operation(method='GET', path='/v1/positions', auth='owner', response=models.PositionsAnswer, outputs=None),
     'product': Operation(method='GET', path='/v1/products/{id}', auth='none', response=models.ProductAnswer, outputs=None),

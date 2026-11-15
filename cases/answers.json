@@ -326,26 +326,29 @@
   },
   "Request": {
    "accept": [
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"addedLater":{"any":"value"}}
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"addedLater":{"any":"value"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"signal_later","anything":1}}
    ],
    "reject": [
-     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":12345,"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_short","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":12345,"state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":12345,"chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":[],"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":12345},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":12345,"steps":[]},
+     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":12345,"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_short","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":12345,"state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":12345,"chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":[],"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":12345},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":12345,"steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      [],
-     "text"
+     "text",
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"send","stepId":"s1"}}
    ]
   },
   "RequestId": {
@@ -965,12 +968,12 @@
      {"explorer":"https://xn--ls8h.example/x","venue":"https://example.com/x"}
    ],
    "reject": [
-      {"explorer":"http://09/x","venue":null},
-      {"explorer":"file://09/x","venue":null},
-      {"explorer":"file://[broken","venue":null},
-      {"explorer":"file://host:80/x","venue":null},
-      {"explorer":"file://user@host/x","venue":null},
-      {"explorer":"file://[::1/x","venue":null},
+     {"explorer":"http://09/x","venue":null},
+     {"explorer":"file://09/x","venue":null},
+     {"explorer":"file://[broken","venue":null},
+     {"explorer":"file://host:80/x","venue":null},
+     {"explorer":"file://user@host/x","venue":null},
+     {"explorer":"file://[::1/x","venue":null},
      {"venue":"https://example.com/x"},
      {"explorer":"https://example.com/x"},
      {"explorer":12345,"venue":"https://example.com/x"},
@@ -1138,9 +1141,11 @@
   },
   "Quote": {
    "accept": [
-     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"}}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":true,"amount":"1000"}}},
      {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666"},
-     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","addedLater":{"any":"value"}}
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","addedLater":{"any":"value"}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":null}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":false,"amount":"0","addedLater":{"any":"value"}}}}
    ],
    "reject": [
      {"action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666"},
@@ -1156,7 +1161,11 @@
      {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"01000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666"},
      {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":12345,"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666"},
      [],
-     "text"
+     "text",
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"}}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":"yes","amount":"1000"}}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":true}}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":true,"amount":"01"}}}
    ]
   },
   "QuoteBody": {
@@ -1315,6 +1324,104 @@
      [],
      "text"
    ]
+  },
+  "Next": {
+   "accept": [
+     {"kind":"send","stepId":"s1","generation":1},
+     {"kind":"sign","stepIds":["s1","s2"]},
+     {"kind":"sign_again","stepId":"s1","generation":2,"reason":"x"},
+     {"kind":"hand_back","stepId":"s1","reason":"x"},
+     {"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"},
+     {"kind":"wait","retryAfterMs":0,"until":"2026-11-09T00:00:00Z","gate":"vault-live","code":"not_running","reason":"x"},
+     {"kind":"done","outcome":"completed"},
+     {"kind":"done","outcome":"partial"},
+     {"kind":"done","outcome":"settledLater"},
+     {"kind":"failed","reason":"x"},
+     {"kind":"failed","reason":"x","stepId":"s1"},
+     {"kind":"cancelled","sent":false},
+     {"kind":"expired","startAgain":true},
+     {"kind":"arrivedLater"},
+     {"kind":"arrivedLater","any":1},
+     {"kind":"send","stepId":"s1","generation":1,"addedLater":{"any":"value"}},
+     {"kind":""}
+   ],
+   "reject": [
+     {"kind":"send","stepId":"s1"},
+     {"kind":"send","generation":1},
+     {"kind":"send","stepId":"s1","generation":0},
+     {"kind":"sign","stepIds":[]},
+     {"kind":"sign"},
+     {"kind":"sign_again","stepId":"s1","generation":2},
+     {"kind":"hand_back","stepId":"s1"},
+     {"kind":"wait","retryAfterMs":-1,"until":"2026-11-09T00:00:00Z"},
+     {"kind":"wait","until":"2026-11-09T00:00:00Z"},
+     {"kind":"done"},
+     {"kind":"done","outcome":""},
+     {"kind":"failed"},
+     {"kind":"cancelled"},
+     {"kind":"expired","startAgain":false},
+     {"kind":12345},
+     {},
+     null,
+     [],
+     "wait"
+   ]
+  },
+  "AmountInput": {
+   "accept": [
+     {"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},
+     {"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","value":"100.5"},
+     {"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","value":"0.000000000000000001"},
+     {"kind":"shares","raw":"1000"},
+     {"kind":"all"},
+     {"kind":"fraction","value":"0.250000"},
+     {"kind":"usd","value":"100.25"},
+     {"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","addedLater":{"any":"value"}},
+     {"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","value":"100.50"}
+   ],
+   "reject": [
+     {"kind":"assets","raw":"1000"},
+     {"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","value":"0.0000000000000000001"},
+     {"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","value":"01"},
+     {"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","value":"-1"},
+     {"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"0"},
+     {"kind":"shares"},
+     {"kind":"elsewhere"},
+     {"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},
+     null,
+     "text"
+   ]
+  },
+  "Chain": {
+   "accept": [
+     {"chainId":"eip155:8453","slug":"base","name":"Base","explorer":"https://basescan.org"},
+     {"chainId":"eip155:8453","slug":"base","name":"Base","explorer":null},
+     {"chainId":"eip155:8453","slug":"base","name":"Base","explorer":"https://basescan.org","addedLater":{"any":"value"}}
+   ],
+   "reject": [
+     {"slug":"base","name":"Base","explorer":"https://basescan.org"},
+     {"chainId":"eip155:8453","slug":"base","name":"Base"},
+     {"chainId":"eip155:8453","slug":"","name":"Base","explorer":"https://basescan.org"},
+     {"chainId":"eip155:8453","slug":"base","name":"","explorer":"https://basescan.org"},
+     {"chainId":"base","slug":"base","name":"Base","explorer":"https://basescan.org"},
+     {"chainId":"eip155:8453","slug":"base","name":"Base","explorer":"not a url"},
+     {"chainId":"eip155:8453","slug":"base","name":"Base","explorer":12345},
+     null,
+     []
+   ]
+  },
+  "ChainList": {
+   "accept": [
+     {"chains":[{"chainId":"eip155:8453","slug":"base","name":"Base","explorer":"https://basescan.org"}]},
+     {"chains":[]},
+     {"chains":[{"chainId":"eip155:8453","slug":"base","name":"Base","explorer":"https://basescan.org"}],"addedLater":{"any":"value"}}
+   ],
+   "reject": [
+     {},
+     {"chains":{"chainId":"eip155:8453","slug":"base","name":"Base","explorer":"https://basescan.org"}},
+     {"chains":[{"chainId":"eip155:8453"}]},
+     null
+   ]
   }
  },
  "operations": {
@@ -1352,29 +1459,32 @@
   },
   "deposit": {
    "accept": [
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"}}
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"signal_later","anything":1}}
    ],
    "reject": [
-     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      7,
      "text",
      [],
      null,
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      {"not":"a request"},
-     {}
+     {},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"send","stepId":"s1"}}
    ]
   },
   "positions": {
@@ -1551,8 +1661,10 @@
   },
   "quote": {
    "accept": [
-     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"}}},
-     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666"}
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":true,"amount":"1000"}}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666"},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":null}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":false,"amount":"0","addedLater":{"any":"value"}}}}
    ],
    "reject": [
      {"action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666"},
@@ -1562,115 +1674,131 @@
      7,
      "text",
      [],
-     null
+     null,
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"}}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":"yes","amount":"1000"}}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":true}}},
+     {"product":"example-product","action":"withdraw","chain":"eip155:8453","block":"1000","asOf":"2026-11-09T00:00:00Z","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","withdraw":{"position":{"shares":{"raw":"1000","decimals":0},"assets":{"raw":"1000","decimals":0}},"withdrawable":{"state":"all","assets":"1000","within":"1000","reason":"x"}},"deposit":{"amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"expectedShares":{"raw":"1000","decimals":0},"sharePrice":{"shares":{"raw":"1000","decimals":0},"assets":"1000"},"check":{"state":"open","reason":"x"},"approval":{"needed":true,"amount":"01"}}}
    ]
   },
   "status_lookup": {
    "accept": [
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"}}
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"signal_later","anything":1}}
    ],
    "reject": [
-     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      7,
      "text",
      [],
      null,
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      {"not":"a request"},
-     {}
+     {},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"send","stepId":"s1"}}
    ]
   },
   "status": {
    "accept": [
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"}}
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"signal_later","anything":1}}
    ],
    "reject": [
-     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      7,
      "text",
      [],
      null,
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      {"not":"a request"},
-     {}
+     {},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"send","stepId":"s1"}}
    ]
   },
   "cancel": {
    "accept": [
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"}}
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"signal_later","anything":1}}
    ],
    "reject": [
-     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      7,
      "text",
      [],
      null,
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      {"not":"a request"},
-     {}
+     {},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"send","stepId":"s1"}}
    ]
   },
   "submit": {
    "accept": [
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"}}
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"signal_later","anything":1}}
    ],
    "reject": [
-     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      7,
      "text",
      [],
      null,
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      {"not":"a request"},
-     {}
+     {},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"send","stepId":"s1"}}
    ]
   },
   "sign_in_challenge": {
@@ -1723,65 +1851,81 @@
   },
   "withdraw": {
    "accept": [
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"}}
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"AAEC"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"op-1","state":"paused"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"signal_later","anything":1}}
    ],
    "reject": [
-     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"action":"deposit","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","state":"requires_action","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      7,
      "text",
      [],
      null,
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"}},
-     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[]},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","state":"ready","checks":[],"kind":"send_solana_transaction","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","transaction":"not base64!"}}],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"route"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","state":"processing","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"operation":{"id":"","state":"running"},"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
+     {"requestId":"req_0123456789","action":"withdraw","chose":{"product":"example-product"},"expiresAt":"2026-11-09T00:00:00Z","steps":[],"next":{"kind":"wait","retryAfterMs":1000,"until":"2026-11-09T00:00:00Z"}},
      {"not":"a request"},
-     {}
+     {},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"}},
+     {"requestId":"req_0123456789","action":"deposit","state":"requires_action","chose":{"product":"example-product","chain":"eip155:8453","token":"USDC","amount":{"kind":"assets","assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000"},"vaultTerms":{"version":"x","sha256":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"quote":{"raw":"1000","source":"x","at":"2026-11-09T00:00:00Z"},"expiresAt":"2026-11-09T00:00:00Z","steps":[{"stepId":"s1","chainId":"eip155:8453","state":"waiting","after":"s1","checks":[{"what":"x","equals":"x","note":"x"}],"handoff":"https://example.com/x","kind":"sign_message","purpose":"x","payload":{"generation":1,"expiresAt":"2026-11-09T00:00:00Z","bytes":"0xabcd"}}],"warning":"x","split":{"fromIdleUsd":1,"fromSaleUsd":1,"remainingInvestedUsd":1},"leftBehind":[{"assetId":"eip155:8453/erc20:0x6666666666666666666666666666666666666666","raw":"1000","valueUsd":1,"reason":"x"}],"smartAccount":"0x1111111111111111111111111111111111111111","operation":{"id":"x","state":"running"},"next":{"kind":"send","stepId":"s1"}}
+   ]
+  },
+  "chains": {
+   "accept": [
+     {"chains":[{"chainId":"eip155:8453","slug":"base","name":"Base","explorer":"https://basescan.org"}]},
+     {"chains":[]},
+     {"chains":[{"chainId":"eip155:8453","slug":"base","name":"Base","explorer":"https://basescan.org"}],"addedLater":{"any":"value"}}
+   ],
+   "reject": [
+     {},
+     {"chains":{"chainId":"eip155:8453","slug":"base","name":"Base","explorer":"https://basescan.org"}},
+     {"chains":[{"chainId":"eip155:8453"}]},
+     null
    ]
   }
  },
  "errors": [
-  {"body":{"error":{"code":"gate_failed","message":"x.","outcome":"refused"}},"error":{"code":"gate_failed","outcome":"refused"}},
-  {"body":{"error":{"code":"rate_limited","message":"x.","outcome":"refused","traceId":"t-1"}},"error":{"code":"rate_limited","outcome":"refused"}},
-  {"body":{"error":{"code":"something_new","message":"x.","outcome":"failed"}},"error":{"code":"something_new","outcome":"failed"}},
-  {"body":{"error":{"code":"not_found","message":"x.","outcome":"maybe"}},"error":null},
-  {"body":{"error":{"code":"upstream_in_progress","message":"x.","outcome":"unknown"}},"error":{"code":"upstream_in_progress","outcome":"unknown"}},
-  {"body":{"error":{"code":"upstream_in_progress","message":"x.","outcome":"failed"}},"error":null},
-  {"body":{"error":{"code":"upstream_in_progress","message":"x.","outcome":"refused"}},"error":null},
-  {"body":{"error":{"code":"upstream_unavailable","message":"x.","outcome":"unknown"}},"error":{"code":"upstream_unavailable","outcome":"unknown"}},
-  {"body":{"error":{"code":"upstream_unavailable","message":"x.","outcome":"failed"}},"error":null},
-  {"body":{"error":{"code":"upstream_unavailable","message":"x.","outcome":"refused"}},"error":null},
-  {"body":{"error":{"code":"upstream_timeout","message":"x.","outcome":"unknown"}},"error":{"code":"upstream_timeout","outcome":"unknown"}},
-  {"body":{"error":{"code":"upstream_timeout","message":"x.","outcome":"failed"}},"error":null},
-  {"body":{"error":{"code":"upstream_timeout","message":"x.","outcome":"refused"}},"error":null},
-  {"body":{"error":{"code":"upstream_unreadable","message":"x.","outcome":"unknown"}},"error":{"code":"upstream_unreadable","outcome":"unknown"}},
-  {"body":{"error":{"code":"upstream_unreadable","message":"x.","outcome":"failed"}},"error":null},
-  {"body":{"error":{"code":"upstream_unreadable","message":"x.","outcome":"refused"}},"error":null},
-  {"body":{"error":{"code":"","message":"x.","outcome":"failed"}},"error":null},
-  {"body":{"error":{"code":7,"message":"x.","outcome":"failed"}},"error":null},
-  {"body":{"error":{"code":"x","outcome":"failed"}},"error":null},
-  {"body":{"error":{"code":"x","message":"","outcome":"failed"}},"error":null},
-  {"body":{"error":{"code":"x","message":"x.","outcome":"failed","traceId":""}},"error":null},
-  {"body":{"error":{"code":"x","message":"x.","outcome":"failed","traceId":null}},"error":null},
-  {"body":{"error":{"code":"gate_failed","message":"x.","outcome":"refused","gates":[{"id":"allowlist","satisfy":{"kind":"handoff","url":"https://example.com/join"}},{"id":"new-gate","satisfy":{"kind":"later","any":1}}]}},"error":{"code":"gate_failed","outcome":"refused"}},
-  {"body":{"error":{"code":"gate_failed","message":"x.","outcome":"refused","gates":[{"id":""}]}},"error":null},
-  {"body":{"error":{"code":"gate_failed","message":"x.","outcome":"refused","gates":[{"id":"market-hours","satisfy":{"kind":"wait","until":"tomorrow"}}]}},"error":{"code":"gate_failed","outcome":"refused"}},
-  {"body":{"error":{"code":"x","message":"x.","outcome":"failed","addedLater":[1]}},"error":{"code":"x","outcome":"failed"}},
-  {"body":{"error":null},"error":null},
-  {"body":{"error":"x"},"error":null},
-  {"body":{},"error":null},
-  {"body":[],"error":null},
-  {"body":"x","error":null},
-  {"body":null,"error":null},
-  {"body":{"error":{"code":"x","message":"x.","outcome":"failed"},"also":1},"error":{"code":"x","outcome":"failed"}}
+   {"body":{"error":{"code":"gate_failed","message":"x.","outcome":"refused"}},"error":{"code":"gate_failed","outcome":"refused"}},
+   {"body":{"error":{"code":"rate_limited","message":"x.","outcome":"refused","traceId":"t-1"}},"error":{"code":"rate_limited","outcome":"refused"}},
+   {"body":{"error":{"code":"something_new","message":"x.","outcome":"failed"}},"error":{"code":"something_new","outcome":"failed"}},
+   {"body":{"error":{"code":"not_found","message":"x.","outcome":"maybe"}},"error":null},
+   {"body":{"error":{"code":"upstream_in_progress","message":"x.","outcome":"unknown"}},"error":{"code":"upstream_in_progress","outcome":"unknown"}},
+   {"body":{"error":{"code":"upstream_in_progress","message":"x.","outcome":"failed"}},"error":null},
+   {"body":{"error":{"code":"upstream_in_progress","message":"x.","outcome":"refused"}},"error":null},
+   {"body":{"error":{"code":"upstream_unavailable","message":"x.","outcome":"unknown"}},"error":{"code":"upstream_unavailable","outcome":"unknown"}},
+   {"body":{"error":{"code":"upstream_unavailable","message":"x.","outcome":"failed"}},"error":null},
+   {"body":{"error":{"code":"upstream_unavailable","message":"x.","outcome":"refused"}},"error":null},
+   {"body":{"error":{"code":"upstream_timeout","message":"x.","outcome":"unknown"}},"error":{"code":"upstream_timeout","outcome":"unknown"}},
+   {"body":{"error":{"code":"upstream_timeout","message":"x.","outcome":"failed"}},"error":null},
+   {"body":{"error":{"code":"upstream_timeout","message":"x.","outcome":"refused"}},"error":null},
+   {"body":{"error":{"code":"upstream_unreadable","message":"x.","outcome":"unknown"}},"error":{"code":"upstream_unreadable","outcome":"unknown"}},
+   {"body":{"error":{"code":"upstream_unreadable","message":"x.","outcome":"failed"}},"error":null},
+   {"body":{"error":{"code":"upstream_unreadable","message":"x.","outcome":"refused"}},"error":null},
+   {"body":{"error":{"code":"","message":"x.","outcome":"failed"}},"error":null},
+   {"body":{"error":{"code":7,"message":"x.","outcome":"failed"}},"error":null},
+   {"body":{"error":{"code":"x","outcome":"failed"}},"error":null},
+   {"body":{"error":{"code":"x","message":"","outcome":"failed"}},"error":null},
+   {"body":{"error":{"code":"x","message":"x.","outcome":"failed","traceId":""}},"error":null},
+   {"body":{"error":{"code":"x","message":"x.","outcome":"failed","traceId":null}},"error":null},
+   {"body":{"error":{"code":"gate_failed","message":"x.","outcome":"refused","gates":[{"id":"allowlist","satisfy":{"kind":"handoff","url":"https://example.com/join"}},{"id":"new-gate","satisfy":{"kind":"later","any":1}}]}},"error":{"code":"gate_failed","outcome":"refused"}},
+   {"body":{"error":{"code":"gate_failed","message":"x.","outcome":"refused","gates":[{"id":""}]}},"error":null},
+   {"body":{"error":{"code":"gate_failed","message":"x.","outcome":"refused","gates":[{"id":"market-hours","satisfy":{"kind":"wait","until":"tomorrow"}}]}},"error":{"code":"gate_failed","outcome":"refused"}},
+   {"body":{"error":{"code":"x","message":"x.","outcome":"failed","addedLater":[1]}},"error":{"code":"x","outcome":"failed"}},
+   {"body":{"error":null},"error":null},
+   {"body":{"error":"x"},"error":null},
+   {"body":{},"error":null},
+   {"body":[],"error":null},
+   {"body":"x","error":null},
+   {"body":null,"error":null},
+   {"body":{"error":{"code":"x","message":"x.","outcome":"failed"},"also":1},"error":{"code":"x","outcome":"failed"}}
  ]
 }

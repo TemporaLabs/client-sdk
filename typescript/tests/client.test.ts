@@ -14,7 +14,7 @@ const make = (respond: (s: Seen) => Response | Promise<Response>, ownerToken?: s
   return { client: createClient({ baseUrl: 'https://api.example', clientKey: 'ck', ...(ownerToken ? { ownerToken } : {}), fetch }), seen }
 }
 const header = (s: Seen, name: string) => (s.init.headers as Record<string, string>)[name]
-const REQUEST = { requestId: 'req_0123456789', action: 'withdraw', state: 'processing', chose: { product: 'example-product' }, expiresAt: '2026-11-09T00:00:00Z', steps: [] }
+const REQUEST = { requestId: 'req_0123456789', action: 'withdraw', state: 'processing', chose: { product: 'example-product' }, expiresAt: '2026-11-09T00:00:00Z', steps: [], next: { kind: 'wait', retryAfterMs: 1000, until: '2026-11-09T00:00:00Z' } }
 
 describe('the client', () => {
   it('fills and encodes the path, sets the query, and sends the client key', async () => {
@@ -94,7 +94,7 @@ describe('the client', () => {
   it('has exactly one method per operation in the API document', () => {
     const { client } = make(() => answer(200, {}))
     expect(Object.keys(client).sort()).toEqual(Object.keys(OPERATIONS).sort())
-    expect(Object.keys(client)).toHaveLength(17)
+    expect(Object.keys(client)).toHaveLength(18)
   })
 
   it('takes exactly one lookup key', () => {

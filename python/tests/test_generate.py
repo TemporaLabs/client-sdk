@@ -45,9 +45,9 @@ def clone() -> dict[str, Any]:
 
 
 class TestTheApiDocumentInSpec:
-    def test_has_the_17_calls_each_with_its_auth(self) -> None:
+    def test_has_the_18_calls_each_with_its_auth(self) -> None:
         ops = {o.id: o.auth for o in gen.operations_of(SPEC)}
-        assert len(ops) == 17
+        assert len(ops) == 18
         expected = {
             "products": "none",
             "sign_in_challenge": "client",
@@ -468,6 +468,7 @@ REQUEST = {
     "chose": {"product": "example-product"},
     "expiresAt": "2026-11-09T00:00:00Z",
     "steps": [],
+    "next": {"kind": "wait", "retryAfterMs": 1000, "until": "2026-11-09T00:00:00Z"},
 }
 
 
@@ -484,6 +485,28 @@ def err(r: Any) -> Err:
 class TestAnswersAreCheckedAgainstTheDocument:
     def test_a_good_request_record_passes(self) -> None:
         assert client_answering(200, REQUEST).status(path={"requestId": "req_0123456789"}).ok is True
+
+    def test_a_request_record_carries_what_to_do_next_and_a_kind_added_later_still_reads(self) -> None:
+        r = client_answering(200, REQUEST).status(path={"requestId": "req_0123456789"})
+        assert r.ok and r.body.next.kind == "wait"
+        later = client_answering(200, {**REQUEST, "next": {"kind": "arrived_later"}}).status(
+            path={"requestId": "req_0123456789"}
+        )
+        assert later.ok and later.body.next.kind == "arrived_later"
+
+    def test_a_request_record_without_next_or_with_a_known_kind_missing_its_fields_is_unreadable(
+        self,
+    ) -> None:
+        no_next = {k: v for k, v in REQUEST.items() if k != "next"}
+        assert (
+            err(client_answering(200, no_next).status(path={"requestId": "req_0123456789"})).error.code
+            == "unreadable_answer"
+        )
+        bad = {**REQUEST, "next": {"kind": "send", "stepId": "s1"}}
+        assert (
+            err(client_answering(200, bad).status(path={"requestId": "req_0123456789"})).error.code
+            == "unreadable_answer"
+        )
 
     def test_a_request_record_missing_a_required_field_is_unreadable(self) -> None:
         missing = {k: v for k, v in REQUEST.items() if k != "state"}

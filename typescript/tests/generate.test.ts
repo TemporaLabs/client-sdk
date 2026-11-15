@@ -17,9 +17,9 @@ const clone = (): Spec => JSON.parse(JSON.stringify(SPEC)) as Spec
 const toZod = (schema: unknown) => z.fromJSONSchema({ ...(schema as object), $defs: DEFS } as never)
 
 describe('the API document in spec/', () => {
-  it('has the 17 calls, each with its auth', () => {
+  it('has the 18 calls, each with its auth', () => {
     const ops = Object.fromEntries(operationsOf(SPEC).map((o) => [o.id, o.auth]))
-    expect(Object.keys(ops)).toHaveLength(17)
+    expect(Object.keys(ops)).toHaveLength(18)
     expect(ops).toMatchObject({ products: 'none', sign_in_challenge: 'client', account: 'owner', withdraw: 'owner', submit: 'owner' })
   })
 
@@ -230,7 +230,7 @@ describe('what is committed is what the document generates', () => {
 })
 
 describe('answers are checked against the document', () => {
-  const REQUEST = { requestId: 'req_0123456789', action: 'withdraw', state: 'processing', chose: { product: 'example-product' }, expiresAt: '2026-11-09T00:00:00Z', steps: [] }
+  const REQUEST = { requestId: 'req_0123456789', action: 'withdraw', state: 'processing', chose: { product: 'example-product' }, expiresAt: '2026-11-09T00:00:00Z', steps: [], next: { kind: 'wait', retryAfterMs: 1000, until: '2026-11-09T00:00:00Z' } }
   const make = (status: number, body: unknown) =>
     createClient({
       baseUrl: 'https://api.example',
@@ -239,6 +239,17 @@ describe('answers are checked against the document', () => {
     })
 
   it('a good request record passes', async () => expect(await make(200, REQUEST).status({ path: { requestId: 'req_0123456789' } })).toMatchObject({ ok: true }))
+  it('a request record carries what to do next, typed, and a kind added later still reads', async () => {
+    const r = await make(200, REQUEST).status({ path: { requestId: 'req_0123456789' } })
+    expect(r.ok && r.body.next.kind).toBe('wait')
+    const later = await make(200, { ...REQUEST, next: { kind: 'arrived_later' } }).status({ path: { requestId: 'req_0123456789' } })
+    expect(later.ok && later.body.next.kind).toBe('arrived_later')
+  })
+  it('a request record without next, or with a known kind missing its fields, is unreadable', async () => {
+    const { next: _n, ...noNext } = REQUEST
+    expect(await make(200, noNext).status({ path: { requestId: 'req_0123456789' } })).toMatchObject({ ok: false, error: { code: 'unreadable_answer' } })
+    expect(await make(200, { ...REQUEST, next: { kind: 'send', stepId: 's1' } }).status({ path: { requestId: 'req_0123456789' } })).toMatchObject({ ok: false, error: { code: 'unreadable_answer' } })
+  })
   it('a request record missing a required field is unreadable', async () => {
     const { state: _s, ...missing } = REQUEST
     expect(await make(200, missing).status({ path: { requestId: 'req_0123456789' } })).toMatchObject({ ok: false, error: { code: 'unreadable_answer', outcome: 'failed' } })
