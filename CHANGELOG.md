@@ -22,6 +22,16 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 - `depositAssets` on a product: the tokens it takes for a deposit, each with its chain, address and decimals.
 - A product can be named by its id, its share ticker, its vault address, or that address with its chain
   (`eip155:<chain>:<address>`), wherever a call takes a product (`ProductRef`), and in the MCP `product` tool.
+- **`next` on every request answer** (`deposit`, `withdraw`, `status`, `status_lookup`, `submit`, `cancel`): what to
+  do now, one of `send`, `sign`, `sign_again`, `hand_back`, `wait`, `done`, `failed`, `cancelled` or `expired`, each
+  with its own fields. A kind a newer API adds still reads, with `kind` as a plain string.
+- `broadcast` on a step: what the wallet said of an attempt handed back without a hash (`unknown` or `declined`).
+- `deposit.approval` on a quote: whether the deposit would first ask the wallet to approve, and for exactly how
+  much, or null when the allowance could not be read.
+- **`chains`**, the call and the MCP tool (`GET /v1/chains`): every chain a product is on, with its CAIP-2 id, short
+  name, display name and block explorer.
+- An amount to deposit, withdraw or quote can be given as a decimal `value` in the token's units (`100.5`) instead
+  of `raw` (`AmountInput`). Amounts in answers also carry `value`, the same amount as a decimal string, for display.
 
 ### Changed
 
@@ -35,11 +45,10 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
   of life. The built files are unchanged.
 - The package is built and type-checked with TypeScript 6.0.3, and its tests with `@types/node` 22.20.5. The
   built files are byte-identical to the TypeScript 7 build.
-- `spec/` is the API 0.1.2 document as released. The copy 0.1.0 shipped with was taken before the API's
-  0.1.2 release and lacked the three additions above.
-- `vault.shareSymbol` is required, as the API document says, so this client reads an answer from an API
-  older than 0.1.2 that carries a vault product as `unreadable_answer` (`product`, `products`). Use it with an
-  API at 0.1.2 or later.
+- `spec/` is the API 0.1.3 document as released, and `API_VERSION` is `0.1.3`.
+- `vault.shareSymbol`, a request's `next` and a quote's `deposit.approval` are required, as the API document says,
+  so this client reads such an answer from an API older than 0.1.3 as `unreadable_answer`. Use it with an API at
+  0.1.3 or later.
 - The repository holds one folder per language. The npm package moved to `typescript/`; the API document
   (`spec/`) and shared test fixtures (`cases/`) stay at the root. The published files are unchanged apart from
   `package.json` (`repository.directory`, script paths) and two README links that now point into `typescript/`.

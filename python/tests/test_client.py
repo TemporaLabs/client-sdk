@@ -26,6 +26,7 @@ REQUEST = {
     "chose": {"product": "example-product"},
     "expiresAt": "2026-11-09T00:00:00Z",
     "steps": [],
+    "next": {"kind": "wait", "retryAfterMs": 1000, "until": "2026-11-09T00:00:00Z"},
 }
 WITHDRAW_ALL = {"product": "example-product", "amount": {"kind": "all"}}
 
@@ -131,7 +132,7 @@ class TestTheClient:
     def test_has_exactly_one_method_per_operation_in_the_api_document(self) -> None:
         client, _ = make(lambda _: answer(200, {}))
         assert sorted(vars(client)) == sorted(OPERATIONS)
-        assert len(vars(client)) == 17
+        assert len(vars(client)) == 18
 
 
 class TestTheConfiguredOrigin:

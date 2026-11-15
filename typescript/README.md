@@ -130,7 +130,7 @@ Three consistency checks the API makes on its own answers are not repeated here:
 
 ## Compatibility
 
-`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.1.2`.
+`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.1.3`.
 Within an API version the API only adds: new optional inputs, new answer fields, new calls. The client keeps
 answer fields it does not know yet. See [versioning](https://github.com/TemporaLabs/client-sdk/blob/main/docs/versioning.md).
 
