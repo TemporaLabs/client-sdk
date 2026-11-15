@@ -56,8 +56,7 @@ Each of these fails a check or breaks a caller when ignored.
 9. **Public text.** No internal names, private paths, issue or pull-request references, or process notes
    in files, commit messages or pull request text. `npm run check:public-text` scans the files; CI also
    scans every commit message.
-10. **Checks:** `npm run check` in `typescript/`, tests with one worker (`npm test` already passes `--maxWorkers=1`);
-    `node scripts/check-copies.mjs` at the root.
+10. **Checks:** `npm run check` in `typescript/`, tests with one worker (`npm test` already passes `--maxWorkers=1`).
 
 ## When a doc is wrong
 

@@ -88,11 +88,11 @@ not for callers.
 | `test` | behaviour changed: `typescript/tests/generate.test.ts` covers the document, the fail-closed cases, the printed types and the checks themselves; `typescript/tests/client.test.ts` covers requests, credentials, outcomes and answer checks; `typescript/tests/mcp.test.ts` the MCP client; `typescript/tests/signIn.test.ts`, `typescript/tests/check.test.ts` and `typescript/tests/checkPortfolio.test.ts` the sign-in and the checks before signing; `typescript/tests/scan.test.ts` the public-text scanner |
 | `check:public-text` | a tracked file contains text on the deny list in `scripts/public-text/deny.json` |
 | `check:client-pack` | the package holds an unexpected file, builds differently twice, or does not install and type-check |
+| `check:copies` | a package folder's `LICENSE` or `NOTICE` is not the same as the root's |
 
 `npm run check`, in `typescript/`, runs them all in that order. CI runs the same steps:
 `.github/workflows/ci-typescript.yml` the package's, and `.github/workflows/ci-repo.yml` the ones that cover the
-whole repository, which also checks each package's `LICENSE` and `NOTICE` copies and scans every commit message
-with the public-text scanner.
+whole repository, which also scans every commit message with the public-text scanner.
 
 ## Changing the client: which layer?
 

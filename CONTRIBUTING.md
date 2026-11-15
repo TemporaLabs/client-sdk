@@ -22,8 +22,8 @@ run TypeScript directly with `--experimental-strip-types`. The `engines` range i
 for the published client, not for these scripts.
 
 `npm run check`, run in `typescript/`, must pass. It runs the source and generation checks, the typecheck, the
-tests (one worker), the public-text scan and the package check. `node scripts/check-copies.mjs`, run at the root,
-checks that each package folder's `LICENSE` and `NOTICE` match the root's. Add a test for any behaviour you change.
+tests (one worker), the public-text scan, the package check, and that each package folder's `LICENSE` and
+`NOTICE` match the root's. Add a test for any behaviour you change.
 
 ## Sign off every commit
 
