@@ -220,6 +220,16 @@ def _intent_problem(intent: Any) -> str | None:
     kind = get(get(intent, "amount"), "kind")
     if action == "withdraw" and kind not in _AMOUNT_KINDS:
         return f"the withdrawal's amount kind {js_json(kind)} is not assets, shares or all"
+    # Checked here, so every check (check_steps too, for a step with nothing to sign yet) reads a complete
+    # record.
+    vault = get(intent, "vault")
+    if (
+        not is_address(get(vault, "vaultAddress"))
+        or not is_address(get(vault, "assetAddress"))
+        or not isinstance(get(vault, "chain"), str)
+        or not get(vault, "chain")
+    ):
+        return "the vault record is not complete"
     return None
 
 

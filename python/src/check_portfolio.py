@@ -484,7 +484,8 @@ def check_portfolio_deposit(
     if not is_address(token):
         return whole("the token is not an address")
     amount = get(intent, "amount")
-    no_amount = amount is UNDEFINED or amount is None
+    # Left out means enrol only; null is not leaving it out, and is refused below as not a raw amount.
+    no_amount = amount is UNDEFINED
     if not no_amount and (not isinstance(amount, str) or not _RAW_POSITIVE.fullmatch(amount)):
         return whole("the amount asked for is zero or not a raw amount")
 

@@ -420,6 +420,12 @@ class TestCheckPortfolioDeposit:
         assert check_portfolio_deposit([ENROL], enrol_only) == PortfolioDepositCheck(ok=True)
         assert "steps" in reason_of(check_portfolio_deposit([ENROL, send(USDT_ADDR, TRANSFER)], enrol_only))
 
+    def test_an_amount_of_null_is_not_an_enrol_only_request(self) -> None:
+        # Only an amount left out asks for enrolment alone; null is an amount that is not a raw amount.
+        assert "zero or not a raw amount" in reason_of(
+            check_portfolio_deposit([ENROL], {**deposit, "amount": None})
+        )
+
     def test_refuses_an_intent_for_a_zero_amount_or_a_smart_account_that_is_not_an_address(self) -> None:
         assert "zero" in reason_of(
             check_portfolio_deposit([send(USDT_ADDR, TRANSFER)], {**deposit, "amount": "0"})

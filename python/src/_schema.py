@@ -9,6 +9,7 @@ into another type. Not part of the public interface.
 
 from __future__ import annotations
 
+import encodings.idna
 import ipaddress
 import math
 import re
@@ -298,7 +299,12 @@ def _domain_ok(host: str) -> bool:
             ascii_host = decoded.lower()
             for label in ascii_host.split("."):
                 if label.startswith("xn--"):
-                    label[4:].encode("ascii").decode("punycode")
+                    # A punycode label must decode to something, and to text a host may hold: an empty or
+                    # control-character decoding is refused, as the WHATWG URL parser refuses it.
+                    unicode = label[4:].encode("ascii").decode("punycode")
+                    if unicode == "":
+                        return False
+                    encodings.idna.ToASCII(unicode)
         else:
             ascii_host = ".".join(
                 label.encode("idna").decode("ascii") if label and not label.isascii() else label.lower()

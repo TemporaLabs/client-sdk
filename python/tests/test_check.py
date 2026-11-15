@@ -377,6 +377,28 @@ class TestAnIntentOutsideTheDocumentedShapeIsRefused:
             is False
         )
 
+    @pytest.mark.parametrize(
+        "bad_vault",
+        [
+            None,
+            {},
+            {**vault, "chain": ""},
+            {**vault, "vaultAddress": "0x12"},
+            {**vault, "assetAddress": None},
+        ],
+    )
+    def test_a_request_whose_intent_has_no_complete_vault_is_refused_even_with_nothing_to_sign_yet(
+        self, bad_vault: Any
+    ) -> None:
+        # A deposit's second step waits on its approval: it has no payload, and no chain to compare.
+        waiting = {"kind": "send_transaction"}
+        intent: dict[str, Any] = {"action": "deposit", "owner": OWNER, "assets": "2000000"}
+        if bad_vault is not None:
+            intent["vault"] = bad_vault
+        r = check_steps([step(ASSET, DATA["approve"]), waiting], intent)
+        assert r.ok is False
+        assert r.reason == "the vault record is not complete"
+
 
 EXTRAS = {
     "authorizationList": [],
