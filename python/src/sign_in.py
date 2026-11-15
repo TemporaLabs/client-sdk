@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
-from typing import Any, Literal, Protocol, TypeVar
+from typing import Any, Literal, Protocol
 
 from . import _internal as internal
 from ._result import Err, Result
@@ -15,7 +15,6 @@ __all__ = ["SignInClient", "SignedIn", "sign_in", "with_owner_retry"]
 
 # What a sign-in returns: the owner token and when it stops working.
 SignedIn = models.SignInVerifyAnswer
-T = TypeVar("T")
 
 
 class SignInClient(Protocol):
@@ -108,7 +107,7 @@ def sign_in(
     return verified
 
 
-def with_owner_retry(
+def with_owner_retry[T](
     call: Callable[[str], Result[T]],
     *,
     sign_in: Callable[[], Result[SignedIn]],

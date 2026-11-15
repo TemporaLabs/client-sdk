@@ -27,7 +27,7 @@ for the published client, not for these scripts.
 tests (one worker), the public-text scan, the package check, and that each package folder's `LICENSE` and
 `NOTICE` match the root's. Add a test for any behaviour you change.
 
-For the Python package, work in `python/` with Python 3.11 or later, in a virtual environment:
+For the Python package, work in `python/` with Python 3.13, in a virtual environment:
 
 ```sh
 python -m venv .venv && . .venv/bin/activate

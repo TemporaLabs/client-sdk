@@ -9,7 +9,7 @@ description = "The typed client for the Tempora API, over HTTP and MCP."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
-requires-python = ">=3.11"
+requires-python = ">=3.13,<3.14"
 authors = [{ name = "Tempora Labs" }]
 keywords = ["tempora", "api-client", "mcp"]
 classifiers = [
@@ -18,14 +18,12 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Typing :: Typed",
 ]
 dependencies = [
   "httpx>=0.28.1",
-  "pydantic>=2.7",
+  "pydantic>=2.14,<2.15",
 ]
 
 [project.optional-dependencies]
@@ -33,6 +31,7 @@ dev = [
   "pytest==9.2.0",
   "ruff==0.17.5",
   "mypy==2.4.1",
+  "pydantic==2.14.3",
   "build==1.6.1",
   "pip-audit==2.10.1",
 ]
@@ -56,7 +55,7 @@ addopts = "-q"
 
 [tool.ruff]
 line-length = 110
-target-version = "py311"
+target-version = "py313"
 src = ["src", "tests"]
 extend-exclude = ["src/generated"]
 
@@ -65,4 +64,4 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 
 [tool.mypy]
 strict = true
-python_version = "3.11"
+python_version = "3.13"
