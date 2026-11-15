@@ -183,9 +183,11 @@ def retry_after(header: str | None) -> int | None:
 
 def small_int(text: str) -> int | None:
     """Whole seconds or a port: digits only, at most 9 significant digits; None otherwise, never raising."""
-    if not re.fullmatch(r"[0-9]+", text, re.ASCII) or len(text.lstrip("0")) > 9:
+    if not re.fullmatch(r"[0-9]+", text, re.ASCII):
         return None
-    return int(text)
+    # int() limits the whole string, leading zeros included, so convert only the significant digits.
+    significant = text.lstrip("0") or "0"
+    return int(significant) if len(significant) <= 9 else None
 
 
 # ------------------------------------------------------------------------------------------------------------

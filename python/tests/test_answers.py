@@ -60,3 +60,12 @@ def test_error_bodies() -> None:
         read = internal.api_error_in(case["body"])
         got = None if read is None else {"code": read.code, "outcome": read.outcome}
         assert (case["body"], got) == (case["body"], case["error"])
+
+
+def test_urls_with_thousands_of_leading_zeros_read_as_whatwg_reads_them() -> None:
+    from temporalabs_client._schema import url_parses
+
+    z = "0" * 5000
+    assert url_parses(f"http://h:{z}80/") is True
+    assert url_parses(f"http://{z}5/") is True  # octal 5
+    assert url_parses(f"http://{z}9/") is False  # 9 is not an octal digit

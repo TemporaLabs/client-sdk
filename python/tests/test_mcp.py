@@ -831,3 +831,12 @@ class TestNumbersPastWhatTheClientCanConvertStayResults:
         said = {"error": self.ERR, "status": 429, "retryAfter": "9" * 4301}
         r = make(lambda _: tool_text(said, True))[0].products()
         assert (err(r).error.code, err(r).retry_after) == ("rate_limited", None)
+
+    def test_a_retry_after_padded_with_leading_zeros_is_read_as_its_value(self) -> None:
+        refusal = {"jsonrpc": "2.0", "id": 1, "error": {"code": -32000, "data": self.ERR}}
+        r = make(lambda _: json_response(refusal, 429, headers={"retry-after": "0" * 5000 + "5"}))[
+            0
+        ].products()
+        assert err(r).retry_after == 5
+        said = {"error": self.ERR, "status": 429, "retryAfter": "0" * 5000 + "5"}
+        assert err(make(lambda _: tool_text(said, True))[0].products()).retry_after == 5

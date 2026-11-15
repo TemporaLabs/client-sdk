@@ -165,8 +165,10 @@ _MS_PER_S: Final = 1_000
 _FRACTION_PLACES: Final = 18
 _MAX_SAFE_INTEGER: Final = 2**53 - 1
 
-_RAW_POSITIVE: Final = re.compile(r"[1-9][0-9]*", re.ASCII)
-_DIGITS: Final = re.compile(r"[0-9]+", re.ASCII)
+# A raw amount is a uint256: at most 78 digits. Anything longer can never match a chain value, so it is
+# refused as malformed, and no client spends unbounded time converting it.
+_RAW_POSITIVE: Final = re.compile(r"[1-9][0-9]{0,77}", re.ASCII)
+_DIGITS: Final = re.compile(r"[0-9]{1,78}", re.ASCII)
 _BYTES32: Final = re.compile(r"0x[0-9a-fA-F]{64}", re.ASCII)
 _CHAIN: Final = re.compile(r"eip155:([1-9][0-9]*)", re.ASCII)
 _ACCOUNT: Final = re.compile(r"eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})", re.ASCII)

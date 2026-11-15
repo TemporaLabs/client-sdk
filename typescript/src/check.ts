@@ -79,7 +79,8 @@ const ARGS: Readonly<Record<VaultCall, readonly Word[]>> = {
 }
 const CALLS = Object.fromEntries(Object.entries(SELECTORS).map(([selector, call]) => [selector, ARGS[call]]))
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/
-const RAW = /^(0|[1-9][0-9]*)$/
+// A raw amount is a uint256: at most 78 digits; a longer one is refused as malformed.
+const RAW = /^(0|[1-9][0-9]{0,77})$/
 /** An approval this large is unlimited in effect, whatever the intent says: never admitted. */
 const UNLIMITED_APPROVAL = 2n ** 128n
 
