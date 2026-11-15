@@ -6,8 +6,7 @@ import { join } from 'node:path'
 import { build } from 'esbuild'
 import { rollup } from 'rollup'
 import { dts } from 'rollup-plugin-dts'
-// TypeScript 7 has no JavaScript compiler API; its 6.x line, published for tools that still need one, prints the files.
-import ts from '@typescript/typescript6'
+import ts from 'typescript'
 
 const root = join(import.meta.dirname, '..')
 process.chdir(root)

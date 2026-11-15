@@ -10,7 +10,7 @@ and withdrawals into its vaults and portfolios, over the API's HTTP routes or it
 
 | Package | Install | Read |
 |---|---|---|
-| `@temporalabs/client` (TypeScript, Node.js 20.3 or later) | `npm install @temporalabs/client` | [typescript/README.md](typescript/README.md) |
+| `@temporalabs/client` (TypeScript, Node.js 22 or later) | `npm install @temporalabs/client` | [typescript/README.md](typescript/README.md) |
 | `temporalabs-client` (Python 3.11 or later) | from this repository at a release tag: see [python/README.md](python/README.md#install) | [python/README.md](python/README.md) |
 
 > **Pre-1.0.** A minor version (`0.2.0`) may change a client's interface; see [versioning](docs/versioning.md).
