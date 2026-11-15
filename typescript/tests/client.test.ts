@@ -260,7 +260,7 @@ describe('Retry-After', () => {
 
   it('a missing or malformed Retry-After leaves it out', async () => {
     const error = { code: 'rate_limited', message: 'x', outcome: 'refused' }
-    for (const h of [{}, { 'retry-after': 'soon' }]) {
+    for (const h of [{}, { 'retry-after': 'soon' }] as Record<string, string>[]) {
       const client = createClient({ baseUrl: 'https://api.example.com', clientKey: 'k', fetch: (async () => new Response(JSON.stringify({ error }), { status: 429, headers: { 'content-type': 'application/json', ...h } })) as unknown as typeof fetch })
       expect(await client.products({})).not.toHaveProperty('retryAfter')
     }
