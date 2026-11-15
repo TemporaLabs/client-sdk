@@ -2,7 +2,8 @@
  * The MCP client: the HTTP client's calls, each one `tools/call` POST to the API's MCP endpoint, with the same Result.
  * Credentials travel in headers, never in a tool's arguments.
  */
-import { API_VERSION, CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec'
+import { CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec'
+import { CLIENT_VERSION } from './version'
 import type { ApiError } from './generated/types'
 import { MAX_RETRY_AFTER_S, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type Op, type Result } from './internal'
 
@@ -28,7 +29,7 @@ export type McpClientOptions = {
 
 /** The protocol revision this client speaks. */
 export const PROTOCOL_VERSION = '2026-07-28'
-const CLIENT_INFO = { name: '@temporalabs/client', version: API_VERSION }
+const CLIENT_INFO = { name: '@temporalabs/client', version: CLIENT_VERSION }
 // The protocol's code for a revision the server does not serve; its data names the ones it does.
 const UNSUPPORTED_PROTOCOL = -32022
 const META = {
@@ -86,9 +87,13 @@ function headersFor(opts: McpClientOptions, method: string, name: string | undef
   return headers
 }
 
+const plain = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v)
+
 function callTool(opts: McpClientOptions, tool: Tool, name: string, op: Op) {
-  return async (input: Input = {}, o: CallOptions = {}): Promise<Result<unknown>> => {
-    const args = { ...(input.path ?? {}), ...(input.query ?? {}), ...(input.body !== undefined ? { body: input.body } : {}) }
+  return async (given: Input = {}, o: CallOptions = {}): Promise<Result<unknown>> => {
+    // Only plain objects are read: a call never throws, and a string is never spread into its characters.
+    const input: Input = plain(given) ? given : {}
+    const args = { ...(plain(input.path) ? input.path : {}), ...(plain(input.query) ? input.query : {}), ...(input.body !== undefined ? { body: input.body } : {}) }
     const headers = headersFor(opts, 'tools/call', tool.name, tool.exposure === 'owner', o)
     if (!headersSafe(headers)) return { ok: false, status: 0, error: unsentHeader(name) }
     let rpcBody: string

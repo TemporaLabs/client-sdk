@@ -78,10 +78,16 @@ of them calls the network or signs. The owner's wallet signs or sends each step,
 ## The MCP version
 
 ```ts
+import { createClient, signIn } from '@temporalabs/client'
 import { createMcpClient } from '@temporalabs/client/mcp'
 
-const tempora = createMcpClient({ url: 'https://<mcp origin>/mcp', ownerToken })
-const r = await tempora.products({})
+// Sign in over HTTP, with a token made for the MCP endpoint.
+const client = createClient({ baseUrl: 'https://api.temporalabs.com' })
+const signedIn = await signIn(client, { owner, signMessage, audience: 'mcp' })
+if (signedIn.ok) {
+  const tempora = createMcpClient({ url: 'https://api.temporalabs.com/mcp', ownerToken: signedIn.body.token })
+  const r = await tempora.positions({})
+}
 ```
 
 - **Same calls:** the same names, inputs and results as `createClient`, except sign-in and sign-out, which are not

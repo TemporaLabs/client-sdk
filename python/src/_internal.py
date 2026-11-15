@@ -106,7 +106,7 @@ def answer_schema(op: Operation, path: Mapping[str, Any] | None) -> Any:
     """One answer shape per read (x-outputs), looked up by the read's own name."""
     if op.outputs is None:
         return op.response
-    read = str((path or {}).get("read"))
+    read = str(path.get("read")) if isinstance(path, Mapping) else "undefined"
     return op.outputs.get(read, UNDEFINED)
 
 

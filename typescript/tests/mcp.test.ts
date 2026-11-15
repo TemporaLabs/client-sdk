@@ -2,6 +2,8 @@
 import { createMcpClient, RELEASED, toolBreaks, TOOLS, type ToolDoc } from '../src/mcp'
 import { API_VERSION } from '../src/index'
 import { mcpClientFor, type Tool } from '../src/mcpClient'
+import { CLIENT_VERSION } from '../src/version'
+import pkg from '../package.json'
 
 type Json = Record<string, any>
 const tool = (name: string, exposure: 'public' | 'owner'): Tool => ({ name, description: `Read ${name}.`, exposure, inputSchema: { type: 'object' } })
@@ -137,10 +139,21 @@ describe('createMcpClient', () => {
     expect(await client.listTools()).toEqual({ ok: false, status: 429, error: data, traceId: 't-3', retryAfter: 2 })
   })
 
-  it('names itself to the endpoint with the API version it was generated from', async () => {
+  it('names itself to the endpoint with its own package name and version', async () => {
     const { client, seen } = make(() => toolText(PRODUCTS))
     await client.products({})
-    expect(seen[0]!.body.params._meta['io.modelcontextprotocol/clientInfo']).toEqual({ name: '@temporalabs/client', version: API_VERSION })
+    expect(seen[0]!.body.params._meta['io.modelcontextprotocol/clientInfo']).toEqual({ name: '@temporalabs/client', version: pkg.version })
+    expect(CLIENT_VERSION).toBe(pkg.version)
+  })
+
+  it('never throws for an input that is not an object, and never spreads a string into the arguments', async () => {
+    const { client, seen } = make(() => toolText(PRODUCTS))
+    for (const input of [null, 'example-product', 7, ['a']]) {
+      const r = await (client.products as (i: unknown) => Promise<{ ok: boolean }>)(input)
+      expect(typeof r.ok).toBe('boolean')
+    }
+    await (client.product_read as (i: unknown) => Promise<unknown>)({ path: 'ab' })
+    expect(seen.map((s) => s.body.params.arguments)).toEqual([{}, {}, {}, {}, {}])
   })
 
   it('a lost answer follows the underlying call: a read failed, a money call unknown', async () => {
