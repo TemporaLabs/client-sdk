@@ -1,5 +1,8 @@
 # Getting started
 
+The examples in these guides are TypeScript. The Python client makes the same calls with the same results; its
+quick start is [below](#in-python).
+
 ## Install
 
 ```sh
@@ -143,3 +146,56 @@ the union of all reads, so narrow it before use, as above.
 
 Owner calls (`account`, `account_performance`, `positions`, and everything in
 [Requests and steps](requests-and-steps.md)) need an owner token: see [Sign-in](sign-in.md).
+
+## In Python
+
+```sh
+pip install temporalabs-client
+```
+
+It needs Python 3.11 or later; its runtime dependencies are `httpx` and `pydantic`. The client is synchronous.
+
+```python
+import os
+
+from temporalabs_client import Ok, create_client
+
+
+def require_env(name: str) -> str:
+    """Fails loudly when the variable is unset or blank, so a server meant to send its key never runs without one."""
+    value = os.environ.get(name, "")
+    if not value.strip():
+        raise RuntimeError(f"{name} is not set")
+    return value
+
+
+client = create_client("https://<api origin>", client_key=require_env("TEMPORALABS_CLIENT_KEY"), timeout_s=10)
+
+r = client.products()
+if isinstance(r, Ok):
+    for p in r.body.products:
+        print(p.id, p.status)
+else:
+    print(r.error.code, r.error.outcome, r.trace_id)
+
+product = client.product(path={"id": "example-product"})
+nav = client.product_read(path={"id": "example-product", "read": "nav"})
+route = client.products_route(query={"amount": "250", "chain": "eip155:56"})
+```
+
+What differs from TypeScript is spelling, not behaviour:
+
+| TypeScript | Python |
+|---|---|
+| `createClient({ baseUrl, clientKey, ownerToken, timeoutMs, fetch })` | `create_client(base_url, client_key=, owner_token=, timeout_s=, http=)`, where `http` is an `httpx.Client` |
+| `client.product({ path: { id } }, { ownerToken })` | `client.product(path={"id": ...}, owner_token=...)` |
+| `{ ok: true, status, body, traceId? }` | `Ok(status, body, trace_id)` |
+| `{ ok: false, status, error, traceId?, retryAfter? }` | `Err(status, error, trace_id, retry_after)` |
+| a `TypeError` from `createClient` | a `ValueError` (a bad value) or `TypeError` (a value of the wrong type) from `create_client` |
+| `signIn`, `withOwnerRetry`, `checkSteps`, `checkPortfolioDeposit` | `sign_in`, `with_owner_retry`, `check_steps`, `check_portfolio_deposit` |
+| `@temporalabs/client/mcp`: `createMcpClient`, `toolBreaks`, `listTools()` | `temporalabs_client.mcp`: `create_mcp_client`, `tool_breaks`, `list_tools()` |
+
+An answer is a pydantic model with the API's own field names (`r.body.expiresAt`); the fields the API adds later
+are in `model_extra`. A call has no `AbortSignal`: it ends at `timeout_s`, which bounds the whole call, body
+included. Everything else on this page, the origin check, the refused redirects and the outcome of a lost
+answer, holds as written.

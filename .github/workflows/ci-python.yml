@@ -1,0 +1,63 @@
+name: CI Python
+
+# The PyPI package in python/: lint, types, its generation check and tests, on the oldest and newest Python it
+# supports, then the built wheel installed into a clean environment and imported from outside the repository, and an
+# audit of its runtime dependencies. On every push to a version branch (vX.Y.Z or release/vX.Y.Z) or main and on every
+# pull request into one. The checks that cover the whole repository are in ci-repo.yml. This workflow publishes
+# nothing.
+on:
+  push:
+    branches: [main, 'v[0-9]+.[0-9]+.[0-9]+', 'release/v[0-9]+.[0-9]+.[0-9]+']
+  pull_request:
+    branches: [main, 'v[0-9]+.[0-9]+.[0-9]+', 'release/v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-python-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: python/pyproject.toml
+      - name: Install the package and its pinned tools
+        run: python -m pip install ".[dev]"
+      - name: Lint and format
+        run: ruff check . && ruff format --check .
+      - name: Typecheck
+        run: mypy src tests
+      - name: The generated client matches the API document
+        run: python scripts/generate.py --check
+      - name: Tests
+        run: pytest
+      - name: The wheel builds, installs in a clean environment and imports
+        run: |
+          python -m build --wheel --outdir "$RUNNER_TEMP/dist" .
+          python -m venv "$RUNNER_TEMP/clean"
+          "$RUNNER_TEMP/clean/bin/python" -m pip install "$RUNNER_TEMP"/dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/clean/bin/python" -c "import temporalabs_client, temporalabs_client.mcp; print(temporalabs_client.__version__, temporalabs_client.API_VERSION, len(temporalabs_client.mcp.TOOLS))"
+      - name: Audit the runtime dependencies
+        if: matrix.python-version == '3.13'
+        run: |
+          "$RUNNER_TEMP/clean/bin/python" -m pip freeze --exclude temporalabs-client > "$RUNNER_TEMP/runtime.txt"
+          pip-audit --strict --no-deps --disable-pip -r "$RUNNER_TEMP/runtime.txt"

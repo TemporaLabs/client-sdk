@@ -1,12 +1,22 @@
 # Changelog
 
-All notable changes to `@temporalabs/client` are recorded here. The format follows
+All notable changes to `@temporalabs/client` and `temporalabs-client` are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
 ### Added
 
+- **`temporalabs-client`, the Python client** (`python/`, imported as `temporalabs_client`), generated from the same
+  `spec/` as the TypeScript client by its own generator, `python/scripts/generate.py`, which refuses the same
+  documents. It makes the same calls with the same results: `create_client` and, in `temporalabs_client.mcp`,
+  `create_mcp_client`, `tool_breaks`, `TOOLS` and `RELEASED`; `sign_in` and `with_owner_retry`; `check_step`,
+  `check_steps`, `check_portfolio_deposit` and `check_portfolio_withdrawal`. Every call returns `Ok` or `Err` and
+  never raises for an API or network problem; answers are pydantic models with the API's own field names. It needs
+  Python 3.11 or later and depends on `httpx` and `pydantic`. Not yet published to PyPI.
+- **One verdict for both clients:** `cases/answers.json` lists answers to accept and to refuse for every named shape,
+  every call and every product read, and the error each error body reads as. The test suites of both clients read
+  it, so the two cannot drift apart on what they accept.
 - `vault.shareSymbol` on a vault product: the vault's share ticker, as the API returns it.
 - `depositAssets` on a product: the tokens it takes for a deposit, each with its chain, address and decimals.
 - A product can be named by its id, its share ticker, its vault address, or that address with its chain

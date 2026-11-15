@@ -1,7 +1,7 @@
 # Dependabot reads this file only from the default branch (main). No `target-branch`: a config that sets it is not
 # used for security updates. Dependabot PRs open on main, and .github/workflows/dependabot-to-cycle-branch.yml moves
 # each one to the current version branch (the newest vX.Y.Z not yet released to main). The npm package is in
-# typescript/.
+# typescript/ and the PyPI package in python/.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -17,6 +17,24 @@ updates:
     groups:
       zod:
         patterns: ["zod"]
+      tooling:
+        patterns: ["*"]
+    commit-message:
+      prefix: "build(deps)"
+
+  - package-ecosystem: "pip"
+    directory: "/python"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 14
+    groups:
+      runtime:
+        patterns: ["httpx", "pydantic"]
       tooling:
         patterns: ["*"]
     commit-message:
