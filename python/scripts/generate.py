@@ -233,6 +233,8 @@ class Printer:
             # checked.
             if s.get("properties") or "additionalProperties" in s:
                 self.object(s, hint, emit=False)
+            if "items" in s:
+                self.ty(s["items"], f"{hint}Item", emit=False)
             return "Any"
         parts = []
         for one in types:

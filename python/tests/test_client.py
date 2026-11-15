@@ -560,3 +560,44 @@ class TestAnswersAsJavaScriptReadsThem:
         body = "\ufeff" + json.dumps({"usd": 1, "asOf": None, "stale": False})
         client, _ = make(lambda _: httpx.Response(200, content=body.encode()))
         assert client.product_read(path={"id": "example-product", "read": "tvl"}).ok is True
+
+
+class _Drip(httpx.SyncByteStream):
+    """A body that keeps arriving, a chunk at a time, faster than any per-read timeout: it never ends."""
+
+    def __init__(self) -> None:
+        self.sent = 0
+        self.closed = threading.Event()
+
+    def __iter__(self) -> Iterator[bytes]:
+        while not self.closed.is_set():
+            self.sent += 1
+            time.sleep(0.002)
+            yield b" "
+
+    def close(self) -> None:
+        self.closed.set()
+
+
+class TestTheDeadlineStopsTheReaderAndOversizedNumbersStayResults:
+    def test_a_body_still_arriving_at_the_deadline_is_stopped_and_closed_not_buffered_on(self) -> None:
+        streams: list[_Drip] = []
+
+        def respond(_: httpx.Request) -> httpx.Response:
+            streams.append(_Drip())
+            return httpx.Response(200, stream=streams[-1])
+
+        client, _ = make(respond, timeout_s=0.05)
+        assert code_outcome(client.products()) == (200, "unreadable_answer", "failed")
+        assert code_outcome(client.withdraw(body=WITHDRAW_ALL)) == (200, "unreadable_answer", "unknown")
+        for s in streams:
+            assert s.closed.wait(2), "the reader went on after the deadline"
+        sent = [s.sent for s in streams]
+        time.sleep(0.05)
+        assert [s.sent for s in streams] == sent
+
+    def test_a_retry_after_too_long_to_read_is_left_out_and_the_error_still_returned(self) -> None:
+        error = {"code": "rate_limited", "message": "Slow down.", "outcome": "refused"}
+        client, _ = make(lambda _: answer(429, {"error": error}, {"retry-after": "9" * 4301}))
+        e = err(client.products())
+        assert (e.status, e.error.code, e.retry_after) == (429, "rate_limited", None)

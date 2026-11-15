@@ -5,6 +5,7 @@
 // It fails closed: a document this generator does not understand is an error, never a partial client.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 type Json = null | boolean | number | string | Json[] | { [k: string]: Json }
 type Schema = { [k: string]: Json }
@@ -58,7 +59,12 @@ export function tsType(s: Json | undefined): string {
   if (Array.isArray(s.allOf)) return s.allOf.map((x) => `(${tsType(x)})`).join(' & ')
   if (Array.isArray(s.enum)) return union(s.enum.map((v) => JSON.stringify(v)))
   const types = s.type === undefined ? [] : Array.isArray(s.type) ? s.type : [s.type]
-  if (types.length === 0) return s.properties || s.additionalProperties !== undefined ? objectType(s) : 'unknown'
+  if (types.length === 0) {
+    // A schema with no type takes any value at run time, but every schema inside it is still checked, so a
+    // keyword the generator cannot represent fails here rather than vanishing into `unknown`.
+    if (s.items !== undefined) tsType(s.items)
+    return s.properties || s.additionalProperties !== undefined ? objectType(s) : 'unknown'
+  }
   return union(types.map((t) => {
     switch (t) {
       case 'string': return 'string'
@@ -377,9 +383,9 @@ export function readToolDoc(root: string): ToolDoc | undefined {
 }
 
 // Run as a script: write the files.
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   // The package is typescript/; the API document it reads is spec/ at the repository root, shared with python/.
-  const root = join(dirname(new URL(import.meta.url).pathname), '..')
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..')
   const repo = join(root, '..')
   const spec = JSON.parse(readFileSync(join(repo, 'spec', 'openapi.json'), 'utf8')) as Spec
   const tools = readToolDoc(repo)

@@ -177,9 +177,15 @@ def _jsonable(v: Any, depth: int) -> Any:
 
 def retry_after(header: str | None) -> int | None:
     """Retry-After in whole seconds, up to a day; a date or anything longer is left out."""
-    if header is not None and re.fullmatch(r"[0-9]+", header, re.ASCII) and int(header) <= MAX_RETRY_AFTER_S:
-        return int(header)
-    return None
+    n = small_int(header) if header is not None else None
+    return n if n is not None and n <= MAX_RETRY_AFTER_S else None
+
+
+def small_int(text: str) -> int | None:
+    """Whole seconds or a port: digits only, at most 9 significant digits; None otherwise, never raising."""
+    if not re.fullmatch(r"[0-9]+", text, re.ASCII) or len(text.lstrip("0")) > 9:
+        return None
+    return int(text)
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -323,6 +329,7 @@ class Answer:
     headers: httpx.Headers
     _results: queue.SimpleQueue[tuple[str, Any]]
     _deadline: float
+    _stop: threading.Event
 
     @property
     def ok(self) -> bool:
@@ -333,6 +340,8 @@ class Answer:
         try:
             kind, value = self._results.get(timeout=max(0.0, self._deadline - time.monotonic()))
         except queue.Empty:
+            # Stop the reader: it closes the response at its next chunk instead of buffering on.
+            self._stop.set()
             return UNDEFINED
         return parse_json(value) if kind == "body" else UNDEFINED
 
@@ -341,9 +350,10 @@ def send(opts: Options, url: str, method: str, headers: dict[str, str], body: st
     """One request, under the client's timeout. Redirects are refused: a followed redirect would carry the
     credentials to wherever it points. The request runs on its own thread, so the timeout holds through the
     body's last byte, even for a transport that ignores its own timeouts; a request still running at the
-    deadline is abandoned."""
+    deadline is abandoned: the reader stops at its next chunk and closes the response."""
     deadline = time.monotonic() + opts.timeout_s
     results: queue.SimpleQueue[tuple[str, Any]] = queue.SimpleQueue()
+    stop = threading.Event()
 
     def run() -> None:
         try:
@@ -365,9 +375,17 @@ def send(opts: Options, url: str, method: str, headers: dict[str, str], body: st
             if response.status_code in REDIRECT_STATUSES:
                 results.put(("error", NoAnswer("a redirect, which the client never follows")))
                 return
+            if stop.is_set():
+                return
             results.put(("response", response))
             try:
-                results.put(("body", response.read()))
+                chunks: list[bytes] = []
+                for chunk in response.iter_bytes():
+                    if stop.is_set() or time.monotonic() >= deadline:
+                        results.put(("body-error", NoAnswer("the body did not arrive before the timeout")))
+                        return
+                    chunks.append(chunk)
+                results.put(("body", b"".join(chunks)))
             except BaseException as e:
                 results.put(("body-error", e))
         finally:
@@ -378,7 +396,10 @@ def send(opts: Options, url: str, method: str, headers: dict[str, str], body: st
     try:
         kind, value = results.get(timeout=opts.timeout_s)
     except queue.Empty:
+        stop.set()
         raise NoAnswer("no answer before the timeout") from None
     if kind != "response":
         raise NoAnswer("no answer") from value if isinstance(value, BaseException) else None
-    return Answer(status=value.status_code, headers=value.headers, _results=results, _deadline=deadline)
+    return Answer(
+        status=value.status_code, headers=value.headers, _results=results, _deadline=deadline, _stop=stop
+    )

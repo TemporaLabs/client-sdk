@@ -246,7 +246,7 @@ def url_parses(value: str) -> bool:
     rest = s[m.end() :]
     if scheme in _SPECIAL_SCHEMES:
         if scheme == "file":
-            return True
+            return _file_ok(rest)
         rest = rest.lstrip("/\\")
         authority = re.split(r"[/\\?#]", rest, maxsplit=1)[0]
         host_port = authority.rpartition("@")[2]
@@ -260,6 +260,22 @@ def url_parses(value: str) -> bool:
     return host_port == "" or _host_port_ok(host_port, special=False)
 
 
+def _file_ok(rest: str) -> bool:
+    """A file URL after `file:`: with `//`, its host is empty, a Windows drive letter (read as the path), a
+    bracketed IPv6 address or a domain; never credentials or a port."""
+    r = rest.replace("\\", "/")
+    if not r.startswith("//"):
+        return True
+    host = re.split(r"[/?#]", r[2:], maxsplit=1)[0]
+    if host == "" or re.fullmatch(r"[A-Za-z][:|]", host, re.ASCII):
+        return True
+    if host.startswith("["):
+        return host.endswith("]") and _host_port_ok(host, special=True)
+    if "@" in host or ":" in host:
+        return False
+    return _domain_ok(host)
+
+
 def _host_port_ok(host_port: str, *, special: bool) -> bool:
     if host_port.startswith("["):
         end = host_port.find("]")
@@ -271,7 +287,9 @@ def _host_port_ok(host_port: str, *, special: bool) -> bool:
         port = after[1:] if after else ""
     else:
         host, _, port = host_port.partition(":")
-    if port and (not re.fullmatch(r"[0-9]+", port, re.ASCII) or int(port) > 65535):
+    if port and (
+        not re.fullmatch(r"[0-9]+", port, re.ASCII) or len(port.lstrip("0")) > 5 or int(port) > 65535
+    ):
         return False
     if host.startswith("["):
         inner = host[1:-1]
@@ -347,6 +365,9 @@ def _ipv4_ok(parts: list[str]) -> bool:
         elif re.fullmatch(r"0[0-7]+", p, re.ASCII):
             numbers.append(int(p, 8))
         elif re.fullmatch(r"[0-9]+", p, re.ASCII):
+            # Past ten significant digits the part is beyond any IPv4 field; int() refuses a very long one.
+            if len(p.lstrip("0")) > 10:
+                return False
             numbers.append(int(p, 10))
         else:
             return False

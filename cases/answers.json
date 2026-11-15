@@ -930,6 +930,9 @@
   },
   "VaultLinks": {
    "accept": [
+     {"explorer":"file:///x","venue":null},
+     {"explorer":"file://c:/x","venue":null},
+     {"explorer":"file://host/x","venue":null},
      {"explorer":"https://example.com/x","venue":"https://example.com/x"},
      {"explorer":"https://example.com/x","venue":"https://example.com/x","addedLater":{"any":"value"}},
      {"explorer":"https://example.com","venue":null},
@@ -961,6 +964,10 @@
      {"explorer":"https://xn--ls8h.example/x","venue":"https://example.com/x"}
    ],
    "reject": [
+      {"explorer":"file://[broken","venue":null},
+      {"explorer":"file://host:80/x","venue":null},
+      {"explorer":"file://user@host/x","venue":null},
+      {"explorer":"file://[::1/x","venue":null},
      {"venue":"https://example.com/x"},
      {"explorer":"https://example.com/x"},
      {"explorer":12345,"venue":"https://example.com/x"},
