@@ -11,7 +11,7 @@ and withdrawals into its vaults and portfolios, over the API's HTTP routes or it
 | Package | Install | Read |
 |---|---|---|
 | `@temporalabs/client` (TypeScript, Node.js 20.3 or later) | `npm install @temporalabs/client` | [typescript/README.md](typescript/README.md) |
-| `temporalabs-client` (Python 3.11 or later) | `pip install temporalabs-client` | [python/README.md](python/README.md) |
+| `temporalabs-client` (Python 3.11 or later) | from this repository at a release tag: see [python/README.md](python/README.md#install) | [python/README.md](python/README.md) |
 
 > **Pre-1.0.** A minor version (`0.2.0`) may change a client's interface; see [versioning](docs/versioning.md).
 > Deposits and withdrawals move real funds: check every step before the owner signs it.
@@ -43,7 +43,7 @@ and withdrawals into its vaults and portfolios, over the API's HTTP routes or it
 |---|---|
 | `spec/` | The API document and tool list, and `spec/SOURCE`, their API version and sha256 |
 | `typescript/` | The npm package: its generator, hand-written client, tests and build |
-| `python/` | The PyPI package: its generator, hand-written client and tests |
+| `python/` | The Python package: its generator, hand-written client and tests |
 | `cases/` | Test fixtures both packages read |
 | `scripts/` | Checks that cover the whole repository: the document's source, the license copies, the public-text scan |
 

@@ -1,7 +1,7 @@
 # How the clients are made
 
 There are two clients, one per language, made the same way from the same API document: the npm package in
-`typescript/` and the PyPI package in `python/`. This page follows the TypeScript one layer by layer, then
+`typescript/` and the Python package in `python/`. This page follows the TypeScript one layer by layer, then
 [the Python one](#the-python-package) and [how the two are held to the same answers](#one-verdict-for-both-clients).
 
 The TypeScript client is mostly generated. The API's document and its MCP tool list become four generated files. The

@@ -13,7 +13,8 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
   `create_mcp_client`, `tool_breaks`, `TOOLS` and `RELEASED`; `sign_in` and `with_owner_retry`; `check_step`,
   `check_steps`, `check_portfolio_deposit` and `check_portfolio_withdrawal`. Every call returns `Ok` or `Err` and
   never raises for an API or network problem; answers are pydantic models with the API's own field names. It needs
-  Python 3.11 or later and depends on `httpx` and `pydantic`. Not yet published to PyPI.
+  Python 3.11 or later and depends on `httpx` and `pydantic`. It installs from this repository at a release tag;
+  it is not on PyPI.
 - **One verdict for both clients:** `cases/answers.json` lists answers to accept and to refuse for every named shape,
   every call and every product read, and the error each error body reads as. The test suites of both clients read
   it, so the two cannot drift apart on what they accept.

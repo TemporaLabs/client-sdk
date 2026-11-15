@@ -1,7 +1,7 @@
 # Working in this repository
 
 The typed clients for the Tempora API, one folder per language: `typescript/` is the npm package
-`@temporalabs/client` (source in `typescript/src/`) and `python/` the PyPI package `temporalabs-client` (source in
+`@temporalabs/client` (source in `typescript/src/`) and `python/` the Python package `temporalabs-client` (source in
 `python/src/`, imported as `temporalabs_client`). `spec/` at the root is the API document both are generated from,
 and `cases/` holds test fixtures both read. This file points; the docs and the code explain.
 This repository is public: every byte you add, commit messages included, is public text.
@@ -33,7 +33,7 @@ Copy no fact from prose. Read it from its source.
 | Python versions and dependencies | `requires-python`, `dependencies` and the pinned `dev` tools in `python/pyproject.toml` |
 | Text that must never appear in a file or commit message | `scripts/public-text/deny.json` |
 | Node versions | `typescript/.nvmrc` for tooling, `engines` in `typescript/package.json` for the client |
-| What CI runs | `.github/workflows/ci-repo.yml` (the whole repository), `.github/workflows/ci-typescript.yml` (the npm package) and `.github/workflows/ci-python.yml` (the PyPI package), and the `check` script in `typescript/package.json` |
+| What CI runs | `.github/workflows/ci-repo.yml` (the whole repository), `.github/workflows/ci-typescript.yml` (the npm package) and `.github/workflows/ci-python.yml` (the Python package), and the `check` script in `typescript/package.json` |
 
 ## Binding rules
 
