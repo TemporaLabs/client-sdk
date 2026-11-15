@@ -10,7 +10,8 @@ This repository is public: every byte you add, commit messages included, is publ
 
 1. [How the clients are made](docs/how-it-is-made.md), from the API document to the published packages, then
    [one call traced](docs/one-call-traced.md).
-2. The usage doc for the area you touch: [errors](docs/errors.md), [sign-in](docs/sign-in.md),
+2. [Development](docs/DEVELOPMENT.md): the technologies and techniques in use.
+3. The usage doc for the area you touch: [errors](docs/errors.md), [sign-in](docs/sign-in.md),
    [requests and steps](docs/requests-and-steps.md), [versioning](docs/versioning.md).
 
 ## Where authority lives
@@ -33,7 +34,11 @@ Copy no fact from prose. Read it from its source.
 | Python versions and dependencies | `requires-python`, `dependencies` and the pinned `dev` tools in `python/pyproject.toml` |
 | Text that must never appear in a file or commit message | `scripts/public-text/deny.json` |
 | Node versions | `typescript/.nvmrc` for tooling, `engines` in `typescript/package.json` for the client |
-| What CI runs | `.github/workflows/ci-repo.yml` (the whole repository), `.github/workflows/ci-typescript.yml` (the npm package) and `.github/workflows/ci-python.yml` (the Python package), and the `check` script in `typescript/package.json` |
+| The TypeScript compiler, test runner and other tool versions | `devDependencies` in `typescript/package.json`, each pinned exactly, and `typescript/package-lock.json` |
+| Which commits need a sign-off, and which are exempt | `.github/scripts/dco-check.sh` and its test `.github/scripts/dco-check.test.sh`; the signing key it trusts for the dependency bot's commits is `.github/keys/github-web-flow.asc` |
+| Where dependency-update pull requests go | `.github/workflows/dependabot-to-cycle-branch.yml` (onto the current `release/vX.Y.Z` branch) and `.github/dependabot.yml` |
+| What CI runs | `.github/workflows/ci-repo.yml` (the whole repository), `.github/workflows/ci-typescript.yml` (the npm package), `.github/workflows/ci-python.yml` (the Python package) and `.github/workflows/dco.yml` (sign-offs), and the `check` script in `typescript/package.json` |
+| How a release is published | `.github/workflows/publish.yml`, run by hand from a release tag; nothing publishes on a merge |
 
 ## Binding rules
 
@@ -65,9 +70,24 @@ Each of these fails a check or breaks a caller when ignored.
 10. **Public text.** No internal names, private paths, issue or pull-request references, or process notes
    in files, commit messages or pull request text. `npm run check:public-text` scans the files; CI also
    scans every commit message.
-11. **Checks:** `npm run check` in `typescript/`, tests with one worker (`npm test` already passes `--maxWorkers=1`).
+11. **Every commit is signed off** (`git commit -s`), as [CONTRIBUTING.md](CONTRIBUTING.md) says. The DCO check runs
+    on `pull_request_target`, so it always uses the checker on `main`, not the pull request's copy.
+12. **Checks:** `npm run check` in `typescript/`, tests with one worker (`npm test` already passes `--maxWorkers=1`).
     In `python/`: `ruff check . && ruff format --check .`, `mypy src tests`, `python scripts/generate.py --check` and
     `pytest` (one process). At the root: `node scripts/check-copies.mjs`.
+
+## Reviewing a pull request
+
+Check the change against its sources above, then these, each of which a reviewer is expected to catch:
+
+- Generated files changed only by their generator, with `spec/SOURCE` updated when `spec/` changed.
+- A change to what one client accepts or sends is made in the other client in the same pull request, with
+  `cases/answers.json` updated and both suites reading it.
+- No call can throw or raise for an API or network problem, and a lost answer to a POST is `unknown`.
+- Credentials cannot leave the configured origin, and the owner token goes only where rule 6 says.
+- New tests can fail: each guard has a case that fails without it.
+- Pinned versions stay exact, and the CHANGELOG's `Unreleased` section names any change a caller can see.
+- Nothing internal in files, commit messages or the pull request text (rule 10).
 
 ## When a doc is wrong
 

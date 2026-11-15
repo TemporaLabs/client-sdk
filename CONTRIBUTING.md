@@ -49,4 +49,6 @@ Every commit needs a `Signed-off-by` trailer (`git commit -s`) that names its au
 [Developer Certificate of Origin](DCO.md): that you wrote the change, or have the right to submit it under
 this repository's license. A check on every pull request refuses a commit without one. A merge commit that
 only merges is exempt; one that resolves a conflict or adds changes of its own needs a sign-off too
-(`git commit -s`, or `git merge --signoff`).
+(`git commit -s`, or `git merge --signoff`). A commit the dependency bot made on GitHub is exempt when GitHub's
+signature on it verifies against GitHub's published signing key; its author and committer fields alone exempt
+nothing.
