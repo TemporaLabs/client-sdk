@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "temporalabs-client"
+version = "0.1.1"
+description = "The typed client for the Tempora API, over HTTP and MCP."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.11"
+authors = [{ name = "Tempora Labs" }]
+keywords = ["tempora", "api-client", "mcp"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Typing :: Typed",
+]
+dependencies = [
+  "httpx>=0.28.1",
+  "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.2.0",
+  "ruff==0.17.5",
+  "mypy==2.4.1",
+  "build==1.6.1",
+  "pip-audit==2.10.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/TemporaLabs/client-sdk#readme"
+Source = "https://github.com/TemporaLabs/client-sdk/tree/main/python"
+Issues = "https://github.com/TemporaLabs/client-sdk/issues"
+Changelog = "https://github.com/TemporaLabs/client-sdk/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+packages = ["temporalabs_client", "temporalabs_client.abi", "temporalabs_client.generated"]
+package-dir = { "temporalabs_client" = "src" }
+
+[tool.setuptools.package-data]
+temporalabs_client = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+src = ["src", "tests"]
+extend-exclude = ["src/generated"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"

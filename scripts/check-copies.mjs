@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const root = join(import.meta.dirname, '..')
-const PACKAGES = ['typescript']
+const PACKAGES = ['typescript', 'python']
 const COPIES = ['LICENSE', 'NOTICE']
 
 const stale = []

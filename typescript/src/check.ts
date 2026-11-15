@@ -102,6 +102,9 @@ function intentProblem(intent: VaultIntent): string | undefined {
   const i = intent as { action?: unknown; amount?: { kind?: unknown } }
   if (i.action !== 'deposit' && i.action !== 'withdraw') return `the intent's action ${JSON.stringify(i.action)} is not deposit or withdraw`
   if (i.action === 'withdraw' && !AMOUNT_KINDS.includes(i.amount?.kind as string)) return `the withdrawal's amount kind ${JSON.stringify(i.amount?.kind)} is not assets, shares or all`
+  // Checked here, so every check (checkSteps too, for a step with nothing to sign yet) reads a complete record.
+  const v = (intent as { vault?: unknown }).vault as { vaultAddress?: unknown; assetAddress?: unknown; chain?: unknown } | null | undefined
+  if (typeof v !== 'object' || v === null || typeof v.vaultAddress !== 'string' || !ADDRESS.test(v.vaultAddress) || typeof v.assetAddress !== 'string' || !ADDRESS.test(v.assetAddress) || typeof v.chain !== 'string' || !v.chain) return 'the vault record is not complete'
   return undefined
 }
 const AMOUNT_KINDS = ['assets', 'shares', 'all']

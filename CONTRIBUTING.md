@@ -1,19 +1,21 @@
 # Contributing
 
-Thanks for considering a contribution. This client is licensed under the Apache License, Version 2.0
+Thanks for considering a contribution. These clients are licensed under the Apache License, Version 2.0
 (see [`LICENSE`](LICENSE)). Tempora Labs reviews every change and decides what merges.
 
-## How the client is made
+## How the clients are made
 
-Most of the client is generated. `spec/openapi.json` is a copy of the Tempora API's own OpenAPI
+Most of each client is generated. `spec/openapi.json` is a copy of the Tempora API's own OpenAPI
 document, taken at a release, and `spec/SOURCE` records its API version and sha256.
-`npm run generate`, run in `typescript/`, writes `typescript/src/generated/` and `typescript/llms.txt` from it. Never edit those by hand: CI
+`npm run generate`, run in `typescript/`, writes `typescript/src/generated/` and `typescript/llms.txt` from it, and
+`python scripts/generate.py`, run in `python/`, writes `python/src/generated/`. Never edit those by hand: CI
 regenerates them and fails on any difference.
 
 A change to what the API accepts or returns is a change to the API, not to this repository. A change
-here is to the hand-written client in `typescript/src/` (every file outside `typescript/src/generated/`), or to the generator,
-`typescript/scripts/generate.ts`. [How the client is made](docs/how-it-is-made.md) shows how the two fit together, and
-[One call traced](docs/one-call-traced.md) follows one call end to end.
+here is to a hand-written client (every file in `typescript/src/` or `python/src/` outside its `generated/`), or to
+a generator, `typescript/scripts/generate.ts` or `python/scripts/generate.py`. [How the clients are
+made](docs/how-it-is-made.md) shows how the parts fit together, and [One call traced](docs/one-call-traced.md)
+follows one call end to end.
 
 ## Before you open a pull request
 
@@ -24,6 +26,22 @@ for the published client, not for these scripts.
 `npm run check`, run in `typescript/`, must pass. It runs the source and generation checks, the typecheck, the
 tests (one worker), the public-text scan, the package check, and that each package folder's `LICENSE` and
 `NOTICE` match the root's. Add a test for any behaviour you change.
+
+For the Python package, work in `python/` with Python 3.11 or later, in a virtual environment:
+
+```sh
+python -m venv .venv && . .venv/bin/activate
+python -m pip install ".[dev]"          # the package and the pinned tools
+ruff check . && ruff format --check .
+mypy src tests
+python scripts/generate.py --check     # python scripts/generate.py rewrites src/generated/
+pytest
+```
+
+The tests run against the installed package, so install it again (`pip install .`) after a change under `src/`.
+A change to how either client checks answers needs the same change in the other, and a case in
+`cases/answers.json` that both test suites read. The Python generator reads the same `spec/` as the TypeScript one
+and refuses the same documents.
 
 ## Sign off every commit
 
