@@ -3,17 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Generic, Literal, TypeVar
+from typing import Literal
 
 from .generated.models import ApiError
-
-T = TypeVar("T", covariant=True)
 
 __all__ = ["ApiError", "Err", "Ok", "Result"]
 
 
 @dataclass(frozen=True)
-class Ok(Generic[T]):
+class Ok[T]:
     """A call the API answered with its documented answer, checked against the API's schema."""
 
     status: int
@@ -36,4 +34,4 @@ class Err:
     ok: Literal[False] = False
 
 
-Result = Ok[T] | Err
+type Result[T] = Ok[T] | Err
