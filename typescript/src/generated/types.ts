@@ -15,6 +15,7 @@ export type WalletReading = { assetId: Caip19; decimals: number; block: Raw; bal
 export type Caip19 = string
 export type Raw = string
 export type Alert = { code: string; message: string }
+export type ProductRef = ProductId | string
 export type Performance = { method: string; asOf: string | null; days: Array<{ date: string; valueUsd: number; cashFlowUsd: number; returnPct: number | null; live: boolean }> } | null
 export type Request = { requestId: RequestId; action: "deposit" | "withdraw" | string; state: "requires_action" | "processing" | "held" | "completed" | "partial" | "failed" | "cancelled" | string; chose: { product: ProductId; chain?: Caip2; token?: TokenSymbol; amount?: Amount; vaultTerms?: { version: string; sha256: Hex32 } }; quote?: { raw: Raw; source: string; at: Time }; expiresAt: Time; steps: Array<Step>; warning?: string | null; split?: Split; leftBehind?: Array<{ assetId: Caip19; raw: Raw; valueUsd: number | null; reason: string }> | null; smartAccount?: Address; operation?: { id: string; state: "running" | "completed" | "failed" | "cancelled" | string } }
 export type RequestId = string
@@ -31,7 +32,7 @@ export type Check = { what: string; equals?: string; note?: string }
 export type BatchPlan = { liquidate: boolean; assets: Array<{ assetId: Caip19; amountRaw: Raw }> }
 export type Base64 = string
 export type Split = { fromIdleUsd: number; fromSaleUsd: number; remainingInvestedUsd: number } | null
-export type DepositBody = { product: ProductId; amount?: Amount; chain?: Caip2; token?: TokenSymbol; sent?: Sent; vaultTerms?: { version: string; sha256: Hex32 } }
+export type DepositBody = { product: ProductRef; amount?: Amount; chain?: Caip2; token?: TokenSymbol; sent?: Sent; vaultTerms?: { version: string; sha256: Hex32 } }
 export type Sent = { txHash: Hex32; to: Address; amount: TokenAmount; notBefore: Raw; nonce?: Raw; wallet?: { nonce: Raw; from: Address; blockNumber: Raw | null } | null }
 export type TokenAmount = string
 export type Positions = { positions: Array<Position> }
@@ -40,10 +41,11 @@ export type Holding = { ticker: string | null; symbol: string; address: Address 
 export type VaultWithdrawable = { block: Raw; basis: "floor" | string; withdrawable: Withdrawable }
 export type Withdrawable = { state: "all" | "partial" | "refused" | "unknown" | string; assets: Raw | null; within: Raw | null; reason: string | null }
 export type ProductList = { products: Array<Product> }
-export type Product = { id: ProductId; kind: "portfolio" | "vault" | string; name: string; status: "live" | "invite-only" | "preview" | "coming-soon" | "paused" | "closed" | string; featured: boolean; thesis: string; risk: "conservative" | "moderate" | "growth" | string; previousIds: Array<ProductId>; chains: Array<Caip2>; tokens: Array<TokenSymbol>; defaults: { chain: Caip2; token: TokenSymbol }; minimum: { firstDepositUsd: Usd; topUpUsd?: Usd } | null; gates: Array<GateId>; steps: { deposit: Array<string>; withdraw: Array<string> }; amountForms: { deposit: Array<"assets" | "shares" | "all" | "fraction" | "usd" | string>; withdraw: Array<"assets" | "shares" | "all" | "fraction" | "usd" | string> }; rebalance: { cadence: string } | null; terms: { swapFeePct: number | null; platformFeeConfirmed: boolean; text?: string }; limits: Record<string, number> | null; sizing: Record<string, number> | null; members: Array<Member>; sectorWeights: Record<string, number> | null; methodology: { version: string | null; month: string | null }; stats: { netApy30d: number | null; tvlUsd: number | null; subscribers: number | null; inception: string | null }; vault?: VaultIdentity; vaultFees?: VaultFees; vaultTerms?: VaultTerms; vaultLinks?: VaultLinks; warnings: Array<string>; recordVersion: number }
+export type Product = { id: ProductId; kind: "portfolio" | "vault" | string; name: string; status: "live" | "invite-only" | "preview" | "coming-soon" | "paused" | "closed" | string; featured: boolean; thesis: string; risk: "conservative" | "moderate" | "growth" | string; previousIds: Array<ProductId>; chains: Array<Caip2>; tokens: Array<TokenSymbol>; defaults: { chain: Caip2; token: TokenSymbol }; depositAssets?: Array<DepositAsset>; minimum: { firstDepositUsd: Usd; topUpUsd?: Usd } | null; gates: Array<GateId>; steps: { deposit: Array<string>; withdraw: Array<string> }; amountForms: { deposit: Array<"assets" | "shares" | "all" | "fraction" | "usd" | string>; withdraw: Array<"assets" | "shares" | "all" | "fraction" | "usd" | string> }; rebalance: { cadence: string } | null; terms: { swapFeePct: number | null; platformFeeConfirmed: boolean; text?: string }; limits: Record<string, number> | null; sizing: Record<string, number> | null; members: Array<Member>; sectorWeights: Record<string, number> | null; methodology: { version: string | null; month: string | null }; stats: { netApy30d: number | null; tvlUsd: number | null; subscribers: number | null; inception: string | null }; vault?: VaultIdentity; vaultFees?: VaultFees; vaultTerms?: VaultTerms; vaultLinks?: VaultLinks; warnings: Array<string>; recordVersion: number }
+export type DepositAsset = { symbol: TokenSymbol; chain: Caip2; address: Address; decimals: number; assetId?: Caip19 }
 export type Usd = string
 export type Member = { ticker: string; company: string; weightPpm: number; industry: string; weightPct: number; assetId: Caip19; split?: Record<string, number> }
-export type VaultIdentity = { standard: "erc4626" | string; chain: Caip2; vaultAddress: Address; assetAddress: Address; assetDecimals: number; shareDecimals: number }
+export type VaultIdentity = { standard: "erc4626" | string; shareSymbol: string; chain: Caip2; vaultAddress: Address; assetAddress: Address; assetDecimals: number; shareDecimals: number }
 export type VaultFees = { performance: string | null; management: string | null; asOf: Time | null; block: Raw | null }
 export type VaultTerms = { text: string; version: string; sha256: Hex32 }
 export type VaultLinks = { explorer: string; venue: string | null }
@@ -56,7 +58,7 @@ export type Reasoning = { runs: Array<ReasoningRun>; stale?: boolean; mock?: boo
 export type ReasoningRun = { runId: string; at: Time; kind: string; outcome: string; accountsChecked: number; accountsTraded: number; gapBeforePp: number | null; gapAfterPp: number | null; alert: string | null; methodologyVersion: string | null }
 export type Nav = { navUsd: number | null; nav?: { raw: Raw; decimals: number; assetId: Caip19 } | null; asOf: Time | null; history: Array<{ at: Time; navUsd: number }> }
 export type Quote = { product: ProductId; action: "withdraw" | "deposit" | string; chain: Caip2; block: Raw; asOf: Time; assetId: Caip19; withdraw?: { position: { shares: { raw: Raw; decimals: number }; assets: { raw: Raw; decimals: number } | null }; withdrawable: Withdrawable }; deposit?: { amount: Amount; expectedShares: { raw: Raw; decimals: number } | null; sharePrice: { shares: { raw: Raw; decimals: number }; assets: Raw } | null; check: { state: "open" | "holdings" | "not_admitted" | "refused" | "unsupported" | "unknown" | string; reason: string | null } } }
-export type QuoteBody = { product: ProductId; action: "withdraw" | "deposit"; amount?: Amount }
+export type QuoteBody = { product: ProductRef; action: "withdraw" | "deposit"; amount?: Amount }
 export type SubmitBody = { kind: "signature"; signature: Signature } | { kind: "transaction"; txHash: Hex32; wallet: { nonce: Raw; from: Address; blockNumber: Raw | null } | null } | { kind: "attempt"; attemptId: string; broadcast: "unknown" | "declined" } | { kind: "refresh"; expectedGeneration: number }
 export type Signature = string
 export type Challenge = { message: string; nonce: string; expiresAt: Time }
@@ -64,7 +66,7 @@ export type ChallengeBody = { owner: Address; origin?: string }
 export type Revoked = { revoked: true }
 export type Token = { token: string; tokenType: "Bearer" | string; expiresAt: Time; [key: string]: unknown }
 export type VerifyBody = { owner: Address; nonce: string; signature: Signature; audience?: "http" | "mcp" | "both" }
-export type WithdrawBody = { product: ProductId; amount: Amount }
+export type WithdrawBody = { product: ProductRef; amount: Amount }
 
 /** The error the API returns: the `error` of its error body. */
 export type ApiError = ApiErrorSchema
@@ -72,14 +74,14 @@ export type ApiError = ApiErrorSchema
 /** Per call: its path, query and body inputs (never when it takes none) and its answer. */
 export type Operations = {
   account: {
-    path: { product: ProductId }
+    path: { product: ProductRef }
     query: never
     body: never
     bodyRequired: false
     output: Account
   }
   account_performance: {
-    path: { product: ProductId }
+    path: { product: ProductRef }
     query: never
     body: never
     bodyRequired: false
@@ -107,14 +109,14 @@ export type Operations = {
     output: Positions
   }
   product: {
-    path: { id: ProductId }
+    path: { id: ProductRef }
     query: never
     body: never
     bodyRequired: false
     output: Product
   }
   product_read: {
-    path: { id: ProductId; read: "tvl" | "market" | "tickers" | "reasoning" | "nav" }
+    path: { id: ProductRef; read: "tvl" | "market" | "tickers" | "reasoning" | "nav" }
     query: never
     body: never
     bodyRequired: false
