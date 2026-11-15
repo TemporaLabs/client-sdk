@@ -183,7 +183,7 @@ jobs:
           FILE: ${{ needs.verify.outputs.file }}
         run: |
           set -euo pipefail
-          npm publish "pkg/${FILE}" --access public --dry-run
+          npm publish "./pkg/${FILE}" --access public --dry-run
           echo "dry_run was true: every gate passed and nothing was published." >> "$GITHUB_STEP_SUMMARY"
 
       - name: publish (trusted publishing; provenance from this job's OIDC identity)
@@ -191,7 +191,7 @@ jobs:
         env:
           FILE: ${{ needs.verify.outputs.file }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish "pkg/${FILE}" --access public --provenance
+        run: npm publish "./pkg/${FILE}" --access public --provenance
 
       # The registry can take minutes to serve a freshly published scoped package. This step polls for
       # ten minutes and, if the version has still not resolved, records a WARNING rather than a failure:
