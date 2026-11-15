@@ -10,8 +10,7 @@ This repository is public: every byte you add, commit messages included, is publ
 
 1. [How the clients are made](docs/how-it-is-made.md), from the API document to the published packages, then
    [one call traced](docs/one-call-traced.md).
-2. [Development](docs/DEVELOPMENT.md): the technologies and techniques in use.
-3. The usage doc for the area you touch: [errors](docs/errors.md), [sign-in](docs/sign-in.md),
+2. The usage doc for the area you touch: [errors](docs/errors.md), [sign-in](docs/sign-in.md),
    [requests and steps](docs/requests-and-steps.md), [versioning](docs/versioning.md).
 
 ## Where authority lives
