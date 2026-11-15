@@ -122,7 +122,10 @@ const MS_PER_S = 1_000
 const FRACTION_PLACES = 18
 
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/
-const RAW_POSITIVE = /^[1-9][0-9]*$/
+// A raw amount is a uint256: at most 78 digits. Anything longer can never match a chain value, so it is refused
+// as malformed, and no client spends unbounded time converting it.
+const RAW_POSITIVE = /^[1-9][0-9]{0,77}$/
+const DIGITS = /^[0-9]{1,78}$/
 const BYTES32 = /^0x[0-9a-fA-F]{64}$/
 const CHAIN = /^eip155:([1-9][0-9]*)$/
 const ACCOUNT = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/
@@ -224,7 +227,7 @@ export function checkPortfolioWithdrawal(steps: readonly PortfolioStepToCheck[],
     if (typeof m['nonce'] !== 'string' || !BYTES32.test(m['nonce'])) return notTheForm
 
     const raw = m['expiresAt']
-    const expiry = typeof raw === 'number' ? raw : typeof raw === 'string' && /^[0-9]+$/.test(raw) ? Number(raw) : NaN
+    const expiry = typeof raw === 'number' ? raw : typeof raw === 'string' && DIGITS.test(raw) ? Number(raw) : NaN
     if (!Number.isSafeInteger(expiry) || expiry <= 0) return notTheForm
     if (expiry <= nowS) return refuse('it has expired')
     if (expiry > nowS + lifetimeS) return refuse(`it stays valid for more than ${lifetimeS} seconds`)
@@ -270,7 +273,7 @@ export function checkPortfolioWithdrawal(steps: readonly PortfolioStepToCheck[],
   const held = new Map<string, bigint>()
   for (const [id, raw] of Object.entries(intent.holdings)) {
     const k = assetKey(id)
-    if (k && /^[0-9]+$/.test(raw)) held.set(k, BigInt(raw))
+    if (k && DIGITS.test(raw)) held.set(k, BigInt(raw))
   }
   const out: { assetId: string; amount: string; held: string }[] = []
   for (const [k, t] of totals) {
@@ -297,7 +300,7 @@ function readPlan(plan: unknown): Amounts | null {
   const out: Amounts = new Map()
   for (const p of plan.assets as { assetId?: unknown; amountRaw?: unknown }[]) {
     const k = assetKey(p?.assetId)
-    if (k === null || out.has(k) || typeof p.amountRaw !== 'string' || !/^[0-9]+$/.test(p.amountRaw)) return null
+    if (k === null || out.has(k) || typeof p.amountRaw !== 'string' || !DIGITS.test(p.amountRaw)) return null
     out.set(k, { assetId: p.assetId as string, amount: BigInt(p.amountRaw) })
   }
   return out

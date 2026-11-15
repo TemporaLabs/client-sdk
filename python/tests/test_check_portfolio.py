@@ -616,20 +616,33 @@ class TestAPortfolioStepCarriesOnlyThePayloadFieldsTheApiDefines:
         assert (r.ok, r.step) == (False, 0)
 
 
-HUGE = "9" * 4301  # past Python's 4,300-digit int() limit
+HUGE = "9" * 4301  # past Python's 4,300-digit int() limit, and far past a uint256's 78 digits
+UINT256_MAX = str(2**256 - 1)  # 78 digits: the longest raw amount there is
 
 
-class TestAmountsPastPythonsDigitLimitAreReadExactly:
+class TestRawAmountsAreUint256Sized:
     def test_a_signed_amount_too_long_for_int_is_a_refusal_not_an_exception(self) -> None:
         signed = transfer_auth({}, {"assets": [{"assetId": USDT, "amountRaw": HUGE}]})
         r = check_portfolio_withdrawal([batch(signed, plan_of(transfer_auth()))], withdraw)
         assert r.ok is False and r.reason
 
-    def test_holdings_too_long_for_int_are_read_exactly(self) -> None:
+    def test_a_holding_longer_than_a_uint256_is_not_a_holding(self) -> None:
         r = check_portfolio_withdrawal(
             [batch(transfer_auth()), batch(sale_auth())], {**withdraw, "holdings": {USDT: HUGE, TOKEN: "400"}}
         )
-        assert r.ok is True and r.totals[0].held == HUGE
+        assert r.ok is False and "does not hold" in reason_of(r)
+
+    def test_a_holding_of_the_largest_uint256_is_read_exactly(self) -> None:
+        r = check_portfolio_withdrawal(
+            [batch(transfer_auth()), batch(sale_auth())],
+            {**withdraw, "holdings": {USDT: UINT256_MAX, TOKEN: "400"}},
+        )
+        assert r.ok is True and r.totals[0].held == UINT256_MAX
+
+    def test_a_signed_amount_one_digit_past_a_uint256_is_refused(self) -> None:
+        signed = transfer_auth({}, {"assets": [{"assetId": USDT, "amountRaw": "1" + "0" * 78}]})
+        r = check_portfolio_withdrawal([batch(signed, plan_of(transfer_auth()))], withdraw)
+        assert r.ok is False
 
     def test_a_deposit_amount_too_long_for_int_is_compared_not_raised_on(self) -> None:
         r = check_portfolio_deposit([send(USDT_ADDR, TRANSFER)], {**deposit, "amount": HUGE})

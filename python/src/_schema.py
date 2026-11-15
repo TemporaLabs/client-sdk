@@ -288,7 +288,9 @@ def _host_port_ok(host_port: str, *, special: bool) -> bool:
     else:
         host, _, port = host_port.partition(":")
     if port and (
-        not re.fullmatch(r"[0-9]+", port, re.ASCII) or len(port.lstrip("0")) > 5 or int(port) > 65535
+        not re.fullmatch(r"[0-9]+", port, re.ASCII)
+        or len(port.lstrip("0")) > 5
+        or int(port.lstrip("0") or "0") > 65535
     ):
         return False
     if host.startswith("["):
@@ -364,6 +366,9 @@ def _ipv4_ok(parts: list[str]) -> bool:
             numbers.append(int(p[2:] or "0", 16))
         elif re.fullmatch(r"0[0-7]+", p, re.ASCII):
             numbers.append(int(p, 8))
+        elif re.fullmatch(r"0[0-9]+", p, re.ASCII):
+            # A leading zero makes the part octal, as WHATWG URL parsing reads it: an 8 or a 9 is invalid.
+            return False
         elif re.fullmatch(r"[0-9]+", p, re.ASCII):
             # Past ten significant digits the part is beyond any IPv4 field; int() refuses a very long one.
             if len(p.lstrip("0")) > 10:

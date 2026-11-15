@@ -601,3 +601,8 @@ class TestTheDeadlineStopsTheReaderAndOversizedNumbersStayResults:
         client, _ = make(lambda _: answer(429, {"error": error}, {"retry-after": "9" * 4301}))
         e = err(client.products())
         assert (e.status, e.error.code, e.retry_after) == (429, "rate_limited", None)
+
+    def test_a_retry_after_padded_with_leading_zeros_is_read_as_its_value(self) -> None:
+        error = {"code": "rate_limited", "message": "Slow down.", "outcome": "refused"}
+        client, _ = make(lambda _: answer(429, {"error": error}, {"retry-after": "0" * 5000 + "5"}))
+        assert err(client.products()).retry_after == 5

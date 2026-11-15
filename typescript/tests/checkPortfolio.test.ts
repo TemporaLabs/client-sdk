@@ -308,3 +308,20 @@ describe('a portfolio step carries only the payload fields the API defines', () 
     expect(checkPortfolioWithdrawal([batch({ ...a, [key]: '0x00' })], withdraw)).toMatchObject({ ok: false, step: 0 })
   })
 })
+
+describe('raw amounts are uint256-sized', () => {
+  const UINT256_MAX = (2n ** 256n - 1n).toString()
+  it('reads a holding of the largest uint256 exactly', () => {
+    const r = checkPortfolioWithdrawal([batch(transferAuth()), batch(saleAuth())], { ...withdraw, holdings: { [USDT]: UINT256_MAX, [TOKEN]: '400' } })
+    expect(r.ok).toBe(true)
+    expect(r.ok && r.totals[0]!.held).toBe(UINT256_MAX)
+  })
+  it('treats a holding longer than a uint256 as not held', () => {
+    const r = checkPortfolioWithdrawal([batch(transferAuth()), batch(saleAuth())], { ...withdraw, holdings: { [USDT]: '9'.repeat(4301), [TOKEN]: '400' } })
+    expect(reasonOf(r)).toMatch(/does not hold/)
+  })
+  it('refuses a signed amount one digit past a uint256', () => {
+    const signed = transferAuth({}, { assets: [{ assetId: USDT, amountRaw: '1' + '0'.repeat(78) }] })
+    expect(checkPortfolioWithdrawal([batch(signed, planOf(transferAuth()))], withdraw).ok).toBe(false)
+  })
+})

@@ -182,7 +182,8 @@ _ARGS: Final[Mapping[VaultCall, tuple[Word, ...]]] = {
 }
 _CALLS: Final = {selector: _ARGS[call] for selector, call in _SELECTORS.items()}
 ADDRESS: Final = re.compile(r"0x[0-9a-fA-F]{40}", re.ASCII)
-_RAW: Final = re.compile(r"0|[1-9][0-9]*", re.ASCII)
+# A raw amount is a uint256: at most 78 digits; a longer one is refused as malformed.
+_RAW: Final = re.compile(r"0|[1-9][0-9]{0,77}", re.ASCII)
 
 
 def exact_int(digits: str) -> int:

@@ -440,7 +440,7 @@ class TestAVaultStepCarriesOnlyThePayloadFieldsTheApiDefines:
 HUGE = "9" * 4301  # past Python's 4,300-digit int() limit
 
 
-class TestAmountsPastPythonsDigitLimitAreReadExactly:
+class TestRawAmountsAreUint256Sized:
     def test_an_amount_asked_for_too_long_for_int_is_a_refusal_not_an_exception(self) -> None:
         r = check_step(step(ASSET, DATA["approve"]), {**deposit, "assets": HUGE})
         assert r.ok is False and r.reason
@@ -448,3 +448,7 @@ class TestAmountsPastPythonsDigitLimitAreReadExactly:
             step(VAULT, DATA["withdraw"]), {**withdraw_assets, "amount": {"kind": "assets", "raw": HUGE}}
         )
         assert r.ok is False and r.reason
+
+    def test_an_amount_one_digit_past_a_uint256_is_refused_and_the_largest_is_read(self) -> None:
+        r = check_step(step(ASSET, DATA["approve"]), {**deposit, "assets": "1" + "0" * 78})
+        assert r.ok is False and "raw amount" in reason_of(r)

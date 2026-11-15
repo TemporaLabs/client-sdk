@@ -384,6 +384,8 @@ describe('inputs that cannot be sent as given', () => {
     const at = (wait: string) => make(() => new Response(JSON.stringify({ error }), { status: 429, headers: { 'retry-after': wait } })).client.products({})
     expect(await at('86400')).toMatchObject({ retryAfter: 86_400 })
     expect('retryAfter' in (await at('86401'))).toBe(false)
+    // Leading zeros do not count: the Python client reads the same value.
+    expect(await at('0'.repeat(5000) + '5')).toMatchObject({ retryAfter: 5 })
   })
 })
 
