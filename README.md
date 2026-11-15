@@ -31,6 +31,77 @@ and withdrawals into its vaults and portfolios, over the API's HTTP routes or it
 - **The client never signs.** A deposit or a withdrawal comes back as steps for the owner's own wallet; the checks
   before signing compare each step's bytes with what the owner asked for.
 
+## Setup
+
+### Using a client
+
+1. **Prerequisites.** TypeScript: Node.js 22 or later. Python: Python 3.13.
+2. **Install.**
+
+   ```bash
+   npm install @temporalabs/client
+   ```
+
+   ```bash
+   pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.1#subdirectory=python"
+   ```
+
+   The Python package installs from this repository at a release tag; it is not on PyPI. Pin the tag.
+3. **Configure.**
+   - **API address:** `https://api.temporalabs.com`, and its MCP endpoint at `https://api.temporalabs.com/mcp`.
+   - **Client key:** businesses Tempora Labs works with get one and pass it as `clientKey` / `client_key`, read
+     from the environment (for example `TEMPORALABS_CLIENT_KEY`). Keep it on a server.
+   - **Without a client key:** a wallet owner's own application leaves the key out. Product reads need no
+     sign-in; owner calls need an owner token from [sign-in](docs/sign-in.md).
+4. **Run** a first call:
+
+   ```ts
+   import { createClient } from '@temporalabs/client'
+
+   const client = createClient({ baseUrl: 'https://api.temporalabs.com' })
+   const r = await client.products({})
+   if (r.ok) console.log(r.body.products.map((p) => p.id))
+   else console.error(r.error.code, r.error.outcome)
+   ```
+
+   ```python
+   from temporalabs_client import Ok, create_client
+
+   client = create_client("https://api.temporalabs.com")
+   r = client.products()
+   print([p.id for p in r.body.products] if isinstance(r, Ok) else (r.error.code, r.error.outcome))
+   ```
+
+   [Getting started](docs/getting-started.md) goes on from here.
+
+### Contributing
+
+1. **Prerequisites.** Node.js 22 (the version in `typescript/.nvmrc`; the scripts need 22.6 or later), Python 3.13 and
+   git. Tool versions are pinned in `typescript/package.json` and `python/pyproject.toml`.
+2. **Install.**
+
+   ```bash
+   git clone https://github.com/TemporaLabs/client-sdk.git && cd client-sdk
+   (cd typescript && npm ci)
+   (cd python && python3.13 -m venv .venv && . .venv/bin/activate && python -m pip install ".[dev]")
+   ```
+
+3. **Configure.** Nothing to configure. The tests make no network calls and need no key.
+4. **Run.** Regenerate a client after `spec/` changes: `npm run generate` in `typescript/`, and
+   `python scripts/generate.py` in `python/`. Never edit `generated/` by hand.
+5. **Test.**
+
+   ```bash
+   (cd typescript && npm run check)
+   (cd python && . .venv/bin/activate && ruff check . && ruff format --check . && mypy src tests \
+     && python scripts/generate.py --check && pytest)
+   node scripts/check-copies.mjs
+   ```
+
+   `npm run check` covers the TypeScript checks, tests, generated code, package build and public-text scan. In
+   Python, reinstall (`pip install .`) after a change under `src/`, since the tests import the installed package.
+   Every commit is signed off (`git commit -s`); see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Documentation
 
 - [Getting started](docs/getting-started.md) · [Sign-in](docs/sign-in.md) · [Requests and steps](docs/requests-and-steps.md)
