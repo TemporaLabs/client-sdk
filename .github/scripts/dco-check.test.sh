@@ -90,6 +90,46 @@ expect "unsigned octopus merge: fails" 1 "$good" "$(git rev-parse HEAD)" "the si
 git checkout -q -b fake "$good"; unsigned f "Merge branch 'nothing'"
 expect "single-parent commit titled Merge: still checked, fails" 1 "$base" "$(git rev-parse HEAD)" "the sign-off is missing"
 
+# a dependency-bot commit that GitHub made and signed is exempt on any pull request, release ones
+# included. A throwaway key stands in for GitHub's; every field and the signature must hold.
+export GNUPGHOME="$tmp/gnupg"; mkdir -m 700 "$GNUPGHOME"
+newkey() { gpg --batch --quiet --passphrase '' --quick-gen-key "$1" ed25519 sign never 2>/dev/null
+  gpg --list-keys --with-colons "$1" 2>/dev/null | awk -F: '/^fpr/{print $10; exit}'; }
+gh_fpr=$(newkey "GitHub Stand-in <noreply@github.com>"); other_fpr=$(newkey "Not GitHub <x@example.org>")
+# the key file holds a second key, as GitHub's published file does: only the pinned fingerprint counts
+gpg --armor --export "$gh_fpr" "$other_fpr" > "$tmp/github.asc"
+export DCO_GITHUB_KEY="$tmp/github.asc" DCO_GITHUB_FPR="$gh_fpr"
+bump() { # bump <branch> <signing-key-or-empty> <committer-name> <committer-email> <subject>
+  git checkout -q -b "$1" "$good"; echo "$RANDOM" >> deps; git add deps
+  GIT_AUTHOR_NAME="dependabot[bot]" GIT_AUTHOR_EMAIL="$BOT" GIT_COMMITTER_NAME="$3" GIT_COMMITTER_EMAIL="$4" \
+    git -c user.signingkey="${2:-none}" commit -q ${2:+-S} -m "$5" -m "Signed-off-by: dependabot[bot] <support@github.com>"; }
+EXEMPT=""
+bump gh1 "$gh_fpr" GitHub noreply@github.com "bump, made by GitHub"
+expect "bot commit signed with GitHub's key, on a pull request the bot did not open: exempt" 0 "$good" "$(git rev-parse HEAD)" "1 bot commit(s) exempt, 0 failure(s)"
+bump gh2 "" GitHub noreply@github.com "bump, unsigned"
+expect "the same bot commit without a signature: fails" 1 "$good" "$(git rev-parse HEAD)" "\"bump, unsigned\": expected"
+bump gh3 "$other_fpr" GitHub noreply@github.com "bump, another key"
+expect "the same bot commit signed with another key in the key file: fails" 1 "$good" "$(git rev-parse HEAD)" "\"bump, another key\": expected"
+bump gh4 "$gh_fpr" "Ada Example" ada@example.org "bump, not committed by GitHub"
+expect "signed with GitHub's key but committed by someone else: fails" 1 "$good" "$(git rev-parse HEAD)" "\"bump, not committed by GitHub\": expected"
+git checkout -q -b gh5 "$good"; echo "$RANDOM" >> deps; git add deps
+GIT_COMMITTER_NAME=GitHub GIT_COMMITTER_EMAIL=noreply@github.com git -c user.signingkey="$gh_fpr" commit -q -S -m "a person's commit, signed with GitHub's key"
+expect "GitHub's signature on a commit the bot did not author: still needs a sign-off, fails" 1 "$good" "$(git rev-parse HEAD)" "the sign-off is missing"
+unset DCO_GITHUB_KEY DCO_GITHUB_FPR GNUPGHOME
+EXEMPT="$BOT"
+
+# the real commit this exemption was written for: the dependency bot's tooling update, signed by
+# GitHub, checked with the key and fingerprint the checker ships with
+repo="$(git -C "$here" rev-parse --show-toplevel)"
+real=ac4977f4f0a5
+if git -C "$repo" cat-file -e "${real}^{commit}" 2>/dev/null; then
+  cd "$repo"; EXEMPT=""
+  expect "ac4977f, the bot's tooling update signed by GitHub: exempt" 0 "${real}^" "$real" "1 bot commit(s) exempt, 0 failure(s)"
+  cd "$tmp"; EXEMPT="$BOT"
+else
+  echo "FAIL: ${real} is not in this checkout; the workflow fetches all history"; fail=$((fail+1))
+fi
+
 # an empty range is the gate failing to run, never a pass
 expect "empty range: exit 2, not a pass" 2 "$good" "$good" "no commits in"
 

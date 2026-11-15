@@ -18,10 +18,20 @@
 #     when the caller sets DCO_EXEMPT_AUTHOR_EMAIL (the workflow does so for a pull request opened
 #     by the dependency bot, whose identity GitHub sets, not the commit) is a commit by exactly that
 #     author email exempt.
+#   - a commit the dependency bot made on GitHub is exempt on any pull request, because GitHub signs it:
+#     its author is exactly `dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>`, its
+#     committer exactly `GitHub <noreply@github.com>`, and its signature verifies against GitHub's
+#     published commit-signing key (.github/keys/github-web-flow.asc, from https://github.com/web-flow.gpg)
+#     with the pinned fingerprint below. Such a commit reaches a release pull request through the bot's
+#     own merged pull request, and the bot signs off as `<support@github.com>`, which names neither its
+#     author nor its committer. The author and committer fields alone prove nothing; the signature is
+#     what a writer cannot forge.
 #   - otherwise at least one `Signed-off-by: Name <email>` line must match, case-insensitively,
 #     a name from {author, committer} and an email from {author, committer}
 #
 # Usage: [DCO_EXEMPT_AUTHOR_EMAIL=<email>] dco-check.sh <base-rev> <head-rev>
+# DCO_GITHUB_KEY and DCO_GITHUB_FPR override the signing key file and its pinned fingerprint; only the
+# checker's own test sets them.
 # Exit 0 when every required commit is signed. Exit 1 naming each commit that is not. Exit 2 when
 # the range is empty, because a pull request always has at least one commit and an empty range
 # means the checkout did not fetch it: that is the gate failing to run, and it must not read as a
@@ -29,6 +39,25 @@
 set -euo pipefail
 
 base="${1:?base rev}"; head="${2:?head rev}"
+
+here="$(cd "$(dirname "$0")" && pwd)"
+DEPENDABOT_NAME='dependabot[bot]'; DEPENDABOT_EMAIL='49699333+dependabot[bot]@users.noreply.github.com'
+GITHUB_KEY="${DCO_GITHUB_KEY:-$here/../keys/github-web-flow.asc}"
+GITHUB_FPR="${DCO_GITHUB_FPR:-968479A1AFF927E37D1A566BB5690EEEBB952194}"
+gnupg=""; trap '[ -z "$gnupg" ] || rm -rf "$gnupg"' EXIT
+
+# signed_by_github <sha>: the dependency bot's commit, made and signed by GitHub with the pinned key.
+signed_by_github() {
+  [ "$an" = "$DEPENDABOT_NAME" ] && [ "$ae" = "$DEPENDABOT_EMAIL" ] \
+    && [ "$cn" = "GitHub" ] && [ "$ce" = "noreply@github.com" ] || return 1
+  if [ -z "$gnupg" ]; then
+    gnupg=$(mktemp -d)
+    gpg --homedir "$gnupg" --batch --quiet --import "$GITHUB_KEY" 2>/dev/null || return 1
+  fi
+  local status fpr
+  read -r status fpr < <(GNUPGHOME="$gnupg" git log -1 --format='%G? %GF' "$1") || return 1
+  { [ "$status" = "G" ] || [ "$status" = "U" ]; } && [ "$fpr" = "$GITHUB_FPR" ]
+}
 
 all=$(git rev-list "${base}..${head}")
 if [ -z "$all" ]; then
@@ -55,6 +84,9 @@ while read -r sha; do
 
   exempt_l=$(printf '%s' "${DCO_EXEMPT_AUTHOR_EMAIL:-}" | tr '[:upper:]' '[:lower:]')
   if [ -n "$exempt_l" ] && [ "$(printf '%s' "$ae" | tr '[:upper:]' '[:lower:]')" = "$exempt_l" ]; then
+    bots=$((bots + 1)); continue
+  fi
+  if signed_by_github "$sha"; then
     bots=$((bots + 1)); continue
   fi
 
