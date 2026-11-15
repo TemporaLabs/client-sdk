@@ -1,0 +1,45 @@
+name: CI TypeScript
+
+# The npm package in typescript/: its generation check, typecheck, tests and the client-pack check, on every push to
+# a version branch (vX.Y.Z or release/vX.Y.Z) or main and on every pull request into one. The checks that cover the
+# whole repository are in ci-repo.yml. This workflow publishes nothing.
+on:
+  push:
+    branches: [main, 'v[0-9]+.[0-9]+.[0-9]+', 'release/v[0-9]+.[0-9]+.[0-9]+']
+  pull_request:
+    branches: [main, 'v[0-9]+.[0-9]+.[0-9]+', 'release/v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-typescript-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typescript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: typescript
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: typescript/.nvmrc
+          cache: npm
+          cache-dependency-path: typescript/package-lock.json
+      - name: Install from the lockfile, with no install scripts
+        run: npm ci --ignore-scripts
+      - name: The generated client matches the API document
+        run: npm run check:generated
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Tests (one worker)
+        run: npm test
+      - name: The client package packs clean and installs in a clean project
+        run: npm run check:client-pack

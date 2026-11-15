@@ -1,7 +1,57 @@
 # Changelog
 
-All notable changes to `@temporalabs/client` are recorded here. The format follows
+All notable changes to `@temporalabs/client` and `temporalabs-client` are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+
+- **`temporalabs-client`, the Python client** (`python/`, imported as `temporalabs_client`), generated from the same
+  `spec/` as the TypeScript client by its own generator, `python/scripts/generate.py`, which refuses the same
+  documents. It makes the same calls with the same results: `create_client` and, in `temporalabs_client.mcp`,
+  `create_mcp_client`, `tool_breaks`, `TOOLS` and `RELEASED`; `sign_in` and `with_owner_retry`; `check_step`,
+  `check_steps`, `check_portfolio_deposit` and `check_portfolio_withdrawal`. Every call returns `Ok` or `Err` and
+  never raises for an API or network problem; answers are pydantic models with the API's own field names. It needs
+  Python 3.13 and depends on `httpx` and `pydantic` 2.14. It installs from this repository at a
+  release tag; it is not on PyPI.
+- **One verdict for both clients:** `cases/answers.json` lists answers to accept and to refuse for every named shape,
+  every call and every product read, and the error each error body reads as. The test suites of both clients read
+  it, so the two cannot drift apart on what they accept.
+- `vault.shareSymbol` on a vault product: the vault's share ticker, as the API returns it.
+- `depositAssets` on a product: the tokens it takes for a deposit, each with its chain, address and decimals.
+- A product can be named by its id, its share ticker, its vault address, or that address with its chain
+  (`eip155:<chain>:<address>`), wherever a call takes a product (`ProductRef`), and in the MCP `product` tool.
+- **`next` on every request answer** (`deposit`, `withdraw`, `status`, `status_lookup`, `submit`, `cancel`): what to
+  do now, one of `send`, `sign`, `sign_again`, `hand_back`, `wait`, `done`, `failed`, `cancelled` or `expired`, each
+  with its own fields. A kind a newer API adds still reads, with `kind` as a plain string.
+- `broadcast` on a step: what the wallet said of an attempt handed back without a hash (`unknown` or `declined`).
+- `deposit.approval` on a quote: whether the deposit would first ask the wallet to approve, and for exactly how
+  much, or null when the allowance could not be read.
+- **`chains`**, the call and the MCP tool (`GET /v1/chains`): every chain a product is on, with its CAIP-2 id, short
+  name, display name and block explorer.
+- An amount to deposit, withdraw or quote can be given as a decimal `value` in the token's units (`100.5`) instead
+  of `raw` (`AmountInput`). Amounts in answers also carry `value`, the same amount as a decimal string, for display.
+
+### Changed
+
+- **The MCP client names itself by its own package and version.** `clientInfo` was the npm package name with the
+  API version; it is now each package's own name and version (`@temporalabs/client` or `temporalabs-client`, and
+  `0.1.1`).
+- **An MCP call never throws for what it was given.** An input that is not an object (`null`, a string), or a `path`
+  or `query` that is not one, is read as empty instead of raising, and a string is never spread into the tool's
+  arguments.
+- **The client needs Node.js 22 or later** (`engines.node` is `>=22`, was `>=20.3`). Node.js 20 is past its end
+  of life. The built files are unchanged.
+- The package is built and type-checked with TypeScript 6.0.3, and its tests with `@types/node` 22.20.5. The
+  built files are byte-identical to the TypeScript 7 build.
+- `spec/` is the API 0.1.3 document as released, and `API_VERSION` is `0.1.3`.
+- `vault.shareSymbol`, a request's `next` and a quote's `deposit.approval` are required, as the API document says,
+  so this client reads such an answer from an API older than 0.1.3 as `unreadable_answer`. Use it with an API at
+  0.1.3 or later.
+- The repository holds one folder per language. The npm package moved to `typescript/`; the API document
+  (`spec/`) and shared test fixtures (`cases/`) stay at the root. The published files are unchanged apart from
+  `package.json` (`repository.directory`, script paths) and two README links that now point into `typescript/`.
 
 ## [v0.1.0] - 2026-11-15
 

@@ -4,8 +4,8 @@
 
 The client is generated from the Tempora API's own OpenAPI document. `spec/openapi.json` is a copy of
 that document, taken at an API release, and `spec/SOURCE` records its API version and its sha256.
-`npm run generate` reads it and the API's MCP tool list (`spec/tools.json`). From them it writes `llms.txt`
-and, in `src/generated/`, the types, the answer schemas and the MCP tool list. Nothing in `src/generated/` is
+`npm run generate` reads it and the API's MCP tool list (`spec/tools.json`). From them it writes `typescript/llms.txt`
+and, in `typescript/src/generated/`, the types, the answer schemas and the MCP tool list. Nothing in `typescript/src/generated/` is
 written by hand. The checks fail if the document does not match `spec/SOURCE`, or if the generated files
 differ from what the document produces.
 
@@ -45,6 +45,7 @@ speaks; the package version says which release of the client it is. Before `1.0.
 | client | speaks the Tempora API |
 |---|---|
 | `0.1.0` | `0.1.2` |
+| `0.1.1` | `0.1.3` |
 
 ## Release tags
 

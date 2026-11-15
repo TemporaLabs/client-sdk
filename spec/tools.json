@@ -1,5 +1,5 @@
 {
-  "version": "0.1.2",
+  "version": "0.1.3",
   "tools": [
     {
       "name": "products",
@@ -119,6 +119,43 @@
                     "token"
                   ],
                   "additionalProperties": false
+                },
+                "depositAssets": {
+                  "description": "Each coin a deposit takes, on each chain: the contract address and decimals a deposit's transfer is checked against. `symbol` is exactly a string in `tokens` (and `defaults.token`), `chain` is exactly one in `chains`, `address` is checksummed (EIP-55), and `assetId` is the same coin in CAIP-19. A token with no entry is not one a deposit can be made in. It names deposit coins only, not what a withdrawal pays out in.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "symbol": {
+                        "type": "string",
+                        "pattern": "^[A-Z][A-Z0-9]{1,11}$"
+                      },
+                      "chain": {
+                        "type": "string",
+                        "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$"
+                      },
+                      "address": {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-fA-F]{40}$"
+                      },
+                      "decimals": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 36
+                      },
+                      "assetId": {
+                        "type": "string",
+                        "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}\\/[-a-z0-9]{3,8}:[-.%a-zA-Z0-9]{1,128}$"
+                      }
+                    },
+                    "required": [
+                      "symbol",
+                      "chain",
+                      "address",
+                      "decimals"
+                    ],
+                    "additionalProperties": false
+                  }
                 },
                 "minimum": {
                   "anyOf": [
@@ -466,6 +503,11 @@
                         }
                       ]
                     },
+                    "shareSymbol": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 32
+                    },
                     "chain": {
                       "type": "string",
                       "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$"
@@ -491,6 +533,7 @@
                   },
                   "required": [
                     "standard",
+                    "shareSymbol",
                     "chain",
                     "vaultAddress",
                     "assetAddress",
@@ -669,8 +712,24 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+              },
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9]{0,31}[A-Z][A-Za-z0-9]{0,31}$"
+              },
+              {
+                "type": "string",
+                "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+              },
+              {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{40}$"
+              }
+            ]
           }
         },
         "required": [
@@ -782,6 +841,43 @@
               "token"
             ],
             "additionalProperties": false
+          },
+          "depositAssets": {
+            "description": "Each coin a deposit takes, on each chain: the contract address and decimals a deposit's transfer is checked against. `symbol` is exactly a string in `tokens` (and `defaults.token`), `chain` is exactly one in `chains`, `address` is checksummed (EIP-55), and `assetId` is the same coin in CAIP-19. A token with no entry is not one a deposit can be made in. It names deposit coins only, not what a withdrawal pays out in.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "symbol": {
+                  "type": "string",
+                  "pattern": "^[A-Z][A-Z0-9]{1,11}$"
+                },
+                "chain": {
+                  "type": "string",
+                  "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$"
+                },
+                "address": {
+                  "type": "string",
+                  "pattern": "^0x[0-9a-fA-F]{40}$"
+                },
+                "decimals": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 36
+                },
+                "assetId": {
+                  "type": "string",
+                  "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}\\/[-a-z0-9]{3,8}:[-.%a-zA-Z0-9]{1,128}$"
+                }
+              },
+              "required": [
+                "symbol",
+                "chain",
+                "address",
+                "decimals"
+              ],
+              "additionalProperties": false
+            }
           },
           "minimum": {
             "anyOf": [
@@ -1129,6 +1225,11 @@
                   }
                 ]
               },
+              "shareSymbol": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
               "chain": {
                 "type": "string",
                 "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$"
@@ -1154,6 +1255,7 @@
             },
             "required": [
               "standard",
+              "shareSymbol",
               "chain",
               "vaultAddress",
               "assetAddress",
@@ -1325,8 +1427,24 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+              },
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9]{0,31}[A-Z][A-Za-z0-9]{0,31}$"
+              },
+              {
+                "type": "string",
+                "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+              },
+              {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{40}$"
+              }
+            ]
           },
           "read": {
             "type": "string",
@@ -1353,7 +1471,7 @@
     },
     {
       "name": "products_route",
-      "description": "Suggest a product for an amount on a chain. A hint only: it moves nothing and admits nothing. amount is a decimal string. Read-only.",
+      "description": "Which product fits an amount on a chain. Routing by amount is not built yet, so it always answers productId null with the reason: choose a vault or portfolio by name. It moves nothing and admits nothing. amount is a decimal string. Read-only.",
       "exposure": "public",
       "inputSchema": {
         "type": "object",
@@ -1403,6 +1521,73 @@
       }
     },
     {
+      "name": "chains",
+      "description": "List the chains Tempora's products are on: each one's CAIP-2 id, short name, display name and block explorer. Read-only.",
+      "exposure": "public",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "chains": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "chainId": {
+                  "type": "string",
+                  "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$",
+                  "description": "The chain as CAIP-2, the same string a product names in `chains` (`eip155:<chain id>`)."
+                },
+                "slug": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "A short lower-case name for the chain, e.g. `base`."
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The chain's display name, e.g. `Base`."
+                },
+                "explorer": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The block explorer's origin, or null when the chain has none. A transaction's page is `{explorer}/tx/{hash}` and an address's is `{explorer}/address/{address}`."
+                }
+              },
+              "required": [
+                "chainId",
+                "slug",
+                "name",
+                "explorer"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Every chain a product of this API is on, each once, by chain id ascending. Testnets are never listed."
+          }
+        },
+        "required": [
+          "chains"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
       "name": "account",
       "description": "Read where the owner stands with one product, and the checks a deposit would meet. Read-only.",
       "exposure": "owner",
@@ -1410,8 +1595,24 @@
         "type": "object",
         "properties": {
           "product": {
-            "type": "string",
-            "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+              },
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9]{0,31}[A-Z][A-Za-z0-9]{0,31}$"
+              },
+              {
+                "type": "string",
+                "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+              },
+              {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{40}$"
+              }
+            ]
           }
         },
         "required": [
@@ -1731,8 +1932,24 @@
         "type": "object",
         "properties": {
           "product": {
-            "type": "string",
-            "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+              },
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9]{0,31}[A-Z][A-Za-z0-9]{0,31}$"
+              },
+              {
+                "type": "string",
+                "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+              },
+              {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{40}$"
+              }
+            ]
           }
         },
         "required": [
@@ -2243,8 +2460,24 @@
             "type": "object",
             "properties": {
               "product": {
-                "type": "string",
-                "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]{0,31}[A-Z][A-Za-z0-9]{0,31}$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  }
+                ]
               },
               "action": {
                 "type": "string",
@@ -2269,13 +2502,18 @@
                       "raw": {
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
+                      },
+                      "value": {
+                        "description": "The amount as a decimal string in the token's units (`100.5`), at most as many places as the token has. Exactly one of `raw` and `value`.",
+                        "type": "string",
+                        "pattern": "^(?:[1-9]\\d*(?:\\.\\d{1,18})?|0\\.(?:0{0}[1-9]\\d{0,17}|0{1}[1-9]\\d{0,16}|0{2}[1-9]\\d{0,15}|0{3}[1-9]\\d{0,14}|0{4}[1-9]\\d{0,13}|0{5}[1-9]\\d{0,12}|0{6}[1-9]\\d{0,11}|0{7}[1-9]\\d{0,10}|0{8}[1-9]\\d{0,9}|0{9}[1-9]\\d{0,8}|0{10}[1-9]\\d{0,7}|0{11}[1-9]\\d{0,6}|0{12}[1-9]\\d{0,5}|0{13}[1-9]\\d{0,4}|0{14}[1-9]\\d{0,3}|0{15}[1-9]\\d{0,2}|0{16}[1-9]\\d{0,1}|0{17}[1-9]\\d{0,0}))$"
                       }
                     },
                     "required": [
                       "kind",
-                      "assetId",
-                      "raw"
-                    ]
+                      "assetId"
+                    ],
+                    "description": "An amount of the asset `assetId` names, sized by exactly one of `raw` (the token's smallest unit) or `value`; both, or neither, is refused."
                   },
                   {
                     "type": "object",
@@ -2410,6 +2648,11 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 36
+                      },
+                      "value": {
+                        "description": "The same amount as `raw`, as an exact decimal string in whole units (`raw` scaled by `decimals`). Display only: `raw` is the amount.",
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                       }
                     },
                     "required": [
@@ -2431,6 +2674,11 @@
                             "type": "integer",
                             "minimum": 0,
                             "maximum": 36
+                          },
+                          "value": {
+                            "description": "The same amount as `raw`, as an exact decimal string in whole units (`raw` scaled by `decimals`). Display only: `raw` is the amount.",
+                            "type": "string",
+                            "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                           }
                         },
                         "required": [
@@ -2535,6 +2783,11 @@
                       "raw": {
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
+                      },
+                      "value": {
+                        "description": "The same amount as `raw`, as an exact decimal string in the token's units (`100.5`). Display only: `raw` is the amount.",
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                       }
                     },
                     "required": [
@@ -2626,6 +2879,11 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 36
+                      },
+                      "value": {
+                        "description": "The same amount as `raw`, as an exact decimal string in whole units (`raw` scaled by `decimals`). Display only: `raw` is the amount.",
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                       }
                     },
                     "required": [
@@ -2655,6 +2913,11 @@
                             "type": "integer",
                             "minimum": 0,
                             "maximum": 36
+                          },
+                          "value": {
+                            "description": "The same amount as `raw`, as an exact decimal string in whole units (`raw` scaled by `decimals`). Display only: `raw` is the amount.",
+                            "type": "string",
+                            "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                           }
                         },
                         "required": [
@@ -2714,13 +2977,39 @@
                   "reason"
                 ],
                 "additionalProperties": false
+              },
+              "approval": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "needed": {
+                        "type": "boolean"
+                      },
+                      "amount": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d{0,77})$"
+                      }
+                    },
+                    "required": [
+                      "needed",
+                      "amount"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Whether the deposit would first ask your wallet to approve exactly `amount` (raw, in the asset's decimals), from the allowance at `block`. Null when it could not be read. Advice: the deposit request's steps decide."
               }
             },
             "required": [
               "amount",
               "expectedShares",
               "sharePrice",
-              "check"
+              "check",
+              "approval"
             ],
             "additionalProperties": false
           }
@@ -2752,8 +3041,24 @@
             "type": "object",
             "properties": {
               "product": {
-                "type": "string",
-                "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]{0,31}[A-Z][A-Za-z0-9]{0,31}$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  }
+                ]
               },
               "amount": {
                 "oneOf": [
@@ -2771,13 +3076,18 @@
                       "raw": {
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
+                      },
+                      "value": {
+                        "description": "The amount as a decimal string in the token's units (`100.5`), at most as many places as the token has. Exactly one of `raw` and `value`.",
+                        "type": "string",
+                        "pattern": "^(?:[1-9]\\d*(?:\\.\\d{1,18})?|0\\.(?:0{0}[1-9]\\d{0,17}|0{1}[1-9]\\d{0,16}|0{2}[1-9]\\d{0,15}|0{3}[1-9]\\d{0,14}|0{4}[1-9]\\d{0,13}|0{5}[1-9]\\d{0,12}|0{6}[1-9]\\d{0,11}|0{7}[1-9]\\d{0,10}|0{8}[1-9]\\d{0,9}|0{9}[1-9]\\d{0,8}|0{10}[1-9]\\d{0,7}|0{11}[1-9]\\d{0,6}|0{12}[1-9]\\d{0,5}|0{13}[1-9]\\d{0,4}|0{14}[1-9]\\d{0,3}|0{15}[1-9]\\d{0,2}|0{16}[1-9]\\d{0,1}|0{17}[1-9]\\d{0,0}))$"
                       }
                     },
                     "required": [
                       "kind",
-                      "assetId",
-                      "raw"
-                    ]
+                      "assetId"
+                    ],
+                    "description": "An amount of the asset `assetId` names, sized by exactly one of `raw` (the token's smallest unit) or `value`; both, or neither, is refused."
                   },
                   {
                     "type": "object",
@@ -3022,6 +3332,11 @@
                       "raw": {
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
+                      },
+                      "value": {
+                        "description": "The same amount as `raw`, as an exact decimal string in the token's units (`100.5`). Display only: `raw` is the amount.",
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                       }
                     },
                     "required": [
@@ -3580,6 +3895,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "verification": {
                       "type": "object",
                       "properties": {
@@ -3756,6 +4087,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "payload": {
                       "type": "object",
                       "properties": {
@@ -3923,6 +4270,254 @@
               "state"
             ],
             "additionalProperties": false
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "send"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation"
+                ],
+                "additionalProperties": false,
+                "description": "Send this transaction step now, at this generation. A step the API has a hash for is never `send` again."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign"
+                  },
+                  "stepIds": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^s\\d{1,3}$"
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepIds"
+                ],
+                "additionalProperties": false,
+                "description": "Sign these steps, each as answered (its payload at its own generation); a withdrawal's batches are signed as a group. Only steps still unsigned are listed, never one whose payload is past its own `expiresAt`, and never part of a group none of which was handed back yet."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign_again"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "The API issued this signature step again with a new generation: sign the new payload, never the earlier one."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "hand_back"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Hand this step back: it was sent or attempted, and the API has no good hash for it (a hash handed back that did not match the step, or an attempt whose `broadcast` is not `declined`). Hand back the hash of the transaction that carries it; never send it again. If none was sent, the owner can cancel."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "wait"
+                  },
+                  "retryAfterMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "gate": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "retryAfterMs",
+                  "until"
+                ],
+                "additionalProperties": false,
+                "description": "Something is in flight, or a ready step is not offered now: read the request again after `retryAfterMs`. `until` is the request's `expiresAt`, when the API stops taking hand-backs. When a ready step is held back, `gate`, `code` and `reason` say why, as a refusal of a new request would (`vault-live` / `not_running`: the vault is not taking deposits right now; it is offered again once it is)."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "done"
+                  },
+                  "outcome": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "completed",
+                          "partial"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "outcome"
+                ],
+                "additionalProperties": false,
+                "description": "Finished. `partial`: some of it was done; `leftBehind` says what was not."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "failed"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Finished without success, and the step that failed when one did."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "cancelled"
+                  },
+                  "sent": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "sent"
+                ],
+                "additionalProperties": false,
+                "description": "Cancelled. `sent: false`: nothing of it was sent or submitted."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "expired"
+                  },
+                  "startAgain": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "startAgain"
+                ],
+                "additionalProperties": false,
+                "description": "It ran out with nothing moved: start a new request."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "pattern": "^(?:$|[^shwdfce][\\s\\S]*|s$|s[^ei][\\s\\S]*|se$|se[^n][\\s\\S]*|sen$|sen[^d][\\s\\S]*|send[\\s\\S]+|si$|si[^g][\\s\\S]*|sig$|sig[^n][\\s\\S]*|sign[^_][\\s\\S]*|sign_$|sign_[^a][\\s\\S]*|sign_a$|sign_a[^g][\\s\\S]*|sign_ag$|sign_ag[^a][\\s\\S]*|sign_aga$|sign_aga[^i][\\s\\S]*|sign_agai$|sign_agai[^n][\\s\\S]*|sign_again[\\s\\S]+|h$|h[^a][\\s\\S]*|ha$|ha[^n][\\s\\S]*|han$|han[^d][\\s\\S]*|hand$|hand[^_][\\s\\S]*|hand_$|hand_[^b][\\s\\S]*|hand_b$|hand_b[^a][\\s\\S]*|hand_ba$|hand_ba[^c][\\s\\S]*|hand_bac$|hand_bac[^k][\\s\\S]*|hand_back[\\s\\S]+|w$|w[^a][\\s\\S]*|wa$|wa[^i][\\s\\S]*|wai$|wai[^t][\\s\\S]*|wait[\\s\\S]+|d$|d[^o][\\s\\S]*|do$|do[^n][\\s\\S]*|don$|don[^e][\\s\\S]*|done[\\s\\S]+|f$|f[^a][\\s\\S]*|fa$|fa[^i][\\s\\S]*|fai$|fai[^l][\\s\\S]*|fail$|fail[^e][\\s\\S]*|faile$|faile[^d][\\s\\S]*|failed[\\s\\S]+|c$|c[^a][\\s\\S]*|ca$|ca[^n][\\s\\S]*|can$|can[^c][\\s\\S]*|canc$|canc[^e][\\s\\S]*|cance$|cance[^l][\\s\\S]*|cancel$|cancel[^l][\\s\\S]*|cancell$|cancell[^e][\\s\\S]*|cancelle$|cancelle[^d][\\s\\S]*|cancelled[\\s\\S]+|e$|e[^x][\\s\\S]*|ex$|ex[^p][\\s\\S]*|exp$|exp[^i][\\s\\S]*|expi$|expi[^r][\\s\\S]*|expir$|expir[^e][\\s\\S]*|expire$|expire[^d][\\s\\S]*|expired[\\s\\S]+)$"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": {}
+              }
+            ],
+            "description": "What the app does now. Each payload's `expiresAt` is that signature's or transaction's own lifetime; the request's `expiresAt` is when the API stops taking hand-backs. Error answers carry no `next`."
           }
         },
         "required": [
@@ -3931,7 +4526,8 @@
           "state",
           "chose",
           "expiresAt",
-          "steps"
+          "steps",
+          "next"
         ],
         "additionalProperties": false
       },
@@ -3953,8 +4549,24 @@
             "type": "object",
             "properties": {
               "product": {
-                "type": "string",
-                "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(?:[a-z0-9][a-z0-9-]{0,3}|[a-z0-9][a-z0-9-]{5,63}|[a-qs-z0-9][a-z0-9-]{4}|r[a-np-z0-9-][a-z0-9-]{3}|ro[a-tv-z0-9-][a-z0-9-]{2}|rou[a-su-z0-9-][a-z0-9-]|rout[a-df-z0-9-])$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]{0,31}[A-Z][A-Za-z0-9]{0,31}$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  }
+                ]
               },
               "amount": {
                 "oneOf": [
@@ -3972,13 +4584,18 @@
                       "raw": {
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
+                      },
+                      "value": {
+                        "description": "The amount as a decimal string in the token's units (`100.5`), at most as many places as the token has. Exactly one of `raw` and `value`.",
+                        "type": "string",
+                        "pattern": "^(?:[1-9]\\d*(?:\\.\\d{1,18})?|0\\.(?:0{0}[1-9]\\d{0,17}|0{1}[1-9]\\d{0,16}|0{2}[1-9]\\d{0,15}|0{3}[1-9]\\d{0,14}|0{4}[1-9]\\d{0,13}|0{5}[1-9]\\d{0,12}|0{6}[1-9]\\d{0,11}|0{7}[1-9]\\d{0,10}|0{8}[1-9]\\d{0,9}|0{9}[1-9]\\d{0,8}|0{10}[1-9]\\d{0,7}|0{11}[1-9]\\d{0,6}|0{12}[1-9]\\d{0,5}|0{13}[1-9]\\d{0,4}|0{14}[1-9]\\d{0,3}|0{15}[1-9]\\d{0,2}|0{16}[1-9]\\d{0,1}|0{17}[1-9]\\d{0,0}))$"
                       }
                     },
                     "required": [
                       "kind",
-                      "assetId",
-                      "raw"
-                    ]
+                      "assetId"
+                    ],
+                    "description": "An amount of the asset `assetId` names, sized by exactly one of `raw` (the token's smallest unit) or `value`; both, or neither, is refused."
                   },
                   {
                     "type": "object",
@@ -4130,6 +4747,11 @@
                       "raw": {
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
+                      },
+                      "value": {
+                        "description": "The same amount as `raw`, as an exact decimal string in the token's units (`100.5`). Display only: `raw` is the amount.",
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                       }
                     },
                     "required": [
@@ -4688,6 +5310,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "verification": {
                       "type": "object",
                       "properties": {
@@ -4864,6 +5502,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "payload": {
                       "type": "object",
                       "properties": {
@@ -5031,6 +5685,254 @@
               "state"
             ],
             "additionalProperties": false
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "send"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation"
+                ],
+                "additionalProperties": false,
+                "description": "Send this transaction step now, at this generation. A step the API has a hash for is never `send` again."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign"
+                  },
+                  "stepIds": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^s\\d{1,3}$"
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepIds"
+                ],
+                "additionalProperties": false,
+                "description": "Sign these steps, each as answered (its payload at its own generation); a withdrawal's batches are signed as a group. Only steps still unsigned are listed, never one whose payload is past its own `expiresAt`, and never part of a group none of which was handed back yet."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign_again"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "The API issued this signature step again with a new generation: sign the new payload, never the earlier one."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "hand_back"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Hand this step back: it was sent or attempted, and the API has no good hash for it (a hash handed back that did not match the step, or an attempt whose `broadcast` is not `declined`). Hand back the hash of the transaction that carries it; never send it again. If none was sent, the owner can cancel."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "wait"
+                  },
+                  "retryAfterMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "gate": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "retryAfterMs",
+                  "until"
+                ],
+                "additionalProperties": false,
+                "description": "Something is in flight, or a ready step is not offered now: read the request again after `retryAfterMs`. `until` is the request's `expiresAt`, when the API stops taking hand-backs. When a ready step is held back, `gate`, `code` and `reason` say why, as a refusal of a new request would (`vault-live` / `not_running`: the vault is not taking deposits right now; it is offered again once it is)."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "done"
+                  },
+                  "outcome": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "completed",
+                          "partial"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "outcome"
+                ],
+                "additionalProperties": false,
+                "description": "Finished. `partial`: some of it was done; `leftBehind` says what was not."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "failed"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Finished without success, and the step that failed when one did."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "cancelled"
+                  },
+                  "sent": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "sent"
+                ],
+                "additionalProperties": false,
+                "description": "Cancelled. `sent: false`: nothing of it was sent or submitted."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "expired"
+                  },
+                  "startAgain": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "startAgain"
+                ],
+                "additionalProperties": false,
+                "description": "It ran out with nothing moved: start a new request."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "pattern": "^(?:$|[^shwdfce][\\s\\S]*|s$|s[^ei][\\s\\S]*|se$|se[^n][\\s\\S]*|sen$|sen[^d][\\s\\S]*|send[\\s\\S]+|si$|si[^g][\\s\\S]*|sig$|sig[^n][\\s\\S]*|sign[^_][\\s\\S]*|sign_$|sign_[^a][\\s\\S]*|sign_a$|sign_a[^g][\\s\\S]*|sign_ag$|sign_ag[^a][\\s\\S]*|sign_aga$|sign_aga[^i][\\s\\S]*|sign_agai$|sign_agai[^n][\\s\\S]*|sign_again[\\s\\S]+|h$|h[^a][\\s\\S]*|ha$|ha[^n][\\s\\S]*|han$|han[^d][\\s\\S]*|hand$|hand[^_][\\s\\S]*|hand_$|hand_[^b][\\s\\S]*|hand_b$|hand_b[^a][\\s\\S]*|hand_ba$|hand_ba[^c][\\s\\S]*|hand_bac$|hand_bac[^k][\\s\\S]*|hand_back[\\s\\S]+|w$|w[^a][\\s\\S]*|wa$|wa[^i][\\s\\S]*|wai$|wai[^t][\\s\\S]*|wait[\\s\\S]+|d$|d[^o][\\s\\S]*|do$|do[^n][\\s\\S]*|don$|don[^e][\\s\\S]*|done[\\s\\S]+|f$|f[^a][\\s\\S]*|fa$|fa[^i][\\s\\S]*|fai$|fai[^l][\\s\\S]*|fail$|fail[^e][\\s\\S]*|faile$|faile[^d][\\s\\S]*|failed[\\s\\S]+|c$|c[^a][\\s\\S]*|ca$|ca[^n][\\s\\S]*|can$|can[^c][\\s\\S]*|canc$|canc[^e][\\s\\S]*|cance$|cance[^l][\\s\\S]*|cancel$|cancel[^l][\\s\\S]*|cancell$|cancell[^e][\\s\\S]*|cancelle$|cancelle[^d][\\s\\S]*|cancelled[\\s\\S]+|e$|e[^x][\\s\\S]*|ex$|ex[^p][\\s\\S]*|exp$|exp[^i][\\s\\S]*|expi$|expi[^r][\\s\\S]*|expir$|expir[^e][\\s\\S]*|expire$|expire[^d][\\s\\S]*|expired[\\s\\S]+)$"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": {}
+              }
+            ],
+            "description": "What the app does now. Each payload's `expiresAt` is that signature's or transaction's own lifetime; the request's `expiresAt` is when the API stops taking hand-backs. Error answers carry no `next`."
           }
         },
         "required": [
@@ -5039,7 +5941,8 @@
           "state",
           "chose",
           "expiresAt",
-          "steps"
+          "steps",
+          "next"
         ],
         "additionalProperties": false
       },
@@ -5267,6 +6170,11 @@
                       "raw": {
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
+                      },
+                      "value": {
+                        "description": "The same amount as `raw`, as an exact decimal string in the token's units (`100.5`). Display only: `raw` is the amount.",
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                       }
                     },
                     "required": [
@@ -5825,6 +6733,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "verification": {
                       "type": "object",
                       "properties": {
@@ -6001,6 +6925,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "payload": {
                       "type": "object",
                       "properties": {
@@ -6168,6 +7108,254 @@
               "state"
             ],
             "additionalProperties": false
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "send"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation"
+                ],
+                "additionalProperties": false,
+                "description": "Send this transaction step now, at this generation. A step the API has a hash for is never `send` again."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign"
+                  },
+                  "stepIds": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^s\\d{1,3}$"
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepIds"
+                ],
+                "additionalProperties": false,
+                "description": "Sign these steps, each as answered (its payload at its own generation); a withdrawal's batches are signed as a group. Only steps still unsigned are listed, never one whose payload is past its own `expiresAt`, and never part of a group none of which was handed back yet."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign_again"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "The API issued this signature step again with a new generation: sign the new payload, never the earlier one."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "hand_back"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Hand this step back: it was sent or attempted, and the API has no good hash for it (a hash handed back that did not match the step, or an attempt whose `broadcast` is not `declined`). Hand back the hash of the transaction that carries it; never send it again. If none was sent, the owner can cancel."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "wait"
+                  },
+                  "retryAfterMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "gate": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "retryAfterMs",
+                  "until"
+                ],
+                "additionalProperties": false,
+                "description": "Something is in flight, or a ready step is not offered now: read the request again after `retryAfterMs`. `until` is the request's `expiresAt`, when the API stops taking hand-backs. When a ready step is held back, `gate`, `code` and `reason` say why, as a refusal of a new request would (`vault-live` / `not_running`: the vault is not taking deposits right now; it is offered again once it is)."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "done"
+                  },
+                  "outcome": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "completed",
+                          "partial"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "outcome"
+                ],
+                "additionalProperties": false,
+                "description": "Finished. `partial`: some of it was done; `leftBehind` says what was not."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "failed"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Finished without success, and the step that failed when one did."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "cancelled"
+                  },
+                  "sent": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "sent"
+                ],
+                "additionalProperties": false,
+                "description": "Cancelled. `sent: false`: nothing of it was sent or submitted."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "expired"
+                  },
+                  "startAgain": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "startAgain"
+                ],
+                "additionalProperties": false,
+                "description": "It ran out with nothing moved: start a new request."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "pattern": "^(?:$|[^shwdfce][\\s\\S]*|s$|s[^ei][\\s\\S]*|se$|se[^n][\\s\\S]*|sen$|sen[^d][\\s\\S]*|send[\\s\\S]+|si$|si[^g][\\s\\S]*|sig$|sig[^n][\\s\\S]*|sign[^_][\\s\\S]*|sign_$|sign_[^a][\\s\\S]*|sign_a$|sign_a[^g][\\s\\S]*|sign_ag$|sign_ag[^a][\\s\\S]*|sign_aga$|sign_aga[^i][\\s\\S]*|sign_agai$|sign_agai[^n][\\s\\S]*|sign_again[\\s\\S]+|h$|h[^a][\\s\\S]*|ha$|ha[^n][\\s\\S]*|han$|han[^d][\\s\\S]*|hand$|hand[^_][\\s\\S]*|hand_$|hand_[^b][\\s\\S]*|hand_b$|hand_b[^a][\\s\\S]*|hand_ba$|hand_ba[^c][\\s\\S]*|hand_bac$|hand_bac[^k][\\s\\S]*|hand_back[\\s\\S]+|w$|w[^a][\\s\\S]*|wa$|wa[^i][\\s\\S]*|wai$|wai[^t][\\s\\S]*|wait[\\s\\S]+|d$|d[^o][\\s\\S]*|do$|do[^n][\\s\\S]*|don$|don[^e][\\s\\S]*|done[\\s\\S]+|f$|f[^a][\\s\\S]*|fa$|fa[^i][\\s\\S]*|fai$|fai[^l][\\s\\S]*|fail$|fail[^e][\\s\\S]*|faile$|faile[^d][\\s\\S]*|failed[\\s\\S]+|c$|c[^a][\\s\\S]*|ca$|ca[^n][\\s\\S]*|can$|can[^c][\\s\\S]*|canc$|canc[^e][\\s\\S]*|cance$|cance[^l][\\s\\S]*|cancel$|cancel[^l][\\s\\S]*|cancell$|cancell[^e][\\s\\S]*|cancelle$|cancelle[^d][\\s\\S]*|cancelled[\\s\\S]+|e$|e[^x][\\s\\S]*|ex$|ex[^p][\\s\\S]*|exp$|exp[^i][\\s\\S]*|expi$|expi[^r][\\s\\S]*|expir$|expir[^e][\\s\\S]*|expire$|expire[^d][\\s\\S]*|expired[\\s\\S]+)$"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": {}
+              }
+            ],
+            "description": "What the app does now. Each payload's `expiresAt` is that signature's or transaction's own lifetime; the request's `expiresAt` is when the API stops taking hand-backs. Error answers carry no `next`."
           }
         },
         "required": [
@@ -6176,7 +7364,8 @@
           "state",
           "chose",
           "expiresAt",
-          "steps"
+          "steps",
+          "next"
         ],
         "additionalProperties": false
       },
@@ -6287,6 +7476,11 @@
                       "raw": {
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
+                      },
+                      "value": {
+                        "description": "The same amount as `raw`, as an exact decimal string in the token's units (`100.5`). Display only: `raw` is the amount.",
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                       }
                     },
                     "required": [
@@ -6845,6 +8039,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "verification": {
                       "type": "object",
                       "properties": {
@@ -7021,6 +8231,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "payload": {
                       "type": "object",
                       "properties": {
@@ -7188,6 +8414,254 @@
               "state"
             ],
             "additionalProperties": false
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "send"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation"
+                ],
+                "additionalProperties": false,
+                "description": "Send this transaction step now, at this generation. A step the API has a hash for is never `send` again."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign"
+                  },
+                  "stepIds": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^s\\d{1,3}$"
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepIds"
+                ],
+                "additionalProperties": false,
+                "description": "Sign these steps, each as answered (its payload at its own generation); a withdrawal's batches are signed as a group. Only steps still unsigned are listed, never one whose payload is past its own `expiresAt`, and never part of a group none of which was handed back yet."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign_again"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "The API issued this signature step again with a new generation: sign the new payload, never the earlier one."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "hand_back"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Hand this step back: it was sent or attempted, and the API has no good hash for it (a hash handed back that did not match the step, or an attempt whose `broadcast` is not `declined`). Hand back the hash of the transaction that carries it; never send it again. If none was sent, the owner can cancel."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "wait"
+                  },
+                  "retryAfterMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "gate": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "retryAfterMs",
+                  "until"
+                ],
+                "additionalProperties": false,
+                "description": "Something is in flight, or a ready step is not offered now: read the request again after `retryAfterMs`. `until` is the request's `expiresAt`, when the API stops taking hand-backs. When a ready step is held back, `gate`, `code` and `reason` say why, as a refusal of a new request would (`vault-live` / `not_running`: the vault is not taking deposits right now; it is offered again once it is)."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "done"
+                  },
+                  "outcome": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "completed",
+                          "partial"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "outcome"
+                ],
+                "additionalProperties": false,
+                "description": "Finished. `partial`: some of it was done; `leftBehind` says what was not."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "failed"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Finished without success, and the step that failed when one did."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "cancelled"
+                  },
+                  "sent": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "sent"
+                ],
+                "additionalProperties": false,
+                "description": "Cancelled. `sent: false`: nothing of it was sent or submitted."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "expired"
+                  },
+                  "startAgain": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "startAgain"
+                ],
+                "additionalProperties": false,
+                "description": "It ran out with nothing moved: start a new request."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "pattern": "^(?:$|[^shwdfce][\\s\\S]*|s$|s[^ei][\\s\\S]*|se$|se[^n][\\s\\S]*|sen$|sen[^d][\\s\\S]*|send[\\s\\S]+|si$|si[^g][\\s\\S]*|sig$|sig[^n][\\s\\S]*|sign[^_][\\s\\S]*|sign_$|sign_[^a][\\s\\S]*|sign_a$|sign_a[^g][\\s\\S]*|sign_ag$|sign_ag[^a][\\s\\S]*|sign_aga$|sign_aga[^i][\\s\\S]*|sign_agai$|sign_agai[^n][\\s\\S]*|sign_again[\\s\\S]+|h$|h[^a][\\s\\S]*|ha$|ha[^n][\\s\\S]*|han$|han[^d][\\s\\S]*|hand$|hand[^_][\\s\\S]*|hand_$|hand_[^b][\\s\\S]*|hand_b$|hand_b[^a][\\s\\S]*|hand_ba$|hand_ba[^c][\\s\\S]*|hand_bac$|hand_bac[^k][\\s\\S]*|hand_back[\\s\\S]+|w$|w[^a][\\s\\S]*|wa$|wa[^i][\\s\\S]*|wai$|wai[^t][\\s\\S]*|wait[\\s\\S]+|d$|d[^o][\\s\\S]*|do$|do[^n][\\s\\S]*|don$|don[^e][\\s\\S]*|done[\\s\\S]+|f$|f[^a][\\s\\S]*|fa$|fa[^i][\\s\\S]*|fai$|fai[^l][\\s\\S]*|fail$|fail[^e][\\s\\S]*|faile$|faile[^d][\\s\\S]*|failed[\\s\\S]+|c$|c[^a][\\s\\S]*|ca$|ca[^n][\\s\\S]*|can$|can[^c][\\s\\S]*|canc$|canc[^e][\\s\\S]*|cance$|cance[^l][\\s\\S]*|cancel$|cancel[^l][\\s\\S]*|cancell$|cancell[^e][\\s\\S]*|cancelle$|cancelle[^d][\\s\\S]*|cancelled[\\s\\S]+|e$|e[^x][\\s\\S]*|ex$|ex[^p][\\s\\S]*|exp$|exp[^i][\\s\\S]*|expi$|expi[^r][\\s\\S]*|expir$|expir[^e][\\s\\S]*|expire$|expire[^d][\\s\\S]*|expired[\\s\\S]+)$"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": {}
+              }
+            ],
+            "description": "What the app does now. Each payload's `expiresAt` is that signature's or transaction's own lifetime; the request's `expiresAt` is when the API stops taking hand-backs. Error answers carry no `next`."
           }
         },
         "required": [
@@ -7196,7 +8670,8 @@
           "state",
           "chose",
           "expiresAt",
-          "steps"
+          "steps",
+          "next"
         ],
         "additionalProperties": false
       },
@@ -7296,6 +8771,11 @@
                       "raw": {
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
+                      },
+                      "value": {
+                        "description": "The same amount as `raw`, as an exact decimal string in the token's units (`100.5`). Display only: `raw` is the amount.",
+                        "type": "string",
+                        "pattern": "^(0|[1-9]\\d*)(\\.\\d{0,77}[1-9])?$"
                       }
                     },
                     "required": [
@@ -7854,6 +9334,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "verification": {
                       "type": "object",
                       "properties": {
@@ -8030,6 +9526,22 @@
                     "attemptId": {
                       "type": "string"
                     },
+                    "broadcast": {
+                      "description": "What the wallet said of the attempt `attemptId` names, handed back without a hash. `unknown`: it may have gone out, so the step is never sent again, only handed back. `declined`: nothing went out. Absent when no attempt was handed back.",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "declined"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
                     "payload": {
                       "type": "object",
                       "properties": {
@@ -8197,6 +9709,254 @@
               "state"
             ],
             "additionalProperties": false
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "send"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation"
+                ],
+                "additionalProperties": false,
+                "description": "Send this transaction step now, at this generation. A step the API has a hash for is never `send` again."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign"
+                  },
+                  "stepIds": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^s\\d{1,3}$"
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepIds"
+                ],
+                "additionalProperties": false,
+                "description": "Sign these steps, each as answered (its payload at its own generation); a withdrawal's batches are signed as a group. Only steps still unsigned are listed, never one whose payload is past its own `expiresAt`, and never part of a group none of which was handed back yet."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sign_again"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "generation": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "generation",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "The API issued this signature step again with a new generation: sign the new payload, never the earlier one."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "hand_back"
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "stepId",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Hand this step back: it was sent or attempted, and the API has no good hash for it (a hash handed back that did not match the step, or an attempt whose `broadcast` is not `declined`). Hand back the hash of the transaction that carries it; never send it again. If none was sent, the owner can cancel."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "wait"
+                  },
+                  "retryAfterMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "until": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "gate": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "retryAfterMs",
+                  "until"
+                ],
+                "additionalProperties": false,
+                "description": "Something is in flight, or a ready step is not offered now: read the request again after `retryAfterMs`. `until` is the request's `expiresAt`, when the API stops taking hand-backs. When a ready step is held back, `gate`, `code` and `reason` say why, as a refusal of a new request would (`vault-live` / `not_running`: the vault is not taking deposits right now; it is offered again once it is)."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "done"
+                  },
+                  "outcome": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "completed",
+                          "partial"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "outcome"
+                ],
+                "additionalProperties": false,
+                "description": "Finished. `partial`: some of it was done; `leftBehind` says what was not."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "failed"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "stepId": {
+                    "type": "string",
+                    "pattern": "^s\\d{1,3}$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "description": "Finished without success, and the step that failed when one did."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "cancelled"
+                  },
+                  "sent": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "sent"
+                ],
+                "additionalProperties": false,
+                "description": "Cancelled. `sent: false`: nothing of it was sent or submitted."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "expired"
+                  },
+                  "startAgain": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "startAgain"
+                ],
+                "additionalProperties": false,
+                "description": "It ran out with nothing moved: start a new request."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "pattern": "^(?:$|[^shwdfce][\\s\\S]*|s$|s[^ei][\\s\\S]*|se$|se[^n][\\s\\S]*|sen$|sen[^d][\\s\\S]*|send[\\s\\S]+|si$|si[^g][\\s\\S]*|sig$|sig[^n][\\s\\S]*|sign[^_][\\s\\S]*|sign_$|sign_[^a][\\s\\S]*|sign_a$|sign_a[^g][\\s\\S]*|sign_ag$|sign_ag[^a][\\s\\S]*|sign_aga$|sign_aga[^i][\\s\\S]*|sign_agai$|sign_agai[^n][\\s\\S]*|sign_again[\\s\\S]+|h$|h[^a][\\s\\S]*|ha$|ha[^n][\\s\\S]*|han$|han[^d][\\s\\S]*|hand$|hand[^_][\\s\\S]*|hand_$|hand_[^b][\\s\\S]*|hand_b$|hand_b[^a][\\s\\S]*|hand_ba$|hand_ba[^c][\\s\\S]*|hand_bac$|hand_bac[^k][\\s\\S]*|hand_back[\\s\\S]+|w$|w[^a][\\s\\S]*|wa$|wa[^i][\\s\\S]*|wai$|wai[^t][\\s\\S]*|wait[\\s\\S]+|d$|d[^o][\\s\\S]*|do$|do[^n][\\s\\S]*|don$|don[^e][\\s\\S]*|done[\\s\\S]+|f$|f[^a][\\s\\S]*|fa$|fa[^i][\\s\\S]*|fai$|fai[^l][\\s\\S]*|fail$|fail[^e][\\s\\S]*|faile$|faile[^d][\\s\\S]*|failed[\\s\\S]+|c$|c[^a][\\s\\S]*|ca$|ca[^n][\\s\\S]*|can$|can[^c][\\s\\S]*|canc$|canc[^e][\\s\\S]*|cance$|cance[^l][\\s\\S]*|cancel$|cancel[^l][\\s\\S]*|cancell$|cancell[^e][\\s\\S]*|cancelle$|cancelle[^d][\\s\\S]*|cancelled[\\s\\S]+|e$|e[^x][\\s\\S]*|ex$|ex[^p][\\s\\S]*|exp$|exp[^i][\\s\\S]*|expi$|expi[^r][\\s\\S]*|expir$|expir[^e][\\s\\S]*|expire$|expire[^d][\\s\\S]*|expired[\\s\\S]+)$"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": {}
+              }
+            ],
+            "description": "What the app does now. Each payload's `expiresAt` is that signature's or transaction's own lifetime; the request's `expiresAt` is when the API stops taking hand-backs. Error answers carry no `next`."
           }
         },
         "required": [
@@ -8205,7 +9965,8 @@
           "state",
           "chose",
           "expiresAt",
-          "steps"
+          "steps",
+          "next"
         ],
         "additionalProperties": false
       },

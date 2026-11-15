@@ -1,0 +1,42 @@
+name: CI repository
+
+# The checks that cover the whole repository rather than one package: the API document against its recorded
+# source, the LICENSE and NOTICE copies in each package folder, and the text scan of every tracked file and every
+# commit message. On every push to a version branch (vX.Y.Z or release/vX.Y.Z) or main and on every pull request
+# into one. This workflow publishes nothing and installs nothing.
+on:
+  push:
+    branches: [main, 'v[0-9]+.[0-9]+.[0-9]+', 'release/v[0-9]+.[0-9]+.[0-9]+']
+  pull_request:
+    branches: [main, 'v[0-9]+.[0-9]+.[0-9]+', 'release/v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-repo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: typescript/.nvmrc
+      - name: The API document matches its recorded source
+        run: node scripts/check-source.mjs
+      - name: Each package's LICENSE and NOTICE match the root
+        run: node scripts/check-copies.mjs
+      - name: Text scan of every tracked file
+        run: node scripts/public-text/scan.mjs --tracked
+      - name: Text scan of every commit message
+        # A merge or squash title carries this repository's own pull-request number ("Merge pull request #N ...",
+        # "<subject> (#N)"); the scan drops that number from the subject line alone and scans everything else.
+        run: node scripts/public-text/scan.mjs --commits
