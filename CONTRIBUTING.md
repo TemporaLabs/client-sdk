@@ -18,7 +18,7 @@ here is to the hand-written client in `typescript/src/` (every file outside `typ
 ## Before you open a pull request
 
 Work with the Node.js version in `typescript/.nvmrc` (22). The generator and checks need Node.js 22.6 or later, since they
-run TypeScript directly with `--experimental-strip-types`. The `engines` range in `typescript/package.json` (20.3 or later) is
+run TypeScript directly with `--experimental-strip-types`. The `engines` range in `typescript/package.json` (22 or later) is
 for the published client, not for these scripts.
 
 `npm run check`, run in `typescript/`, must pass. It runs the source and generation checks, the typecheck, the

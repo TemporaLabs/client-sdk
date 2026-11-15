@@ -6,7 +6,7 @@
 npm install @temporalabs/client
 ```
 
-The client needs Node.js 20.3 or later (`engines` in `typescript/package.json`) and is an ES module. It has one runtime
+The client needs Node.js 22 or later (`engines` in `typescript/package.json`) and is an ES module. It has one runtime
 dependency, `zod`, which npm installs with it, and no install scripts. Pin an exact version: before `1.0.0`
 a minor version may change the client's interface (see [Versioning](versioning.md#version-numbers)).
 

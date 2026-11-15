@@ -31,7 +31,7 @@ owner asked for. Your code then hands the signed result back.
 npm install @temporalabs/client
 ```
 
-It needs Node.js 20.3 or later and is an ES module: load it with `import` (`require()` works only on Node.js versions that can load ES modules). It has one runtime dependency (zod) and no install scripts.
+It needs Node.js 22 or later and is an ES module: load it with `import` (`require()` works only on Node.js versions that can load ES modules). It has one runtime dependency (zod) and no install scripts.
 More in [Getting started](https://github.com/TemporaLabs/client-sdk/blob/main/docs/getting-started.md).
 
 ## A first call
