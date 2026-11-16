@@ -5,23 +5,24 @@ name: Dependabot PRs go to the cycle branch
 # release/vX.Y.Z). If that branch is already released (its vX.Y.Z or vX.Y.Z-alpha tag exists, next cycle
 # not cut), the PR stays on main.
 #
-# Three triggers:
-# - a Dependabot PR opened (or put back) on main: that PR moves;
-# - a new version branch created: every open Dependabot PR on main or on an older version branch moves to it;
-# - run by hand (workflow_dispatch): the same sweep, for PRs that were open before this existed.
+# Every trigger runs the same sweep: each open Dependabot PR on main or on an older version branch moves to
+# the cycle branch.
+# - every day at 15:00 UTC, after Dependabot's weekly run and to catch a security update on any day;
+# - a new version branch created;
+# - run by hand (workflow_dispatch).
+# A Dependabot PR therefore waits on main until the next sweep. Nothing here runs on pull_request_target,
+# which GitHub blocks by default on public repositories.
 #
 # A moved PR's checks were computed against its old base: a base change made with this token starts no
 # workflow, so close and reopen the PR (or push to it) before trusting them. A lockfile conflict on
 # the new base means regenerating the lockfile by hand.
 #
-# pull_request_target runs from the default branch only, so the first trigger takes effect once on main.
-# It never checks out or runs the PR's code.
+# The schedule runs from the default branch only, so it takes effect once on main. The job never checks out
+# or runs a PR's code.
 
 on:
-  pull_request_target:
-    types: [opened, reopened, edited, synchronize]
-    branches:
-      - main
+  schedule:
+    - cron: "0 15 * * *"
   create:
   workflow_dispatch:
 
@@ -30,21 +31,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: dependabot-to-cycle-${{ github.event.pull_request.number || 'sweep' }}
+  group: dependabot-to-cycle-sweep
 
 jobs:
   retarget:
-    # edited and synchronize catch a PR that Dependabot put back on main, for example on a recreate. A PR moves
-    # only when Dependabot opened it from a branch of this repository, and a push to it counts only when
-    # Dependabot made the push: a fork cannot be opened as Dependabot, and a push by anyone else is not its.
     if: >-
-      (github.event_name == 'pull_request_target' && github.event.pull_request.user.login == 'dependabot[bot]'
-        && github.event.pull_request.head.repo.full_name == github.repository
-        && (github.event.action != 'synchronize' || github.actor == 'dependabot[bot]')
-        && github.event.pull_request.base.ref == 'main')
-      || (github.event_name == 'create' && github.event.ref_type == 'branch'
+      (github.event_name == 'create' && github.event.ref_type == 'branch'
         && (startsWith(github.event.ref, 'v') || startsWith(github.event.ref, 'release/v')))
-      || github.event_name == 'workflow_dispatch'
+      || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -52,8 +46,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          EVENT: ${{ github.event_name }}
-          PR: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
           version_re='^(release/)?v[0-9]+\.[0-9]+\.[0-9]+$'
@@ -79,17 +71,13 @@ jobs:
               exit 1
             fi
           done
-          if [ "$EVENT" = "pull_request_target" ]; then
-            prs="$PR"
-          else
-            # Every open Dependabot PR on main or on another version branch.
-            prs=$(gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
-              --jq ".[] | select(.user.login == \"dependabot[bot]\") | select(.head.repo.full_name == \"$REPO\")
-                | select(.base.ref != \"$cycle\") | \"\(.number) \(.base.ref)\"" \
-              | while read -r n base; do
-                  if [ "$base" = "main" ] || printf '%s' "$base" | grep -qE "$version_re"; then echo "$n"; fi
-                done)
-          fi
+          # Every open Dependabot PR on main or on another version branch.
+          prs=$(gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
+            --jq ".[] | select(.user.login == \"dependabot[bot]\") | select(.head.repo.full_name == \"$REPO\")
+              | select(.base.ref != \"$cycle\") | \"\(.number) \(.base.ref)\"" \
+            | while read -r n base; do
+                if [ "$base" = "main" ] || printf '%s' "$base" | grep -qE "$version_re"; then echo "$n"; fi
+              done)
           if [ -z "$prs" ]; then
             echo "No Dependabot PR to move; the cycle branch is $cycle."
             exit 0
