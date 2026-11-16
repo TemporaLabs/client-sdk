@@ -21,7 +21,7 @@ and withdrawals into its vaults and portfolios, over the API's HTTP routes or it
 | Published to | npm | this repository, at a release tag (not on PyPI) |
 | Package guide | [typescript/README.md](typescript/README.md) | [python/README.md](python/README.md) |
 
-Pin an exact version in both languages. Before `1.0.0` a minor version may change the interface.
+Pin an exact version in both languages.
 
 ### TypeScript
 
