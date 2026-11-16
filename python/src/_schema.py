@@ -340,7 +340,7 @@ def _domain_ok(host: str) -> bool:
                 label.encode("idna").decode("ascii") if label and not label.isascii() else label.lower()
                 for label in decoded.split(".")
             )
-    except (UnicodeError, ValueError):
+    except ValueError:  # UnicodeError is a ValueError
         return False
     if ascii_host == "" or any(ch in _FORBIDDEN_DOMAIN for ch in ascii_host):
         return False

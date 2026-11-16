@@ -216,11 +216,11 @@ const paramType = (ps: Param[]) =>
   ps.length === 0 ? 'never' : `{ ${ps.map((p) => `${key(p.name)}${p.required ? '' : '?'}: ${tsType(p.schema)}`).join('; ')} }`
 
 /** The API's published MCP tool list (spec/tools.json), copied at a release like the document. */
-export type ToolDoc = { version: string; tools: readonly { name: string; description: string; exposure: string }[] }
+export type ToolListFile = { version: string; tools: readonly { name: string; description: string; exposure: string }[] }
 const EXPOSURES = ['public', 'owner'] as const
 
 /** The tools, checked against the document: each is one of its calls, once, offered to the public or the owner. */
-function toolsOf(spec: Spec, ops: Operation[], doc: ToolDoc | undefined): ToolDoc['tools'] {
+function toolsOf(spec: Spec, ops: Operation[], doc: ToolListFile | undefined): ToolListFile['tools'] {
   if (!doc) return []
   if (doc.version !== spec.info.version) fail(`the tool list is API ${doc.version}, the document is ${spec.info.version}`)
   const calls = new Set(ops.map((o) => o.id))
@@ -234,7 +234,7 @@ function toolsOf(spec: Spec, ops: Operation[], doc: ToolDoc | undefined): ToolDo
   return doc.tools
 }
 
-export function generate(spec: Spec, toolDoc?: ToolDoc): Record<string, string> {
+export function generate(spec: Spec, toolDoc?: ToolListFile): Record<string, string> {
   const ops = operationsOf(spec)
   const tools = toolsOf(spec, ops, toolDoc)
   const schemas = spec.components.schemas
@@ -315,7 +315,7 @@ export function errorCodes(spec: Spec, err: Schema): string[] {
   return codes as string[]
 }
 
-function llms(spec: Spec, ops: Operation[], err: Schema, tools: ToolDoc['tools']): string {
+function llms(spec: Spec, ops: Operation[], err: Schema, tools: ToolListFile['tools']): string {
   const who = { public: 'anyone', owner: 'the owner' } as Record<string, string>
   // The client key is optional on every call: a wallet owner's own application calls without one.
   const auth = { owner: 'an owner token (and the client key, when the client has one)', client: 'the client key when the client has one; an owner\'s own application signs in without one', none: 'no credentials (the client key is still sent, when the client has one)' } as const
@@ -373,9 +373,9 @@ function llms(spec: Spec, ops: Operation[], err: Schema, tools: ToolDoc['tools']
 }
 
 /** spec/tools.json under the repository root `root` when the API has published a tool list, otherwise none. */
-export function readToolDoc(root: string): ToolDoc | undefined {
+export function readToolDoc(root: string): ToolListFile | undefined {
   try {
-    return JSON.parse(readFileSync(join(root, 'spec', 'tools.json'), 'utf8')) as ToolDoc
+    return JSON.parse(readFileSync(join(root, 'spec', 'tools.json'), 'utf8')) as ToolListFile
   } catch (e) {
     if ((e as { code?: string }).code === 'ENOENT') return undefined
     throw e

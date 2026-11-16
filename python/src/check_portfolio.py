@@ -6,24 +6,19 @@ network or signs.
 **A withdrawal** is one or more EIP-712 authorizations, the provider's `Withdrawal` struct. Admitted, and
 nothing else:
   - the struct exactly: its domain name and version (`1` for a plain transfer, `2` for a sale), its field
-  lists IN
-    ORDER (a reordered struct hashes differently), no field shown that is not signed and none signed that is
-    not read;
-  - on the portfolio's chain, debiting the owner's smart account (`verifyingContract`), paying the owner's
-  own wallet
-    (`recipientAccountId`), for the named portfolio;
+    lists IN ORDER (a reordered struct hashes differently), no field shown that is not signed and none signed
+    that is not read;
+  - on the portfolio's chain, debiting the owner's smart account (`verifyingContract`), paying the owner's own
+    wallet (`recipientAccountId`), for the named portfolio;
   - a sale settles in the settlement asset; a plain transfer moves only that asset;
-  - each amount a whole number of units above zero, each asset named once, each entry exactly `{assetId,
-  amountRaw}`;
+  - each amount a whole number of units above zero, each asset named once, each entry exactly
+    `{assetId, amountRaw}`;
   - expiring in the future, and no later than `maxLifetimeSeconds` from now (the provider gives ten minutes);
-  `now`
-    and the lifetime must be finite numbers, the lifetime above zero, or nothing is admitted;
+    `now` and the lifetime must be finite numbers, the lifetime above zero, or nothing is admitted;
   - each batch exactly the plan the API attached to its step (same kind, every asset at exactly its amount,
-  every
-    signed asset planned, none planned twice);
+    every signed asset planned, none planned twice);
   - each asset's total over every batch at most the asked fraction (or all) of what the caller says the smart
-  account
-    holds, which the caller reads from the API's `positions`. An asset not held is refused.
+    account holds, which the caller reads from the API's `positions`. An asset not held is refused.
 Every chain, account and asset id is read with one strict parser: `eip155:<reference>` with no leading zero,
 and a 20-byte address compared in any letter case, refused when mixed case with a wrong EIP-55 checksum. The
 portfolio's chain must be an EVM chain the API serves (`SERVED_CHAINS`).
@@ -51,7 +46,7 @@ from datetime import UTC, datetime
 from typing import Any, Final, Literal, NotRequired, TypedDict
 
 from ._evm import CHAIN, UINT256_DIGITS, same, served_chain
-from .abi.calldata import decode_call
+from .abi.calldata import Word, decode_call
 from .check import (
     PAYLOAD_FIELDS,
     UNDEFINED,
@@ -410,8 +405,7 @@ def check_portfolio_withdrawal(
             ):
                 return refuse(
                     f"it names an asset that is not a token on {chain}, "
-                    "or an amount that is not a whole number of "
-                    "units above zero"
+                    "or an amount that is not a whole number of units above zero"
                 )
             if not _keys_are(x, [f[0] for f in _ASSET_FIELDS]):
                 return not_the_form
@@ -436,8 +430,7 @@ def check_portfolio_withdrawal(
         if not matches:
             return refuse(
                 "it is not the plan the API attached to this step: another kind, another amount, "
-                "an asset added or "
-                "left out, or one named twice"
+                "an asset added or left out, or one named twice"
             )
         kinds.append(shape)
         _add_to(totals, signed)
@@ -472,7 +465,8 @@ def check_portfolio_withdrawal(
     )
 
 
-_TRANSFER: Final = {"0xa9059cbb": ("address", "uint")}  # transfer(address,uint256)
+# transfer(address,uint256)
+_TRANSFER: Final[Mapping[str, Sequence[Word]]] = {"0xa9059cbb": ("address", "uint")}
 _ENROL_PURPOSE: Final = "enrol"
 
 
@@ -505,8 +499,7 @@ def check_portfolio_deposit(
     if shape is None:
         return whole(
             f"a portfolio deposit{' with no amount' if no_amount else ''} with {len(steps)} steps "
-            "is not a shape "
-            "this client admits"
+            "is not a shape this client admits"
         )
     pending: list[int] = []
 
@@ -560,7 +553,7 @@ def check_portfolio_deposit(
             return refuse("the transfer sends value; a token transfer carries none")
         if not is_address(to) or not same(to, token):
             return refuse("the transfer is not sent to the deposit token's contract")
-        d = decode_call(data, _TRANSFER)  # type: ignore[arg-type]
+        d = decode_call(data, _TRANSFER)
         if not d.ok and d.refused != "canonical":
             return refuse("the transfer is not a call to transfer(address,uint256)")
         if not d.ok:

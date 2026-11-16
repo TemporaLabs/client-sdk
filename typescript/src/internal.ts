@@ -1,4 +1,4 @@
-/** What both entry points share: the call and result types, the answer checks, and the option checks. Not exported. */
+/** What both entry points share: the call and result types, the answer checks, and the option checks. Not a package entry point. */
 import { z } from 'zod'
 
 import { DEFS, ERROR_BODY, UNKNOWN_CODES } from './generated/spec'

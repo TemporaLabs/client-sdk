@@ -10,7 +10,8 @@ from __future__ import annotations
 import re
 from typing import Any, Final
 
-# The EVM chains the API serves (`GET /v1/chains`, API 0.1.3), by chain id. A step or a vault on any other
+# The EVM chains the API serves (`GET /v1/chains` at API 0.1.3, the version in
+# `spec/SOURCE`), by chain id. A step or a vault on any other
 # chain is refused. A chain the API adds later is refused until a client release adds it here: stricter, never
 # looser.
 SERVED_CHAINS: Final[tuple[str, ...]] = ("1", "56", "143", "4663", "8453", "42161")
