@@ -274,13 +274,6 @@ def check_step(
     owner = get(intent, "owner")
     if not is_address(owner):
         return _refuse("the owner is not an address")
-    if (
-        not is_address(get(vault, "vaultAddress"))
-        or not is_address(get(vault, "assetAddress"))
-        or not isinstance(get(vault, "chain"), str)
-        or not get(vault, "chain")
-    ):
-        return _refuse("the vault record is not complete")
     chain: str = vault["chain"]
     vault_address: str = vault["vaultAddress"]
     asset_address: str = vault["assetAddress"]
