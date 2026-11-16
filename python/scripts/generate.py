@@ -30,7 +30,7 @@ REPO = PACKAGE.parent
 sys.path.insert(0, str(PACKAGE / "src"))
 # The pattern translation and the format lists are the run-time ones, so the generator refuses exactly what
 # the client could not check.
-from _schema import CHECKED_FORMATS, SUPPORTED_FORMATS, translate_pattern  # noqa: E402
+from _schema import CHECKED_FORMATS, SUPPORTED_FORMATS, is_number, translate_pattern  # noqa: E402
 
 # The client reads a lost answer as `unknown` only on a POST, so a write must be a POST; any other method
 # fails.
@@ -160,10 +160,6 @@ def js(v: Json) -> str:
     """A JSON value as JavaScript's JSON.stringify writes it, for the messages the TypeScript
     generator writes."""
     return json.dumps(v, separators=(",", ":"), ensure_ascii=False)
-
-
-def is_number(v: Any) -> bool:
-    return isinstance(v, int | float) and not isinstance(v, bool)
 
 
 # ------------------------------------------------------------------------------------------------------------

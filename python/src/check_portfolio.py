@@ -50,7 +50,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Final, Literal, NotRequired, TypedDict
 
-from ._evm import served_chain
+from ._evm import CHAIN, same, served_chain
 from .abi.calldata import decode_call
 from .check import (
     PAYLOAD_FIELDS,
@@ -172,7 +172,6 @@ _MAX_SAFE_INTEGER: Final = 2**53 - 1
 _RAW_POSITIVE: Final = re.compile(r"[1-9][0-9]{0,77}", re.ASCII)
 _DIGITS: Final = re.compile(r"[0-9]{1,78}", re.ASCII)
 _BYTES32: Final = re.compile(r"0x[0-9a-fA-F]{64}", re.ASCII)
-_CHAIN: Final = re.compile(r"eip155:([1-9][0-9]*)", re.ASCII)
 _ACCOUNT: Final = re.compile(r"eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})", re.ASCII)
 _ASSET: Final = re.compile(r"eip155:([1-9][0-9]*)/erc20:(0x[0-9a-fA-F]{40})", re.ASCII)
 _FRACTION: Final = re.compile(rf"(0|1)(?:\.(\d{{1,{_FRACTION_PLACES}}}))?", re.ASCII)
@@ -185,12 +184,8 @@ def _asset_key(v: Any) -> str | None:
 
 
 def _chain_ref(v: Any) -> str | None:
-    m = _CHAIN.fullmatch(v) if isinstance(v, str) else None
+    m = CHAIN.fullmatch(v) if isinstance(v, str) else None
     return m.group(1) if m else None
-
-
-def _same(a: str, b: str) -> bool:
-    return a.lower() == b.lower()
 
 
 def _keys_are(o: Mapping[str, Any], want: Sequence[str]) -> bool:
@@ -372,7 +367,7 @@ def check_portfolio_withdrawal(
         if not _is_number(chain_id) or js_str(chain_id) != ref:
             return refuse(f"it is for chain {js_str(chain_id)}, not {chain}")
         verifying = domain.get("verifyingContract")
-        if not isinstance(verifying, str) or not is_address(verifying) or not _same(verifying, smart_account):
+        if not isinstance(verifying, str) or not is_address(verifying) or not same(verifying, smart_account):
             return refuse(
                 f"it would take funds from {js_str(verifying)}, not the smart account {smart_account}"
             )
@@ -380,7 +375,7 @@ def check_portfolio_withdrawal(
             return refuse("it is for another portfolio")
         recipient = m["recipientAccountId"]
         to = _ACCOUNT.fullmatch(recipient) if isinstance(recipient, str) else None
-        if not to or to.group(1) != ref or not is_address(to.group(2)) or not _same(to.group(2), owner):
+        if not to or to.group(1) != ref or not is_address(to.group(2)) or not same(to.group(2), owner):
             return refuse(f"it would pay {js_str(recipient)}, not the owner {owner} on {chain}")
         if sale and _asset_key(m["settlementAssetId"]) != settlement:
             return refuse(
@@ -563,7 +558,7 @@ def check_portfolio_deposit(
             return refuse("the transfer has nothing to send")
         if value != "0":
             return refuse("the transfer sends value; a token transfer carries none")
-        if not is_address(to) or not _same(to, token):
+        if not is_address(to) or not same(to, token):
             return refuse("the transfer is not sent to the deposit token's contract")
         d = decode_call(data, _TRANSFER)  # type: ignore[arg-type]
         if not d.ok and d.refused != "canonical":
@@ -571,7 +566,7 @@ def check_portfolio_deposit(
         if not d.ok:
             return refuse("the calldata is not the canonical encoding of transfer")
         recipient, sent = d.words[0], d.words[1]
-        if not isinstance(recipient, str) or not _same(recipient, smart_account):
+        if not isinstance(recipient, str) or not same(recipient, smart_account):
             return refuse(f"the transfer pays {recipient}, not the smart account {smart_account}")
         if no_amount or sent != exact_int(amount):
             return refuse("the transfer's amount is not exactly the one asked for")

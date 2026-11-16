@@ -42,7 +42,7 @@ from typing import Any, Final, Literal, NotRequired, TypedDict
 from pydantic import BaseModel
 
 from ._evm import is_address as is_address
-from ._evm import served_chain
+from ._evm import same, served_chain
 from .abi.calldata import Word, decode_call
 
 __all__ = [
@@ -211,10 +211,6 @@ def _refuse(reason: str) -> StepCheck:
     return StepCheck(ok=False, reason=reason)
 
 
-def _same(a: str, b: str) -> bool:
-    return a.lower() == b.lower()
-
-
 def _decode(data: str) -> tuple[VaultCall, list[int | str]] | str:
     """The call and its arguments, or why the calldata is not exactly one of the four calls' canonical
     encodings."""
@@ -317,9 +313,9 @@ def check_step(
     if call == "approve":
         if action != "deposit":
             return _refuse("an approval is not what was asked for")
-        if not _same(to, asset_address):
+        if not same(to, asset_address):
             return _refuse("the approval is not sent to the vault's asset")
-        if not isinstance(a, str) or not _same(a, vault_address):
+        if not isinstance(a, str) or not same(a, vault_address):
             return _refuse("the approval names a spender other than the vault")
         if isinstance(b, int) and b >= _UNLIMITED_APPROVAL:
             return _refuse("the approval is unlimited in effect (2^128 or more)")
@@ -329,11 +325,11 @@ def check_step(
     if call == "deposit":
         if action != "deposit":
             return _refuse("a deposit is not what was asked for")
-        if not _same(to, vault_address):
+        if not same(to, vault_address):
             return _refuse("the deposit is not sent to the vault")
         if not _exact(get(intent, "assets"), a):
             return _refuse("the deposit's amount is not exactly the one asked for")
-        if not isinstance(b, str) or not _same(b, owner):
+        if not isinstance(b, str) or not same(b, owner):
             return _refuse("the deposit's receiver is not the owner")
         return StepCheck(ok=True, call="deposit")
     # withdraw or redeem
@@ -342,11 +338,11 @@ def check_step(
     wanted = "withdraw" if kind == "assets" else "redeem"
     if call != wanted:
         return _refuse(f"a {call} is not what was asked for: the amount was given in {kind}")
-    if not _same(to, vault_address):
+    if not same(to, vault_address):
         return _refuse(f"the {call} is not sent to the vault")
-    if not isinstance(b, str) or not _same(b, owner):
+    if not isinstance(b, str) or not same(b, owner):
         return _refuse(f"the {call}'s receiver is not the owner")
-    if not isinstance(c, str) or not _same(c, owner):
+    if not isinstance(c, str) or not same(c, owner):
         return _refuse(f"the {call}'s owner is not the owner")
     if kind == "assets" and not _exact(get(amount, "raw"), a):
         return _refuse("the withdrawal's amount is not exactly the one asked for")

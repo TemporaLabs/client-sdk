@@ -15,13 +15,19 @@ from typing import Any, Final
 # looser.
 SERVED_CHAINS: Final[tuple[str, ...]] = ("1", "56", "143", "4663", "8453", "42161")
 
-_CHAIN: Final = re.compile(r"eip155:([1-9][0-9]*)", re.ASCII)
+# An `eip155:<id>` chain, its id captured.
+CHAIN: Final = re.compile(r"eip155:([1-9][0-9]*)", re.ASCII)
 _ADDRESS_SHAPE: Final = re.compile(r"0x[0-9a-fA-F]{40}", re.ASCII)
+
+
+def same(a: str, b: str) -> bool:
+    """Two addresses alike in any case."""
+    return a.lower() == b.lower()
 
 
 def served_chain(value: Any) -> str | None:
     """The chain id of an `eip155:<id>` chain the API serves, or None for any other value."""
-    m = _CHAIN.fullmatch(value) if isinstance(value, str) else None
+    m = CHAIN.fullmatch(value) if isinstance(value, str) else None
     return m.group(1) if m and m.group(1) in SERVED_CHAINS else None
 
 

@@ -11,6 +11,7 @@ from typing import Any, Final
 
 from . import _internal as internal
 from ._result import Err, Ok, Result
+from ._schema import is_number
 from ._version import VERSION
 from .generated.models import ApiError
 from .generated.spec import CLIENT_KEY_HEADER, OPERATIONS, Operation
@@ -29,7 +30,6 @@ META: Final = {
 }
 STATUS: Final = "status"
 STATUS_LOOKUP: Final = "status_lookup"
-_NOT_SET: Any = object()
 _U = internal.UNDEFINED
 
 
@@ -59,10 +59,6 @@ def _truthy(v: Any) -> bool:
     return True
 
 
-def _is_number(v: Any) -> bool:
-    return isinstance(v, int | float) and not isinstance(v, bool)
-
-
 def _finite(v: Any) -> bool:
     """A JSON number JavaScript reads as finite: an int past a double's range reads as Infinity there."""
     if isinstance(v, int):
@@ -75,7 +71,7 @@ def _finite(v: Any) -> bool:
 
 
 def _seconds(v: Any) -> float | None:
-    if _is_number(v):
+    if is_number(v):
         n: float | None = v if _finite(v) else None
     elif isinstance(v, str):
         n = internal.small_int(v)
@@ -97,7 +93,7 @@ def _rpc_error(res: internal.Answer, error: Any, method: str, name: str) -> Err:
     """A JSON-RPC error as a Result: the endpoint's own refusal (an API error), a protocol revision it no
     longer serves, or unreadable."""
     code = _get(error, "code")
-    if _is_number(code) and code == UNSUPPORTED_PROTOCOL:
+    if is_number(code) and code == UNSUPPORTED_PROTOCOL:
         supported = _get(_get(error, "data"), "supported")
         # Only date-shaped revisions are quoted: the rest of the list is the endpoint's text, not the
         # protocol's.
@@ -157,7 +153,7 @@ def _text_value(text: Any) -> Any:
         return _U
     if isinstance(text, str):
         return internal.parse_json_text(text)
-    if text is None or isinstance(text, bool) or (_is_number(text) and _finite(text)):
+    if text is None or isinstance(text, bool) or (is_number(text) and _finite(text)):
         return text
     return _U
 
@@ -175,7 +171,7 @@ def _call_tool(
         *,
         path: Mapping[str, Any] | None = None,
         query: Mapping[str, Any] | None = None,
-        body: Any = _NOT_SET,
+        body: Any = internal.NOT_SET,
         owner_token: str | None = None,
     ) -> Result[Any]:
         # Only mappings are read: a call never raises for what it was given.
@@ -183,7 +179,7 @@ def _call_tool(
             **(path if isinstance(path, Mapping) else {}),
             **(query if isinstance(query, Mapping) else {}),
         }
-        if body is not _NOT_SET and body is not None:
+        if body is not internal.NOT_SET and body is not None:
             args["body"] = body
         headers = _headers(opts, "tools/call", tool["name"], tool["exposure"] == "owner", owner_token)
         if not internal.headers_safe(headers):
@@ -223,7 +219,7 @@ def _call_tool(
             status = res.status
             if (
                 res.ok
-                and _is_number(said)
+                and is_number(said)
                 and _finite(said)
                 and float(said).is_integer()
                 and 400 <= said <= 599

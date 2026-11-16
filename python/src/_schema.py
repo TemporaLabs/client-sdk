@@ -234,11 +234,21 @@ _FORBIDDEN_DOMAIN = _FORBIDDEN_HOST | {chr(c) for c in range(0x20)} | {"%", "\x7
 _SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]*:")
 
 
+def clean_url(value: str) -> str:
+    """The URL as a WHATWG URL parser reads it: no leading or trailing control characters or spaces, and no
+    tab or line break anywhere."""
+    return (
+        value.strip("".join(chr(c) for c in range(0x21)))
+        .replace("\t", "")
+        .replace("\n", "")
+        .replace("\r", "")
+    )
+
+
 def url_parses(value: str) -> bool:
     """Whether a WHATWG URL parser, given no base, parses `value`: what `URL.canParse` answers in
     JavaScript."""
-    s = value.strip("".join(chr(c) for c in range(0x21)))
-    s = s.replace("\t", "").replace("\n", "").replace("\r", "")
+    s = clean_url(value)
     m = _SCHEME.match(s)
     if not m:
         return False
@@ -439,7 +449,8 @@ class JsString:
         return _plain(self.validate)
 
 
-def _is_number(v: Any) -> bool:
+def is_number(v: Any) -> bool:
+    """A JSON number: an int or a float, never a bool."""
     return isinstance(v, int | float) and not isinstance(v, bool)
 
 
@@ -458,21 +469,21 @@ class JsNumber:
         self.integer = integer
         self.checks: list[tuple[str, float]] = []
         # A boolean exclusive bound (an older draft's form) makes its sibling bound exclusive.
-        if _is_number(minimum) and exclusive_minimum is not True:
+        if is_number(minimum) and exclusive_minimum is not True:
             self.checks.append((">=", minimum))  # type: ignore[arg-type]
-        if _is_number(maximum) and exclusive_maximum is not True:
+        if is_number(maximum) and exclusive_maximum is not True:
             self.checks.append(("<=", maximum))  # type: ignore[arg-type]
-        if _is_number(exclusive_minimum):
+        if is_number(exclusive_minimum):
             self.checks.append((">", exclusive_minimum))  # type: ignore[arg-type]
-        elif exclusive_minimum is True and _is_number(minimum):
+        elif exclusive_minimum is True and is_number(minimum):
             self.checks.append((">", minimum))  # type: ignore[arg-type]
-        if _is_number(exclusive_maximum):
+        if is_number(exclusive_maximum):
             self.checks.append(("<", exclusive_maximum))  # type: ignore[arg-type]
-        elif exclusive_maximum is True and _is_number(maximum):
+        elif exclusive_maximum is True and is_number(maximum):
             self.checks.append(("<", maximum))  # type: ignore[arg-type]
 
     def validate(self, v: Any) -> float:
-        if not _is_number(v):
+        if not is_number(v):
             raise _fail("number_type", "not a number")
         if isinstance(v, int) and abs(v) > MAX_SAFE_INTEGER:
             # JavaScript reads a number this large as the nearest double; one too large to hold is Infinity.
@@ -544,7 +555,7 @@ class JsLiteral:
                 return True
             if isinstance(want, bool) and isinstance(v, bool) and v == want:
                 return True
-            if _is_number(want) and _is_number(v) and v == want:
+            if is_number(want) and is_number(v) and v == want:
                 return True
             if isinstance(want, str) and isinstance(v, str) and v == want:
                 return True

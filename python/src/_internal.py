@@ -17,12 +17,14 @@ from urllib.parse import urlsplit
 import httpx
 from pydantic import BaseModel, TypeAdapter
 
-from ._schema import url_parses
+from ._schema import clean_url, url_parses
 from .generated.models import ApiError, ErrorBody
 from .generated.spec import UNKNOWN_CODES, Operation
 
 DEFAULT_TIMEOUT_S: Final = 30.0
 TRACE_HEADER: Final = "x-trace-id"
+# A call's `body` argument when the caller passed none (None is a value a caller may pass).
+NOT_SET: Final[Any] = object()
 # The longest wait the client passes on as `retry_after`, in seconds: one day. A longer one is left out.
 MAX_RETRY_AFTER_S: Final = 86_400
 # The longest timeout, in seconds: the largest delay a JavaScript timer accepts, so both clients take the
@@ -124,12 +126,7 @@ def parse_json(data: bytes) -> Any:
     """The body read as a JavaScript fetch reads it with `json()`: UTF-8 (a bad byte read as U+FFFD, a leading
     byte order mark dropped), plain JSON only (no NaN or Infinity), or UNDEFINED when it is not JSON."""
     text = data.decode("utf-8", errors="replace")
-    if text.startswith("\ufeff"):
-        text = text[1:]
-    try:
-        return json.loads(text, parse_constant=_no_constant)
-    except Exception:
-        return UNDEFINED
+    return parse_json_text(text[1:] if text.startswith("\ufeff") else text)
 
 
 def parse_json_text(text: str) -> Any:
@@ -261,17 +258,6 @@ def check_options(
         owner_token=owner_token,
         timeout_s=float(timeout_s),
         http=http if http is not None else httpx.Client(follow_redirects=False),
-    )
-
-
-def clean_url(value: str) -> str:
-    """The URL as a WHATWG URL parser reads it: no leading or trailing control characters or spaces, and no
-    tab or line break anywhere."""
-    return (
-        value.strip("".join(chr(c) for c in range(0x21)))
-        .replace("\t", "")
-        .replace("\n", "")
-        .replace("\r", "")
     )
 
 
