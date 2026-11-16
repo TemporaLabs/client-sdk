@@ -255,8 +255,8 @@ describe('the transfer decoder, byte by byte', () => {
     expect(reasonOf(checkPortfolioDeposit([send(USDT_ADDR, approve)], deposit))).toBe('the transfer is not a call to transfer(address,uint256)')
   })
 
-  it('reads the selector whatever its case', () => {
-    expect(checkPortfolioDeposit([send(USDT_ADDR, TRANSFER.replace('0xa9059cbb', '0xA9059CBB'))], deposit)).toEqual({ ok: true, pending: [] })
+  it('refuses a selector that is not lower-case hex', () => {
+    expect(checkPortfolioDeposit([send(USDT_ADDR, TRANSFER.replace('0xa9059cbb', '0xA9059CBB'))], deposit)).toMatchObject({ ok: false, step: 0 })
   })
 })
 
@@ -323,5 +323,25 @@ describe('raw amounts are uint256-sized', () => {
   it('refuses a signed amount one digit past a uint256', () => {
     const signed = transferAuth({}, { assets: [{ assetId: USDT, amountRaw: '1' + '0'.repeat(78) }] })
     expect(checkPortfolioWithdrawal([batch(signed, planOf(transferAuth()))], withdraw).ok).toBe(false)
+  })
+})
+
+describe('portfolio chains and addresses: never looser than the API', () => {
+  // OWNER and USDT_ADDR are EIP-55 checksummed; flipping one letter's case breaks the checksum.
+  const flip = (a: string) => a.replace('f39Fd', 'f39FD')
+  const USDT_BAD = USDT_ADDR.replace('55d398326f99059fF', '55d398326f99059ff')
+
+  it.each(['eip155:999999999', 'solana:mainnet', 'garbage'])('refuses a deposit or a withdrawal on %j', (chain) => {
+    expect(checkPortfolioDeposit([send(USDT_ADDR, TRANSFER, { chainId: chain })], { ...deposit, chain })).toMatchObject({ ok: false, step: null })
+    expect(checkPortfolioWithdrawal([], { ...withdraw, chain })).toMatchObject({ ok: false, step: null })
+  })
+  it('refuses an owner, a token or a transfer target whose mixed-case checksum is wrong', () => {
+    expect(flip(OWNER)).not.toBe(OWNER)
+    expect(checkPortfolioWithdrawal([], { ...withdraw, owner: flip(OWNER) })).toMatchObject({ ok: false, step: null, reason: 'the owner is not an address' })
+    expect(checkPortfolioDeposit([send(USDT_ADDR, TRANSFER)], { ...deposit, tokenAddress: USDT_BAD })).toMatchObject({ ok: false, step: null, reason: 'the token is not an address' })
+    expect(checkPortfolioDeposit([send(USDT_BAD, TRANSFER)], deposit)).toMatchObject({ ok: false, step: 0 })
+  })
+  it('still admits the same addresses in lower case', () => {
+    expect(checkPortfolioDeposit([send(USDT_ADDR.toLowerCase(), TRANSFER)], { ...deposit, tokenAddress: USDT_ADDR.toLowerCase() })).toEqual({ ok: true, pending: [] })
   })
 })

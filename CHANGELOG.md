@@ -5,6 +5,15 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ## [Unreleased]
 
+### Changed
+
+- **The step checks are never looser than the API.** `checkStep`, `checkSteps`, `checkPortfolioDeposit` and
+  `checkPortfolioWithdrawal` (and the Python `check_*` functions) now refuse:
+  - a vault or portfolio on a chain the API does not serve. The served chains are exported as `SERVED_CHAINS`;
+  - calldata that is not lower-case hex;
+  - a mixed-case address whose EIP-55 checksum is wrong. All lower case and all upper case are still admitted.
+- `cases/vault-steps.json` holds one-step deposits that both clients must admit or refuse alike.
+
 ## [v0.1.1] - 2026-11-15
 
 ### Added
