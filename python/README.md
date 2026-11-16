@@ -23,10 +23,17 @@ owner asked for. Your code then hands the signed result back.
 ## Install
 
 ```bash
-pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.1#subdirectory=python"
+pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.2#subdirectory=python"
 ```
 
-It installs from this repository at a release tag; it is not on PyPI. Pin the tag, as above.
+With uv:
+
+```bash
+uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.2#subdirectory=python"
+```
+
+It installs from this repository at a release tag; it is not on PyPI. In a `requirements.txt`, or under `dependencies`
+in a `pyproject.toml`, use the same quoted string. Keep the tag: without it, pip installs whatever `main` holds.
 
 It needs Python 3.13. Its runtime dependencies are `httpx` and `pydantic`. The client is synchronous.
 

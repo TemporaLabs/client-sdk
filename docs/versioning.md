@@ -46,11 +46,13 @@ speaks; the package version says which release of the client it is. Before `1.0.
 |---|---|
 | `0.1.0` | `0.1.2` |
 | `0.1.1` | `0.1.3` |
+| `0.1.2` | `0.1.3` |
 
 ## Release tags
 
-Each release is published to npm as `@temporalabs/client` at its version and tagged `vX.Y.Z` on this
-repository. The first is `v0.1.0`. The tag is that version's source. See
-[Getting started](getting-started.md#install).
+Each release is tagged `vX.Y.Z` on this repository, and the tag is that version's source. The first is `v0.1.0`.
+The TypeScript package is published to npm as `@temporalabs/client` at the same version. The Python package is not
+on PyPI: it installs from the tag, starting with `v0.1.1`, the first release that has it. See
+[Install](../README.md#install).
 
 What changed in each release is in the [changelog](../CHANGELOG.md).
