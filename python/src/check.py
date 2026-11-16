@@ -8,11 +8,10 @@ the request), the owner's own address, and the amount the owner asked for. Nothi
   - `approve(vault, n)` on the vault's asset, for exactly the deposit's amount, never more;
   - `deposit(assets, receiver)` on the vault, for exactly the amount asked, receiver = the owner;
   - `withdraw(assets, receiver, owner)` on the vault, for exactly the assets asked, receiver = owner = the
-  owner;
+    owner;
   - `redeem(shares, receiver, owner)` on the vault, for exactly the shares asked, receiver = owner = the
-  owner. For
-    "all", the shares are not checked (any above zero): only the receiver, the owner and the direction are. A
-    caller that knows the owner's share balance should ask for those shares instead.
+    owner. For "all", the shares are not checked (any above zero): only the receiver, the owner and the
+    direction are. A caller that knows the owner's share balance should ask for those shares instead.
 
 The vault record is the anchor: a caller that holds its own record of the vault (a pinned configuration)
 should pass that one. Passing the product record read from the same API that builds the steps checks the steps

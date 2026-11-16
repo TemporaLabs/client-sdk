@@ -74,9 +74,9 @@ function call(opts: ClientOptions, name: string, op: Op) {
     const json: unknown = await res.json().catch(() => undefined)
     if (res.ok) {
       const schema = answerSchema(op, input.path)
-      const body = schema === undefined ? { success: false as const } : check(schema, json)
-      return body.success
-        ? ({ ok: true, status: res.status, body: body.data, traceId } as const)
+      const parsed = schema === undefined ? { success: false as const } : check(schema, json)
+      return parsed.success
+        ? ({ ok: true, status: res.status, body: parsed.data, traceId } as const)
         : ({ ok: false, status: res.status, error: schemaMismatch(op.method, name), traceId } as const)
     }
     const error = apiErrorIn(json)

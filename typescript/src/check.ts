@@ -21,8 +21,9 @@
  * upper case, or mixed case with a correct EIP-55 checksum.
  *
  * Every step is a `send_transaction` on the vault's chain carrying no value, and its calldata must be exactly the
- * canonical encoding of what it decodes to: lower-case hex, no trailing bytes, no bits set above an address's 20 bytes. A request is
- * `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the network or signs.
+ * canonical encoding of what it decodes to: lower-case hex, no trailing bytes, no bits set above an address's 20
+ * bytes. A request is `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the
+ * network or signs.
  */
 import { decodeCall, type Word } from './abi/calldata'
 import { UINT256_DIGITS, isAddress, same, servedChain } from './evm'
