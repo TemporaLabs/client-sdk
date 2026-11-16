@@ -12,6 +12,8 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
   - a vault or portfolio on a chain the API does not serve. The served chains are exported as `SERVED_CHAINS`;
   - calldata that is not lower-case hex;
   - a mixed-case address whose EIP-55 checksum is wrong. All lower case and all upper case are still admitted.
+- `SERVED_CHAINS` is frozen in TypeScript, so it cannot be widened at run time, a cast included; in Python it was
+  already a tuple.
 - `cases/vault-steps.json` holds one-step deposits that both clients must admit or refuse alike.
 
 ## [v0.1.1] - 2026-11-15

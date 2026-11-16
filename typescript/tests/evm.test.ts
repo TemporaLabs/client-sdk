@@ -52,6 +52,11 @@ describe('EIP-55', () => {
 })
 
 describe('servedChain', () => {
+  it('cannot be widened at run time, a cast included', () => {
+    expect(Object.isFrozen(SERVED_CHAINS)).toBe(true)
+    expect(() => (SERVED_CHAINS as string[]).push('999')).toThrow(TypeError)
+    expect(servedChain('eip155:999')).toBeNull()
+  })
   it.each(SERVED_CHAINS)('reads eip155:%s', (id) => expect(servedChain(`eip155:${id}`)).toBe(id))
   it.each(['eip155:999999999', 'eip155:08453', 'eip155:0', 'eip155:', 'eip155', 'solana:mainnet', 'garbage', ' eip155:8453', 'eip155:8453\n', 8453, null])('refuses %j', (v) => {
     expect(servedChain(v)).toBeNull()
