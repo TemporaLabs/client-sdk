@@ -840,3 +840,15 @@ class TestNumbersPastWhatTheClientCanConvertStayResults:
         assert err(r).retry_after == 5
         said = {"error": self.ERR, "status": 429, "retryAfter": "0" * 5000 + "5"}
         assert err(make(lambda _: tool_text(said, True))[0].products()).retry_after == 5
+
+
+def test_the_protocol_metadata_cannot_be_changed() -> None:
+    from temporalabs_client import mcp_client
+
+    for table in (
+        mcp_client.META,
+        mcp_client.CLIENT_INFO,
+        mcp_client.META["io.modelcontextprotocol/clientCapabilities"],
+    ):
+        with pytest.raises(TypeError):
+            table["x"] = "y"  # type: ignore[index]

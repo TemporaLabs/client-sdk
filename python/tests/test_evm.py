@@ -104,3 +104,11 @@ def test_reads_a_served_chain(i: str) -> None:
 )
 def test_refuses_a_chain_the_api_does_not_serve(v: Any) -> None:
     assert served_chain(v) is None
+
+
+def test_rebinding_served_chains_does_not_widen_served_chain(monkeypatch: pytest.MonkeyPatch) -> None:
+    import temporalabs_client._evm as evm
+
+    monkeypatch.setattr(evm, "SERVED_CHAINS", (*SERVED_CHAINS, "999"))
+    assert served_chain("eip155:999") is None
+    assert served_chain("eip155:8453") == "8453"

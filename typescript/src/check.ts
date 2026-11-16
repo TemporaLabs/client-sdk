@@ -45,13 +45,13 @@ export type StepToCheck = { readonly kind: string; readonly chainId?: unknown; r
 /**
  * The payload fields the API defines for each step kind. A payload carrying any other field is refused: a caller that
  * hands the payload to a wallet would hand that field over too (an EIP-7702 authorization list, another chain, gas, a
- * sender), and no check here reads it.
+ * sender), and no check here reads it. Frozen, each list too, so a caller cannot widen it at run time.
  */
-export const PAYLOAD_FIELDS = {
-  send_transaction: ['generation', 'expiresAt', 'to', 'data', 'value'],
-  sign_message: ['generation', 'expiresAt', 'bytes'],
-  sign_typed_data: ['generation', 'expiresAt', 'typedData'],
-} as const
+export const PAYLOAD_FIELDS = Object.freeze({
+  send_transaction: Object.freeze(['generation', 'expiresAt', 'to', 'data', 'value'] as const),
+  sign_message: Object.freeze(['generation', 'expiresAt', 'bytes'] as const),
+  sign_typed_data: Object.freeze(['generation', 'expiresAt', 'typedData'] as const),
+})
 
 /** The payload as a plain object holding only the fields `kind` defines, or null. An own `__proto__` key is a field like any other, so it is refused. */
 export function payloadOf(payload: unknown, kind: keyof typeof PAYLOAD_FIELDS): Record<string, unknown> | null {

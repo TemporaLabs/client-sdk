@@ -14,6 +14,9 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
   - a mixed-case address whose EIP-55 checksum is wrong. All lower case and all upper case are still admitted.
 - `SERVED_CHAINS` is frozen in TypeScript, so it cannot be widened at run time, a cast included; in Python it was
   already a tuple.
+- `PAYLOAD_FIELDS` is read-only in both clients (frozen in TypeScript, each list too; a read-only mapping in
+  Python), and so is the MCP client's protocol metadata. Python's `served_chain` reads the served chains bound at
+  import, so rebinding the module's `SERVED_CHAINS` does not widen it.
 - `cases/vault-steps.json` holds one-step deposits that both clients must admit or refuse alike.
 - The README's install section gives the exact pinned install for both languages, including `uv add` for Python,
   and a one-line check that the install worked.

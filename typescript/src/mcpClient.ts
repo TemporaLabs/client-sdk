@@ -29,16 +29,16 @@ export type McpClientOptions = {
 
 /** The protocol revision this client speaks. */
 export const PROTOCOL_VERSION = '2026-07-28'
-const CLIENT_INFO = { name: '@temporalabs/client', version: CLIENT_VERSION }
+const CLIENT_INFO = Object.freeze({ name: '@temporalabs/client', version: CLIENT_VERSION })
 // The protocol's code for a revision the server does not serve; its data names the ones it does.
 const UNSUPPORTED_PROTOCOL = -32022
-const META = {
+const META = Object.freeze({
   'io.modelcontextprotocol/protocolVersion': PROTOCOL_VERSION,
   'io.modelcontextprotocol/clientInfo': CLIENT_INFO,
-  'io.modelcontextprotocol/clientCapabilities': {},
-}
+  'io.modelcontextprotocol/clientCapabilities': Object.freeze({}),
+})
 // Every message is one JSON-RPC 2.0 request, so one id is enough.
-const JSON_RPC = { jsonrpc: '2.0', id: 1 } as const
+const JSON_RPC = Object.freeze({ jsonrpc: '2.0', id: 1 } as const)
 // The tool list goes out as a POST but only reads, so a lost list is `failed`, never `unknown`.
 const LIST_METHOD = 'GET'
 const STATUS = 'status'

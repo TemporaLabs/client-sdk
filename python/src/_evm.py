@@ -19,6 +19,9 @@ SERVED_CHAINS: Final[tuple[str, ...]] = ("1", "56", "143", "4663", "8453", "4216
 # A uint256 written in decimal has at most this many digits.
 UINT256_DIGITS: Final = 78
 
+# Bound at import: rebinding SERVED_CHAINS later does not widen what `served_chain` admits.
+_SERVED: Final = frozenset(SERVED_CHAINS)
+
 # An `eip155:<id>` chain, its id captured.
 CHAIN: Final = re.compile(r"eip155:([1-9][0-9]*)", re.ASCII)
 _ADDRESS_SHAPE: Final = re.compile(r"0x[0-9a-fA-F]{40}", re.ASCII)
@@ -32,7 +35,7 @@ def same(a: str, b: str) -> bool:
 def served_chain(value: Any) -> str | None:
     """The chain id of an `eip155:<id>` chain the API serves, or None for any other value."""
     m = CHAIN.fullmatch(value) if isinstance(value, str) else None
-    return m.group(1) if m and m.group(1) in SERVED_CHAINS else None
+    return m.group(1) if m and m.group(1) in _SERVED else None
 
 
 def is_address(value: Any) -> bool:
