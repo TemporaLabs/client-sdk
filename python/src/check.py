@@ -36,6 +36,7 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
+from types import MappingProxyType
 from typing import Any, Final, Literal, NotRequired, TypedDict
 
 from pydantic import BaseModel
@@ -115,12 +116,14 @@ UNDEFINED: Final = _Undefined()
 
 # The payload fields the API defines for each step kind. A payload carrying any other field is refused: a
 # caller that hands the payload to a wallet would hand that field over too (an EIP-7702 authorization list,
-# another chain, gas, a sender), and no check here reads it.
-PAYLOAD_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
-    "send_transaction": ("generation", "expiresAt", "to", "data", "value"),
-    "sign_message": ("generation", "expiresAt", "bytes"),
-    "sign_typed_data": ("generation", "expiresAt", "typedData"),
-}
+# another chain, gas, a sender), and no check here reads it. Read-only, so a caller cannot widen it.
+PAYLOAD_FIELDS: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType(
+    {
+        "send_transaction": ("generation", "expiresAt", "to", "data", "value"),
+        "sign_message": ("generation", "expiresAt", "bytes"),
+        "sign_typed_data": ("generation", "expiresAt", "typedData"),
+    }
+)
 
 
 def plain(x: Any) -> Any:

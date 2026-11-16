@@ -7,6 +7,7 @@ import json
 import math
 import re
 from collections.abc import Callable, Mapping, Sequence
+from types import MappingProxyType
 from typing import Any, Final
 
 from . import _internal as internal
@@ -20,16 +21,19 @@ __all__ = ["PROTOCOL_VERSION", "is_tool", "mcp_client_for"]
 
 # The protocol revision this client speaks.
 PROTOCOL_VERSION: Final = "2026-07-28"
-CLIENT_INFO: Final = {"name": "temporalabs-client", "version": VERSION}
+# Read-only, like META below: every call sends them as they are here.
+CLIENT_INFO: Final[Mapping[str, str]] = MappingProxyType({"name": "temporalabs-client", "version": VERSION})
 # The protocol's code for a revision the server does not serve; its data names the ones it does.
 UNSUPPORTED_PROTOCOL: Final = -32022
-META: Final = {
-    "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
-    "io.modelcontextprotocol/clientInfo": CLIENT_INFO,
-    "io.modelcontextprotocol/clientCapabilities": {},
-}
+META: Final[Mapping[str, Any]] = MappingProxyType(
+    {
+        "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
+        "io.modelcontextprotocol/clientInfo": CLIENT_INFO,
+        "io.modelcontextprotocol/clientCapabilities": MappingProxyType({}),
+    }
+)
 # Every message is one JSON-RPC 2.0 request, so one id is enough.
-_JSON_RPC: Final = {"jsonrpc": "2.0", "id": 1}
+_JSON_RPC: Final[Mapping[str, Any]] = MappingProxyType({"jsonrpc": "2.0", "id": 1})
 # The tool list goes out as a POST but only reads, so a lost list is `failed`, never `unknown`.
 _LIST_METHOD: Final = "GET"
 # A protocol revision is a date.
@@ -254,7 +258,7 @@ def _list_tools(opts: internal.Options) -> Callable[..., Result[tuple[dict[str, 
         headers = _headers(opts, "tools/list", None, True, owner_token)
         if not internal.headers_safe(headers):
             return Err(status=0, error=internal.unsent_header("tool list"))
-        body = json.dumps({**_JSON_RPC, "method": "tools/list", "params": {"_meta": META}})
+        body = json.dumps({**_JSON_RPC, "method": "tools/list", "params": {"_meta": META}}, default=dict)
         try:
             res = internal.send(opts, opts.url, "POST", headers, body)
         except Exception:

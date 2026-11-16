@@ -520,3 +520,13 @@ class TestChainsAndAddressesNeverLooserThanTheApi:
         )
         lower_vault = {**deposit, "vault": {**vault, "vaultAddress": self.GOOD.lower()}}
         assert check_step(step(self.GOOD, DATA["deposit"]), lower_vault) == StepCheck(ok=True, call="deposit")
+
+
+def test_payload_fields_cannot_be_widened() -> None:
+    from temporalabs_client.check import PAYLOAD_FIELDS
+
+    with pytest.raises(TypeError):
+        PAYLOAD_FIELDS["send_transaction"] = ("to", "data", "value", "gas")  # type: ignore[index]
+    with pytest.raises(TypeError):
+        del PAYLOAD_FIELDS["sign_message"]  # type: ignore[attr-defined]
+    assert isinstance(PAYLOAD_FIELDS["send_transaction"], tuple)

@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { checkStep, checkSteps, type VaultIntent } from '../src/check'
+import { checkStep, checkSteps, PAYLOAD_FIELDS, type VaultIntent } from '../src/check'
 import { SERVED_CHAINS } from '../src/evm'
 
 const VAULT = '0x1111111111111111111111111111111111111111'
@@ -283,5 +283,16 @@ describe('chains and addresses: never looser than the API', () => {
     expect(checkStep(step(BAD, DATA.deposit), { ...deposit, vault: v })).toEqual({ ok: false, reason: 'the vault record is not complete' })
     expect(checkStep(step(BAD, DATA.deposit), { ...deposit, vault: { ...vault, vaultAddress: GOOD } })).toEqual({ ok: false, reason: 'the step is not sent to an address' })
     expect(checkStep(step(GOOD, DATA.deposit), { ...deposit, vault: { ...vault, vaultAddress: GOOD.toLowerCase() } })).toEqual({ ok: true, call: 'deposit' })
+  })
+})
+
+describe('PAYLOAD_FIELDS', () => {
+  it('is frozen, each list too, so it cannot be widened at run time', () => {
+    expect(Object.isFrozen(PAYLOAD_FIELDS)).toBe(true)
+    for (const fields of Object.values(PAYLOAD_FIELDS)) expect(Object.isFrozen(fields)).toBe(true)
+    expect(() => (PAYLOAD_FIELDS.send_transaction as unknown as string[]).push('gas')).toThrow(TypeError)
+    expect(() => {
+      ;(PAYLOAD_FIELDS as Record<string, unknown>).sign_message = ['bytes', 'gas']
+    }).toThrow(TypeError)
   })
 })
