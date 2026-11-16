@@ -7,11 +7,11 @@ name: DCO
 # GitHub's published signing key, .github/keys/github-web-flow.asc). The check reads the commits from
 # git (.github/scripts/dco-check.sh), so the size of a pull request cannot stop it from running.
 #
-# The checker is never the pull request's own copy. This runs on pull_request_target, so GitHub takes
-# this file from the default branch, and the checkout below is the default branch too: a pull request
-# that edits the checker or this workflow is checked by the version already on main. The pull
-# request's commits are fetched as data and read with git; none of its code runs, and the job holds no
-# secret and a read-only token.
+# The checker is the base branch's copy, never the pull request's. This runs on pull_request, so the
+# workflow file is the pull request's own, but the checkout below is the base commit: a pull request that
+# edits the checker is checked by the version already on its base branch, and one that edits this
+# workflow shows that edit in its own diff for review. The pull request's commits are fetched as data
+# and read with git; none of its code runs, and the job holds no secret and a read-only token.
 #
 # It enforces only on the public repository, TemporaLabs/client-sdk, which starts from one signed-off
 # commit. A copy of this file in any other repository skips the job, because a history written before
@@ -21,7 +21,7 @@ name: DCO
 # prints green is indistinguishable from one that stopped checking.
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.repository.default_branch }}
+          ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
           persist-credentials: false
 
