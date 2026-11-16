@@ -64,6 +64,13 @@ export const unwritableBody = (name: string): ApiError => ({ code: 'network_erro
 export const MAX_RETRY_AFTER_S = 86_400
 export const unsentHeader = (name: string): ApiError => ({ code: 'network_error', message: `The ${name} call was not sent: a key or token is not a valid header value.`, outcome: 'failed' })
 export const schemaMismatch = (method: string, name: string): ApiError => local(method, 'unreadable_answer', `The ${name} answer did not match its schema.`)
+/** A call that went out and got no answer: its outcome follows the method (see `local`). */
+export const noAnswer = (method: string, name: string): ApiError => local(method, 'network_error', `The ${name} call got no answer.`)
+/** Retry-After in whole seconds, up to a day; a date, or anything longer or not a whole number, is left out. */
+export const retryAfterSeconds = (v: unknown): number | undefined => {
+  const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : NaN
+  return n >= 0 && n <= MAX_RETRY_AFTER_S ? n : undefined
+}
 
 // One answer shape per read (x-outputs), looked up as an own key, so `constructor` is not a read.
 export function answerSchema(op: Op, path: Record<string, unknown> | undefined): unknown {

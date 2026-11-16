@@ -390,9 +390,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const spec = JSON.parse(readFileSync(join(repo, 'spec', 'openapi.json'), 'utf8')) as Spec
   const tools = readToolDoc(repo)
   const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1]! : root
-  for (const [rel, text] of Object.entries(generate(spec, tools))) {
+  const files = generate(spec, tools)
+  for (const [rel, text] of Object.entries(files)) {
     mkdirSync(dirname(join(out, rel)), { recursive: true })
     writeFileSync(join(out, rel), text)
   }
-  console.log(`generate: ${Object.keys(generate(spec, tools)).length} files from the API ${spec.info.version}`)
+  console.log(`generate: ${Object.keys(files).length} files from the API ${spec.info.version}`)
 }

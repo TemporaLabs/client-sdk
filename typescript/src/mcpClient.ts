@@ -5,7 +5,7 @@
 import { CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec'
 import { CLIENT_VERSION } from './version'
 import type { ApiError } from './generated/types'
-import { MAX_RETRY_AFTER_S, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type Op, type Result } from './internal'
+import { TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type Op, type Result } from './internal'
 
 /** Whether a value has a tool's shape: a name, an exposure and an input schema object. */
 export const isTool = (t: unknown): t is Tool => {
@@ -44,10 +44,6 @@ type Input = { path?: Record<string, unknown>; query?: Record<string, unknown>; 
 type Rpc = { result?: { content?: Array<{ type?: string; text?: string }>; isError?: boolean; tools?: unknown }; error?: { code?: unknown; data?: unknown } }
 
 const unreadable = (method: string, name: string): ApiError => local(method, 'unreadable_answer', `The ${name} answer was not readable.`)
-const seconds = (v: unknown): number | undefined => {
-  const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : NaN
-  return n >= 0 && n <= MAX_RETRY_AFTER_S ? n : undefined
-}
 
 /** An API error, if the value is one the document allows (the same rule as the HTTP client). */
 const apiError = (value: unknown): ApiError | undefined => apiErrorIn({ error: value })
@@ -64,7 +60,7 @@ function rpcError(res: Answer, error: NonNullable<Rpc['error']>, method: string,
   // A refusal before the protocol layer (the origin check; a deployment with no MCP endpoint) is a plain API error body,
   // `{ error: { code, message, outcome } }`, so `error` is itself the API error. A JSON-RPC error's code is a number.
   const api = apiError(error.data) ?? apiError(error)
-  const retryAfter = seconds(res.headers.get('retry-after'))
+  const retryAfter = retryAfterSeconds(res.headers.get('retry-after'))
   return api
     ? { ok: false, status: res.status, error: api, ...(api.traceId !== undefined && { traceId: api.traceId }), ...(retryAfter !== undefined && { retryAfter }) }
     : { ok: false, status: res.status, error: unreadable(method, name) }
@@ -106,7 +102,7 @@ function callTool(opts: McpClientOptions, tool: Tool, name: string, op: Op) {
     try {
       res = await post(opts, headers, rpcBody, o.signal)
     } catch {
-      return { ok: false, status: 0, error: local(op.method, 'network_error', `The ${name} call got no answer.`) }
+      return { ok: false, status: 0, error: noAnswer(op.method, name) }
     }
     // The endpoint answers in JSON; anything else (a stream, a page) is not its answer.
     if (!(res.headers.get('content-type') ?? '').includes('application/json')) return { ok: false, status: res.status, error: unreadable(op.method, name) }
@@ -124,7 +120,7 @@ function callTool(opts: McpClientOptions, tool: Tool, name: string, op: Op) {
       const error = apiError(v.error)
       // A non-2xx HTTP status stands; otherwise the body's status is used only when it is an error status.
       const status = !res.ok ? res.status : Number.isInteger(v.status) && (v.status as number) >= 400 && (v.status as number) <= 599 ? (v.status as number) : res.status
-      const retryAfter = seconds(v.retryAfter)
+      const retryAfter = retryAfterSeconds(v.retryAfter)
       return error
         ? { ok: false, status, error, ...(error.traceId !== undefined && { traceId: error.traceId }), ...(retryAfter !== undefined && { retryAfter }) }
         : { ok: false, status, error: unreadable(op.method, name) }
