@@ -108,8 +108,9 @@ print([p.id for p in r.body.products] if isinstance(r, Ok) else (r.error.code, r
 - **Credentials stay on the configured origin.** Redirects are refused, a call whose URL would leave the origin
   sends nothing, and the owner token goes only on owner calls.
 - **The client never signs.** A deposit or a withdrawal comes back as steps for the owner's own wallet. The checks
-  before signing compare each step's bytes with what the owner asked for, and refuse anything the API itself
-  would refuse: a chain the API does not serve (`SERVED_CHAINS`), an address with a wrong checksum, or calldata in upper-case hex.
+  before signing compare each step's bytes with what the owner asked for. They may refuse what the API would allow,
+  never the reverse: a chain the API does not serve (`SERVED_CHAINS`), a mixed-case address with a wrong EIP-55
+  checksum, and calldata that is not lower-case hex are all refused.
 
 ## Documentation
 
