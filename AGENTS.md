@@ -72,7 +72,7 @@ Each of these fails a check or breaks a caller when ignored.
    in files, commit messages or pull request text. `npm run check:public-text` scans the files; CI also
    scans every commit message.
 11. **Every commit is signed off** (`git commit -s`), as [CONTRIBUTING.md](CONTRIBUTING.md) says. The DCO check runs
-    on `pull_request_target`, so it always uses the checker on `main`, not the pull request's copy.
+    the checker from the pull request's base commit, not the pull request's own copy.
 12. **Checks:** `npm run check` in `typescript/`, tests with one worker (`npm test` already passes `--maxWorkers=1`).
     In `python/`: `ruff check . && ruff format --check .`, `mypy src tests`, `python scripts/generate.py --check` and
     `pytest` (one process). At the root: `node scripts/check-copies.mjs`.
