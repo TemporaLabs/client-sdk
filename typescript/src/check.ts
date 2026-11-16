@@ -207,3 +207,66 @@ export function checkSteps(steps: readonly StepToCheck[], intent: VaultIntent): 
   const at = calls.findIndex((c, i) => c !== null && candidates.every((s) => s[i] !== c))
   return { ok: false, step: at === -1 ? null : at, reason: `the steps are not in an order this client admits for a ${intent.action}` }
 }
+
+/** The EIP-5792 version of the `wallet_sendCalls` params this client admits. */
+export const EIP5792_VERSION = '2.0.0'
+
+/**
+ * The fields the API defines for a bundle and for its `sendCalls`. Any other field is refused: `sendCalls` goes to the
+ * wallet as it is, so an extra field (`capabilities`, a paymaster, an id) would go with it, and no check here reads it.
+ */
+export const BUNDLE_FIELDS = Object.freeze({
+  bundle: Object.freeze(['stepIds', 'sendCalls'] as const),
+  sendCalls: Object.freeze(['version', 'from', 'chainId', 'atomicRequired', 'calls'] as const),
+  call: Object.freeze(['to', 'data', 'value'] as const),
+})
+
+/** The parts of a request `checkBundle` reads. A request as the client returns it fits. */
+export type BundleToCheck = { readonly steps: readonly (StepToCheck & { readonly stepId?: unknown })[]; readonly bundle?: unknown }
+export type BundleCheck = { ok: true } | { ok: false; reason: string }
+
+// A chain id as `wallet_sendCalls` takes it: lower-case hex, no leading zero.
+const HEX_QUANTITY = /^0x(0|[1-9a-f][0-9a-f]*)$/
+// A call's value: every admitted vault call carries none.
+const NO_VALUE = '0x0'
+
+const only = (x: unknown, fields: readonly string[]): x is Record<string, unknown> =>
+  typeof x === 'object' && x !== null && !Array.isArray(x) && Object.keys(x).every((k) => fields.includes(k))
+
+/**
+ * A vault deposit's `bundle`, the steps offered as one `wallet_sendCalls` batch, checked before it goes to the wallet.
+ * The steps themselves must pass `checkSteps` with nothing pending; the bundle must then be exactly those steps: its
+ * `stepIds` every step's id in order, and each call the step's `to` and `data` byte for byte, with no value. Its
+ * `sendCalls` must be from the owner, on the vault's chain, all-or-nothing (`atomicRequired: true`), EIP-5792 version
+ * `2.0.0`, and carry no field beyond those. A request with no bundle is refused: send its steps one at a time.
+ */
+export function checkBundle(request: BundleToCheck, intent: VaultIntent): BundleCheck {
+  const problem = intentProblem(intent)
+  if (problem) return refuse(problem)
+  if (intent.action !== 'deposit') return refuse('a bundle is offered only for a deposit')
+  const steps = (request as { steps?: unknown }).steps
+  if (!Array.isArray(steps)) return refuse('the request has no steps')
+  const s = checkSteps(steps, intent)
+  if (!s.ok) return refuse(s.step === null ? s.reason : `step ${s.step}: ${s.reason}`)
+  if (s.pending.length > 0) return refuse('a step has nothing to sign yet, so the bundle cannot be checked')
+  const b = request.bundle
+  if (b === undefined) return refuse('the request offers no bundle; send its steps one at a time')
+  if (!only(b, BUNDLE_FIELDS.bundle)) return refuse(`the bundle is not an object of only ${BUNDLE_FIELDS.bundle.join(', ')}`)
+  const ids = b.stepIds
+  if (!Array.isArray(ids) || ids.length !== steps.length || ids.some((id, i) => typeof id !== 'string' || id !== steps[i].stepId)) return refuse("the bundle's stepIds are not the request's steps, in order")
+  const sc = b.sendCalls
+  if (!only(sc, BUNDLE_FIELDS.sendCalls)) return refuse(`the bundle's sendCalls is not an object of only ${BUNDLE_FIELDS.sendCalls.join(', ')}`)
+  if (sc.version !== EIP5792_VERSION) return refuse(`the bundle is not EIP-5792 version ${EIP5792_VERSION}`)
+  if (sc.atomicRequired !== true) return refuse('the bundle is not all-or-nothing (atomicRequired is not true)')
+  if (!isAddress(sc.from) || !same(sc.from as string, intent.owner)) return refuse('the bundle is not from the owner')
+  if (typeof sc.chainId !== 'string' || !HEX_QUANTITY.test(sc.chainId) || `eip155:${BigInt(sc.chainId)}` !== intent.vault.chain) return refuse(`the bundle is not on the vault's chain ${intent.vault.chain}`)
+  const calls = sc.calls
+  if (!Array.isArray(calls) || calls.length !== steps.length) return refuse('the bundle does not have one call per step')
+  for (const [i, c] of calls.entries()) {
+    if (!only(c, BUNDLE_FIELDS.call)) return refuse(`call ${i} is not an object of only ${BUNDLE_FIELDS.call.join(', ')}`)
+    const p = steps[i].payload as Record<string, unknown>
+    if (c.to !== p.to || c.data !== p.data) return refuse(`call ${i} is not step ${i}'s to and data, byte for byte`)
+    if (c.value !== NO_VALUE) return refuse(`call ${i} sends value; a vault call carries none`)
+  }
+  return { ok: true }
+}

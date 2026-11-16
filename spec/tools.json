@@ -1,5 +1,5 @@
 {
-  "version": "0.1.3",
+  "version": "0.1.4",
   "tools": [
     {
       "name": "products",
@@ -202,7 +202,8 @@
                           "vault-live",
                           "vault-terms",
                           "allowance",
-                          "rate-limit"
+                          "rate-limit",
+                          "gas-funds"
                         ]
                       },
                       {
@@ -924,7 +925,8 @@
                     "vault-live",
                     "vault-terms",
                     "allowance",
-                    "rate-limit"
+                    "rate-limit",
+                    "gas-funds"
                   ]
                 },
                 {
@@ -1545,11 +1547,14 @@
                 "slug": {
                   "type": "string",
                   "minLength": 1,
+                  "maxLength": 32,
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
                   "description": "A short lower-case name for the chain, e.g. `base`."
                 },
                 "name": {
                   "type": "string",
                   "minLength": 1,
+                  "maxLength": 64,
                   "description": "The chain's display name, e.g. `Base`."
                 },
                 "explorer": {
@@ -1696,7 +1701,8 @@
                         "vault-live",
                         "vault-terms",
                         "allowance",
-                        "rate-limit"
+                        "rate-limit",
+                        "gas-funds"
                       ]
                     },
                     {
@@ -2114,8 +2120,61 @@
                     "null"
                   ]
                 },
+                "basis": {
+                  "type": "object",
+                  "properties": {
+                    "usd": {
+                      "description": "What the owner put in, net of what they took out, in USD. Null when it could not be read.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "state": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "read",
+                            "partial",
+                            "unreadable"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ],
+                      "description": "read: every deposit and withdrawal up to the value's own time is counted. partial: a bound, not the basis, never an estimate: the history it is summed from was computed apart from the value, so the two may disagree on the latest deposit or withdrawal, or value moved in or out other than by deposits and withdrawals (shares transferred to or from the owner). unreadable: no figure."
+                    },
+                    "asOf": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "When the history the basis is summed from was computed. Null when unreadable."
+                    }
+                  },
+                  "required": [
+                    "usd",
+                    "state",
+                    "asOf"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The owner's entry basis: deposits less withdrawals. A portfolio's is summed from the portfolio provider's own cash flows."
+                },
+                "earnedUsd": {
+                  "description": "What the position has earned: `value.usd` less `basis.usd`, and negative for a loss. Present only when both are `read`, so it is never a guess or a stand-in zero.",
+                  "type": "number"
+                },
                 "pnlUsd": {
-                  "description": "Null for a vault: earnings cannot be read over public RPCs in v0.1.2.",
+                  "description": "The same figure as `earnedUsd`, or null when that is absent. Kept for 0.1.x clients: read `earnedUsd`.",
                   "type": [
                     "number",
                     "null"
@@ -2422,6 +2481,7 @@
                 "value",
                 "balances",
                 "idleUsd",
+                "basis",
                 "pnlUsd",
                 "driftPct",
                 "driftTicker",
@@ -2451,7 +2511,7 @@
     },
     {
       "name": "quote",
-      "description": "Quote a deposit into a vault (expected shares, the share price, and whether the vault would take it) or a withdrawal from one (the position, and how much of it can be withdrawn now, found by simulating withdrawals). Everything is read and simulated at one block. Advice only: the request decides. Read-only.",
+      "description": "Quote a deposit into a vault (expected shares, the share price, and whether the vault would take it) or a withdrawal from one (the position, and how much of it can be withdrawn now, found by simulating withdrawals). Everything is read and simulated at one block. Advice only: the request decides. Read-only. A quote is for a vault: a portfolio is refused as invalid_input. A vault the API is not running deposits for is refused at its vault-live gate, not quoted; one whose own contract would refuse the deposit is quoted, with the deposit check refused and its reason.",
       "exposure": "owner",
       "inputSchema": {
         "type": "object",
@@ -2500,6 +2560,7 @@
                         "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}\\/[-a-z0-9]{3,8}:[-.%a-zA-Z0-9]{1,128}$"
                       },
                       "raw": {
+                        "description": "The amount in the token's smallest unit, as digits. Exactly one of `raw` and `value`.",
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
                       },
@@ -3074,6 +3135,7 @@
                         "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}\\/[-a-z0-9]{3,8}:[-.%a-zA-Z0-9]{1,128}$"
                       },
                       "raw": {
+                        "description": "The amount in the token's smallest unit, as digits. Exactly one of `raw` and `value`.",
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
                       },
@@ -3228,6 +3290,21 @@
                   "amount",
                   "notBefore"
                 ]
+              },
+              "gas": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "self"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                ],
+                "description": "\"self\" when the wallet pays its own gas: the request is then refused at the gas-funds gate if its native balance cannot pay every step. Leave it out for a sponsored or smart-account wallet."
               },
               "vaultTerms": {
                 "description": "A vault deposit only, and required there: the `vaultTerms.version` and `vaultTerms.sha256` of the terms the depositor was shown and accepted. Any other is refused at the vault-terms gate; the request records it as `chose.vaultTerms`.",
@@ -4002,6 +4079,186 @@
                         "value"
                       ],
                       "additionalProperties": false
+                    },
+                    "fee": {
+                      "type": "object",
+                      "properties": {
+                        "chain": {
+                          "type": "string",
+                          "pattern": "^eip155:[1-9][0-9]*$"
+                        },
+                        "block": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The block the estimate, the fee and the balance were read at."
+                        },
+                        "estimate": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "estimateSource": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "\"node\", \"simulated\" or \"fixed\"; a later source is a value this release does not know."
+                        },
+                        "gasLimit": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The limit to sign with, its buffer already in it: pass it as the transaction's gas, never buffer it again."
+                        },
+                        "bufferBps": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "fees": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "eip1559"
+                                    },
+                                    "maxFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    },
+                                    "maxPriorityFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "maxFeePerGas",
+                                    "maxPriorityFeePerGas"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "legacy"
+                                    },
+                                    "gasPrice": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "gasPrice"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind"
+                                  ],
+                                  "additionalProperties": {}
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "l1Fee": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "maxCost": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "gasLimit × the worst-case fee + value + l1Fee, in the native asset's raw units: what the sender must hold for this step."
+                        },
+                        "nativeAsset": {
+                          "type": "object",
+                          "properties": {
+                            "symbol": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "decimals": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 36
+                            }
+                          },
+                          "required": [
+                            "symbol",
+                            "decimals"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "advisory": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "display": {
+                          "description": "`maxCost` formatted in the native asset, with its symbol (e.g. \"0.000021 BNB\").",
+                          "type": "object",
+                          "properties": {
+                            "maxCost": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "maxCost"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "chain",
+                        "block",
+                        "estimate",
+                        "estimateSource",
+                        "gasLimit",
+                        "bufferBps",
+                        "fees",
+                        "l1Fee",
+                        "maxCost",
+                        "nativeAsset",
+                        "advisory"
+                      ],
+                      "additionalProperties": {},
+                      "description": "This step's gas and fee estimate, advisory."
                     }
                   },
                   "required": [
@@ -4238,6 +4495,81 @@
           "smartAccount": {
             "type": "string",
             "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "bundle": {
+            "type": "object",
+            "properties": {
+              "stepIds": {
+                "minItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^s\\d{1,3}$"
+                }
+              },
+              "sendCalls": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "from": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]+$"
+                  },
+                  "atomicRequired": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "calls": {
+                    "minItems": 2,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "to": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "data": {
+                          "type": "string",
+                          "pattern": "^0x([0-9a-fA-F]{2})*$"
+                        },
+                        "value": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]+$"
+                        }
+                      },
+                      "required": [
+                        "to",
+                        "data",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "version",
+                  "from",
+                  "chainId",
+                  "atomicRequired",
+                  "calls"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "stepIds",
+              "sendCalls"
+            ],
+            "additionalProperties": false,
+            "description": "This request's steps as one wallet_sendCalls batch (EIP-5792), offered beside them; never required."
           },
           "operation": {
             "description": "Only on a withdrawal request found by its operationId when the API holds no request for that operation: the request is answered from the operation at the portfolio provider, and carries that operation and its state, with no steps. Its expiresAt is the time of that answer and bounds nothing, because nothing is left to sign.",
@@ -4582,6 +4914,7 @@
                         "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}\\/[-a-z0-9]{3,8}:[-.%a-zA-Z0-9]{1,128}$"
                       },
                       "raw": {
+                        "description": "The amount in the token's smallest unit, as digits. Exactly one of `raw` and `value`.",
                         "type": "string",
                         "pattern": "^[1-9]\\d{0,77}$"
                       },
@@ -4661,6 +4994,21 @@
                     ]
                   }
                 ]
+              },
+              "gas": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "self"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                ],
+                "description": "\"self\" when the wallet pays its own gas: the request is then refused at the gas-funds gate if its native balance cannot pay every step. Leave it out for a sponsored or smart-account wallet."
               }
             },
             "required": [
@@ -5417,6 +5765,186 @@
                         "value"
                       ],
                       "additionalProperties": false
+                    },
+                    "fee": {
+                      "type": "object",
+                      "properties": {
+                        "chain": {
+                          "type": "string",
+                          "pattern": "^eip155:[1-9][0-9]*$"
+                        },
+                        "block": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The block the estimate, the fee and the balance were read at."
+                        },
+                        "estimate": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "estimateSource": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "\"node\", \"simulated\" or \"fixed\"; a later source is a value this release does not know."
+                        },
+                        "gasLimit": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The limit to sign with, its buffer already in it: pass it as the transaction's gas, never buffer it again."
+                        },
+                        "bufferBps": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "fees": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "eip1559"
+                                    },
+                                    "maxFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    },
+                                    "maxPriorityFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "maxFeePerGas",
+                                    "maxPriorityFeePerGas"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "legacy"
+                                    },
+                                    "gasPrice": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "gasPrice"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind"
+                                  ],
+                                  "additionalProperties": {}
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "l1Fee": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "maxCost": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "gasLimit × the worst-case fee + value + l1Fee, in the native asset's raw units: what the sender must hold for this step."
+                        },
+                        "nativeAsset": {
+                          "type": "object",
+                          "properties": {
+                            "symbol": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "decimals": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 36
+                            }
+                          },
+                          "required": [
+                            "symbol",
+                            "decimals"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "advisory": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "display": {
+                          "description": "`maxCost` formatted in the native asset, with its symbol (e.g. \"0.000021 BNB\").",
+                          "type": "object",
+                          "properties": {
+                            "maxCost": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "maxCost"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "chain",
+                        "block",
+                        "estimate",
+                        "estimateSource",
+                        "gasLimit",
+                        "bufferBps",
+                        "fees",
+                        "l1Fee",
+                        "maxCost",
+                        "nativeAsset",
+                        "advisory"
+                      ],
+                      "additionalProperties": {},
+                      "description": "This step's gas and fee estimate, advisory."
                     }
                   },
                   "required": [
@@ -5653,6 +6181,81 @@
           "smartAccount": {
             "type": "string",
             "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "bundle": {
+            "type": "object",
+            "properties": {
+              "stepIds": {
+                "minItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^s\\d{1,3}$"
+                }
+              },
+              "sendCalls": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "from": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]+$"
+                  },
+                  "atomicRequired": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "calls": {
+                    "minItems": 2,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "to": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "data": {
+                          "type": "string",
+                          "pattern": "^0x([0-9a-fA-F]{2})*$"
+                        },
+                        "value": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]+$"
+                        }
+                      },
+                      "required": [
+                        "to",
+                        "data",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "version",
+                  "from",
+                  "chainId",
+                  "atomicRequired",
+                  "calls"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "stepIds",
+              "sendCalls"
+            ],
+            "additionalProperties": false,
+            "description": "This request's steps as one wallet_sendCalls batch (EIP-5792), offered beside them; never required."
           },
           "operation": {
             "description": "Only on a withdrawal request found by its operationId when the API holds no request for that operation: the request is answered from the operation at the portfolio provider, and carries that operation and its state, with no steps. Its expiresAt is the time of that answer and bounds nothing, because nothing is left to sign.",
@@ -6084,6 +6687,32 @@
                 "required": [
                   "kind",
                   "expectedGeneration"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "bundle"
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The batch id wallet_sendCalls answered."
+                  },
+                  "status": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {},
+                    "description": "What wallet_getCallsStatus answered for that id, as the wallet gave it. Used only to find each step's transaction: every step is then checked on the chain, as a hash handed back is."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "id",
+                  "status"
                 ],
                 "additionalProperties": false
               }
@@ -6840,6 +7469,186 @@
                         "value"
                       ],
                       "additionalProperties": false
+                    },
+                    "fee": {
+                      "type": "object",
+                      "properties": {
+                        "chain": {
+                          "type": "string",
+                          "pattern": "^eip155:[1-9][0-9]*$"
+                        },
+                        "block": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The block the estimate, the fee and the balance were read at."
+                        },
+                        "estimate": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "estimateSource": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "\"node\", \"simulated\" or \"fixed\"; a later source is a value this release does not know."
+                        },
+                        "gasLimit": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The limit to sign with, its buffer already in it: pass it as the transaction's gas, never buffer it again."
+                        },
+                        "bufferBps": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "fees": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "eip1559"
+                                    },
+                                    "maxFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    },
+                                    "maxPriorityFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "maxFeePerGas",
+                                    "maxPriorityFeePerGas"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "legacy"
+                                    },
+                                    "gasPrice": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "gasPrice"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind"
+                                  ],
+                                  "additionalProperties": {}
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "l1Fee": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "maxCost": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "gasLimit × the worst-case fee + value + l1Fee, in the native asset's raw units: what the sender must hold for this step."
+                        },
+                        "nativeAsset": {
+                          "type": "object",
+                          "properties": {
+                            "symbol": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "decimals": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 36
+                            }
+                          },
+                          "required": [
+                            "symbol",
+                            "decimals"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "advisory": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "display": {
+                          "description": "`maxCost` formatted in the native asset, with its symbol (e.g. \"0.000021 BNB\").",
+                          "type": "object",
+                          "properties": {
+                            "maxCost": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "maxCost"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "chain",
+                        "block",
+                        "estimate",
+                        "estimateSource",
+                        "gasLimit",
+                        "bufferBps",
+                        "fees",
+                        "l1Fee",
+                        "maxCost",
+                        "nativeAsset",
+                        "advisory"
+                      ],
+                      "additionalProperties": {},
+                      "description": "This step's gas and fee estimate, advisory."
                     }
                   },
                   "required": [
@@ -7076,6 +7885,81 @@
           "smartAccount": {
             "type": "string",
             "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "bundle": {
+            "type": "object",
+            "properties": {
+              "stepIds": {
+                "minItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^s\\d{1,3}$"
+                }
+              },
+              "sendCalls": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "from": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]+$"
+                  },
+                  "atomicRequired": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "calls": {
+                    "minItems": 2,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "to": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "data": {
+                          "type": "string",
+                          "pattern": "^0x([0-9a-fA-F]{2})*$"
+                        },
+                        "value": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]+$"
+                        }
+                      },
+                      "required": [
+                        "to",
+                        "data",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "version",
+                  "from",
+                  "chainId",
+                  "atomicRequired",
+                  "calls"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "stepIds",
+              "sendCalls"
+            ],
+            "additionalProperties": false,
+            "description": "This request's steps as one wallet_sendCalls batch (EIP-5792), offered beside them; never required."
           },
           "operation": {
             "description": "Only on a withdrawal request found by its operationId when the API holds no request for that operation: the request is answered from the operation at the portfolio provider, and carries that operation and its state, with no steps. Its expiresAt is the time of that answer and bounds nothing, because nothing is left to sign.",
@@ -8146,6 +9030,186 @@
                         "value"
                       ],
                       "additionalProperties": false
+                    },
+                    "fee": {
+                      "type": "object",
+                      "properties": {
+                        "chain": {
+                          "type": "string",
+                          "pattern": "^eip155:[1-9][0-9]*$"
+                        },
+                        "block": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The block the estimate, the fee and the balance were read at."
+                        },
+                        "estimate": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "estimateSource": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "\"node\", \"simulated\" or \"fixed\"; a later source is a value this release does not know."
+                        },
+                        "gasLimit": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The limit to sign with, its buffer already in it: pass it as the transaction's gas, never buffer it again."
+                        },
+                        "bufferBps": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "fees": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "eip1559"
+                                    },
+                                    "maxFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    },
+                                    "maxPriorityFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "maxFeePerGas",
+                                    "maxPriorityFeePerGas"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "legacy"
+                                    },
+                                    "gasPrice": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "gasPrice"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind"
+                                  ],
+                                  "additionalProperties": {}
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "l1Fee": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "maxCost": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "gasLimit × the worst-case fee + value + l1Fee, in the native asset's raw units: what the sender must hold for this step."
+                        },
+                        "nativeAsset": {
+                          "type": "object",
+                          "properties": {
+                            "symbol": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "decimals": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 36
+                            }
+                          },
+                          "required": [
+                            "symbol",
+                            "decimals"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "advisory": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "display": {
+                          "description": "`maxCost` formatted in the native asset, with its symbol (e.g. \"0.000021 BNB\").",
+                          "type": "object",
+                          "properties": {
+                            "maxCost": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "maxCost"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "chain",
+                        "block",
+                        "estimate",
+                        "estimateSource",
+                        "gasLimit",
+                        "bufferBps",
+                        "fees",
+                        "l1Fee",
+                        "maxCost",
+                        "nativeAsset",
+                        "advisory"
+                      ],
+                      "additionalProperties": {},
+                      "description": "This step's gas and fee estimate, advisory."
                     }
                   },
                   "required": [
@@ -8382,6 +9446,81 @@
           "smartAccount": {
             "type": "string",
             "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "bundle": {
+            "type": "object",
+            "properties": {
+              "stepIds": {
+                "minItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^s\\d{1,3}$"
+                }
+              },
+              "sendCalls": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "from": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]+$"
+                  },
+                  "atomicRequired": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "calls": {
+                    "minItems": 2,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "to": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "data": {
+                          "type": "string",
+                          "pattern": "^0x([0-9a-fA-F]{2})*$"
+                        },
+                        "value": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]+$"
+                        }
+                      },
+                      "required": [
+                        "to",
+                        "data",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "version",
+                  "from",
+                  "chainId",
+                  "atomicRequired",
+                  "calls"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "stepIds",
+              "sendCalls"
+            ],
+            "additionalProperties": false,
+            "description": "This request's steps as one wallet_sendCalls batch (EIP-5792), offered beside them; never required."
           },
           "operation": {
             "description": "Only on a withdrawal request found by its operationId when the API holds no request for that operation: the request is answered from the operation at the portfolio provider, and carries that operation and its state, with no steps. Its expiresAt is the time of that answer and bounds nothing, because nothing is left to sign.",
@@ -9441,6 +10580,186 @@
                         "value"
                       ],
                       "additionalProperties": false
+                    },
+                    "fee": {
+                      "type": "object",
+                      "properties": {
+                        "chain": {
+                          "type": "string",
+                          "pattern": "^eip155:[1-9][0-9]*$"
+                        },
+                        "block": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The block the estimate, the fee and the balance were read at."
+                        },
+                        "estimate": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "estimateSource": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "\"node\", \"simulated\" or \"fixed\"; a later source is a value this release does not know."
+                        },
+                        "gasLimit": {
+                          "type": "string",
+                          "pattern": "^(?:0|[1-9][0-9]{0,77})$",
+                          "description": "The limit to sign with, its buffer already in it: pass it as the transaction's gas, never buffer it again."
+                        },
+                        "bufferBps": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "fees": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "eip1559"
+                                    },
+                                    "maxFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    },
+                                    "maxPriorityFeePerGas": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "maxFeePerGas",
+                                    "maxPriorityFeePerGas"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "legacy"
+                                    },
+                                    "gasPrice": {
+                                      "type": "string",
+                                      "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "gasPrice"
+                                  ],
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind"
+                                  ],
+                                  "additionalProperties": {}
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "l1Fee": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "maxCost": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^(?:0|[1-9][0-9]{0,77})$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "gasLimit × the worst-case fee + value + l1Fee, in the native asset's raw units: what the sender must hold for this step."
+                        },
+                        "nativeAsset": {
+                          "type": "object",
+                          "properties": {
+                            "symbol": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "decimals": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 36
+                            }
+                          },
+                          "required": [
+                            "symbol",
+                            "decimals"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "advisory": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "display": {
+                          "description": "`maxCost` formatted in the native asset, with its symbol (e.g. \"0.000021 BNB\").",
+                          "type": "object",
+                          "properties": {
+                            "maxCost": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "maxCost"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "chain",
+                        "block",
+                        "estimate",
+                        "estimateSource",
+                        "gasLimit",
+                        "bufferBps",
+                        "fees",
+                        "l1Fee",
+                        "maxCost",
+                        "nativeAsset",
+                        "advisory"
+                      ],
+                      "additionalProperties": {},
+                      "description": "This step's gas and fee estimate, advisory."
                     }
                   },
                   "required": [
@@ -9677,6 +10996,81 @@
           "smartAccount": {
             "type": "string",
             "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "bundle": {
+            "type": "object",
+            "properties": {
+              "stepIds": {
+                "minItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^s\\d{1,3}$"
+                }
+              },
+              "sendCalls": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "from": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]+$"
+                  },
+                  "atomicRequired": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "calls": {
+                    "minItems": 2,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "to": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "data": {
+                          "type": "string",
+                          "pattern": "^0x([0-9a-fA-F]{2})*$"
+                        },
+                        "value": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]+$"
+                        }
+                      },
+                      "required": [
+                        "to",
+                        "data",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "version",
+                  "from",
+                  "chainId",
+                  "atomicRequired",
+                  "calls"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "stepIds",
+              "sendCalls"
+            ],
+            "additionalProperties": false,
+            "description": "This request's steps as one wallet_sendCalls batch (EIP-5792), offered beside them; never required."
           },
           "operation": {
             "description": "Only on a withdrawal request found by its operationId when the API holds no request for that operation: the request is answered from the operation at the portfolio provider, and carries that operation and its state, with no steps. Its expiresAt is the time of that answer and bounds nothing, because nothing is left to sign.",
