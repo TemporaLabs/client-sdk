@@ -21,7 +21,6 @@ __all__ = ["Client", "create_client"]
 # `.` or `..`, even percent-encoded, would move the call to another route on the same origin.
 _DOT_SEGMENT = re.compile(r"(?:\.|%2e){1,2}", re.IGNORECASE | re.ASCII)
 _PATH_NAME = re.compile(r"\{(\w+)\}", re.ASCII)
-_NOT_SET: Any = object()
 
 
 class _PathValue(Exception):
@@ -91,7 +90,7 @@ def _call(opts: internal.Options, name: str, op: Operation) -> Callable[..., Res
         *,
         path: Mapping[str, Any] | None = None,
         query: Mapping[str, Any] | None = None,
-        body: Any = _NOT_SET,
+        body: Any = internal.NOT_SET,
         owner_token: str | None = None,
     ) -> Result[Any]:
         path_args: Mapping[str, Any] = path if isinstance(path, Mapping) else {}
@@ -148,7 +147,7 @@ def _call(opts: internal.Options, name: str, op: Operation) -> Callable[..., Res
             if not isinstance(token, str):
                 return _err(0, internal.unsent_header(name))
             headers["authorization"] = f"Bearer {token}"
-        has_body = body is not _NOT_SET and body is not None
+        has_body = body is not internal.NOT_SET and body is not None
         if has_body:
             headers["content-type"] = "application/json"
         if not internal.headers_safe(headers):
