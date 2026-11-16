@@ -29,6 +29,7 @@ Copy no fact from prose. Read it from its source.
 | How the Python answer checks match the TypeScript ones, keyword by keyword | `python/src/_schema.py` |
 | The answers both clients must judge alike | `cases/answers.json`, read by `typescript/tests/answers.test.ts` and `python/tests/test_answers.py` |
 | Request behaviour: the origin check, headers, timeout, the outcome of a lost answer | `typescript/src/index.ts` (HTTP) and `typescript/src/mcpClient.ts` (MCP), over `typescript/src/internal.ts`, which both share; in Python, `python/src/client.py` and `python/src/mcp_client.py` over `python/src/_internal.py` |
+| The chains the checks before signing admit, the EIP-55 address check, Keccak-256 | `SERVED_CHAINS` and the functions in `typescript/src/evm.ts` and `python/src/_evm.py`; `SERVED_CHAINS` is the chain list of the API version in `spec/SOURCE` |
 | The default timeout and the trace header name | constants in `typescript/src/internal.ts` and `python/src/_internal.py` |
 | What the published package may contain | `ALLOWED` in `typescript/scripts/client-pack.mjs`, and `files` in `typescript/package.json`; `[tool.setuptools]` in `python/pyproject.toml` |
 | Python versions and dependencies | `requires-python`, `dependencies` and the pinned `dev` tools in `python/pyproject.toml` |

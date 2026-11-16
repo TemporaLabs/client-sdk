@@ -15,6 +15,8 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 - `SERVED_CHAINS` is frozen in TypeScript, so it cannot be widened at run time, a cast included; in Python it was
   already a tuple.
 - `cases/vault-steps.json` holds one-step deposits that both clients must admit or refuse alike.
+- The README's install section gives the exact pinned install for both languages, including `uv add` for Python,
+  and a one-line check that the install worked.
 
 ## [v0.1.1] - 2026-11-15
 
