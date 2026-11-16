@@ -11,6 +11,8 @@ from typing import Literal
 # A 32-byte argument word: an address (20 bytes, the rest zero) or a uint256.
 Word = Literal["address", "uint"]
 
+# The `0x` before the hex digits.
+PREFIX_HEX = 2
 SELECTOR_HEX = 8
 WORD_HEX = 64
 ADDRESS_HEX = 40
@@ -39,13 +41,13 @@ class Refused:
 
 
 def decode_call(data: str, calls: Mapping[str, Sequence[Word]]) -> Decoded | Refused:
-    if not isinstance(data, str) or not HEX_BYTES.fullmatch(data) or len(data) < 2 + SELECTOR_HEX:
+    if not isinstance(data, str) or not HEX_BYTES.fullmatch(data) or len(data) < PREFIX_HEX + SELECTOR_HEX:
         return Refused(ok=False, refused="encoding")
-    selector = data[: 2 + SELECTOR_HEX]
+    selector = data[: PREFIX_HEX + SELECTOR_HEX]
     args = calls.get(selector)
     if args is None:
         return Refused(ok=False, refused="selector", selector=selector)
-    body = data[2 + SELECTOR_HEX :]
+    body = data[PREFIX_HEX + SELECTOR_HEX :]
     if len(body) != len(args) * WORD_HEX:
         return Refused(ok=False, refused="canonical", selector=selector)
     words: list[int | str] = []

@@ -3,6 +3,8 @@
 /** A 32-byte argument word: an address (20 bytes, the rest zero) or a uint256. */
 export type Word = 'address' | 'uint'
 
+// The `0x` before the hex digits.
+const PREFIX_HEX = 2
 const SELECTOR_HEX = 8
 const WORD_HEX = 64
 const ADDRESS_HEX = 40
@@ -19,11 +21,11 @@ export function decodeCall(
   data: string,
   calls: Readonly<Record<string, readonly Word[]>>,
 ): { ok: true; selector: string; words: (bigint | string)[] } | { ok: false; refused: 'encoding' | 'selector' | 'canonical'; selector?: string } {
-  if (!HEX_BYTES.test(data) || data.length < 2 + SELECTOR_HEX) return { ok: false, refused: 'encoding' }
-  const selector = data.slice(0, 2 + SELECTOR_HEX)
+  if (!HEX_BYTES.test(data) || data.length < PREFIX_HEX + SELECTOR_HEX) return { ok: false, refused: 'encoding' }
+  const selector = data.slice(0, PREFIX_HEX + SELECTOR_HEX)
   const args = calls[selector]
   if (!args) return { ok: false, refused: 'selector', selector }
-  const body = data.slice(2 + SELECTOR_HEX)
+  const body = data.slice(PREFIX_HEX + SELECTOR_HEX)
   if (body.length !== args.length * WORD_HEX) return { ok: false, refused: 'canonical', selector }
   const words: (bigint | string)[] = []
   for (let i = 0; i < args.length; i++) {

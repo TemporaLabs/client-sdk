@@ -50,7 +50,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Final, Literal, NotRequired, TypedDict
 
-from ._evm import CHAIN, same, served_chain
+from ._evm import CHAIN, UINT256_DIGITS, same, served_chain
 from .abi.calldata import decode_call
 from .check import (
     PAYLOAD_FIELDS,
@@ -169,8 +169,8 @@ _MAX_SAFE_INTEGER: Final = 2**53 - 1
 
 # A raw amount is a uint256: at most 78 digits. Anything longer can never match a chain value, so it is
 # refused as malformed, and no client spends unbounded time converting it.
-_RAW_POSITIVE: Final = re.compile(r"[1-9][0-9]{0,77}", re.ASCII)
-_DIGITS: Final = re.compile(r"[0-9]{1,78}", re.ASCII)
+_RAW_POSITIVE: Final = re.compile(rf"[1-9][0-9]{{0,{UINT256_DIGITS - 1}}}", re.ASCII)
+_DIGITS: Final = re.compile(rf"[0-9]{{1,{UINT256_DIGITS}}}", re.ASCII)
 _BYTES32: Final = re.compile(r"0x[0-9a-fA-F]{64}", re.ASCII)
 _ACCOUNT: Final = re.compile(r"eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})", re.ASCII)
 _ASSET: Final = re.compile(r"eip155:([1-9][0-9]*)/erc20:(0x[0-9a-fA-F]{40})", re.ASCII)

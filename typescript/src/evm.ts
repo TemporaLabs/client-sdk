@@ -12,6 +12,9 @@
  */
 export const SERVED_CHAINS: readonly string[] = Object.freeze(['1', '56', '143', '4663', '8453', '42161'])
 
+/** A uint256 written in decimal has at most this many digits. */
+export const UINT256_DIGITS = 78
+
 /** An `eip155:<id>` chain, its id captured. */
 export const CHAIN = /^eip155:([1-9][0-9]*)$/
 

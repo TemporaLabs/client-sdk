@@ -41,8 +41,8 @@ from typing import Any, Final, Literal, NotRequired, TypedDict
 
 from pydantic import BaseModel
 
+from ._evm import UINT256_DIGITS, same, served_chain
 from ._evm import is_address as is_address
-from ._evm import same, served_chain
 from .abi.calldata import Word, decode_call
 
 __all__ = [
@@ -187,7 +187,7 @@ _ARGS: Final[Mapping[VaultCall, tuple[Word, ...]]] = {
 }
 _CALLS: Final = {selector: _ARGS[call] for selector, call in _SELECTORS.items()}
 # A raw amount is a uint256: at most 78 digits; a longer one is refused as malformed.
-_RAW: Final = re.compile(r"0|[1-9][0-9]{0,77}", re.ASCII)
+_RAW: Final = re.compile(rf"0|[1-9][0-9]{{0,{UINT256_DIGITS - 1}}}", re.ASCII)
 
 
 def exact_int(digits: str) -> int:

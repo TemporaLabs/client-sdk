@@ -28,6 +28,12 @@ META: Final = {
     "io.modelcontextprotocol/clientInfo": CLIENT_INFO,
     "io.modelcontextprotocol/clientCapabilities": {},
 }
+# Every message is one JSON-RPC 2.0 request, so one id is enough.
+_JSON_RPC: Final = {"jsonrpc": "2.0", "id": 1}
+# The tool list goes out as a POST but only reads, so a lost list is `failed`, never `unknown`.
+_LIST_METHOD: Final = "GET"
+# A protocol revision is a date.
+_REVISION: Final = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 STATUS: Final = "status"
 STATUS_LOOKUP: Final = "status_lookup"
 _U = internal.UNDEFINED
@@ -98,7 +104,7 @@ def _rpc_error(res: internal.Answer, error: Any, method: str, name: str) -> Err:
         # Only date-shaped revisions are quoted: the rest of the list is the endpoint's text, not the
         # protocol's.
         dates = (
-            [s for s in supported if isinstance(s, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", s, re.ASCII)]
+            [s for s in supported if isinstance(s, str) and _REVISION.fullmatch(s)]
             if isinstance(supported, list)
             else []
         )
@@ -117,7 +123,7 @@ def _rpc_error(res: internal.Answer, error: Any, method: str, name: str) -> Err:
     api = _api_error(_get(error, "data"))
     if api is None:
         api = _api_error(error)
-    wait = _seconds(res.headers.get("retry-after"))
+    wait = _seconds(res.headers.get(internal.RETRY_AFTER_HEADER))
     if api is None:
         return Err(status=res.status, error=_unreadable(method, name))
     return Err(status=res.status, error=api, trace_id=api.traceId, retry_after=wait)
@@ -139,7 +145,7 @@ def _headers(
     token = token if token is not None else opts.owner_token
     if owner and token is not None:
         # A token that is not text cannot be a header value: the header check refuses the call.
-        headers["authorization"] = f"Bearer {token}" if isinstance(token, str) else "\x00"
+        headers["authorization"] = f"{internal.AUTH_SCHEME} {token}" if isinstance(token, str) else "\x00"
     return headers
 
 
@@ -187,8 +193,7 @@ def _call_tool(
         try:
             rpc_body = internal.to_json(
                 {
-                    "jsonrpc": "2.0",
-                    "id": 1,
+                    **_JSON_RPC,
                     "method": "tools/call",
                     "params": {"name": tool["name"], "arguments": args, "_meta": META},
                 }
@@ -249,14 +254,16 @@ def _list_tools(opts: internal.Options) -> Callable[..., Result[tuple[dict[str, 
         headers = _headers(opts, "tools/list", None, True, owner_token)
         if not internal.headers_safe(headers):
             return Err(status=0, error=internal.unsent_header("tool list"))
-        body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {"_meta": META}})
+        body = json.dumps({**_JSON_RPC, "method": "tools/list", "params": {"_meta": META}})
         try:
             res = internal.send(opts, opts.url, "POST", headers, body)
         except Exception:
-            return Err(status=0, error=internal.local("GET", "network_error", "The tool list got no answer."))
+            return Err(
+                status=0, error=internal.local(_LIST_METHOD, "network_error", "The tool list got no answer.")
+            )
         unreadable = Err(
             status=res.status,
-            error=internal.local("GET", "unreadable_answer", "The tool list was not readable."),
+            error=internal.local(_LIST_METHOD, "unreadable_answer", "The tool list was not readable."),
         )
         # The endpoint answers in JSON, and every item of the list must be a tool.
         if not _is_json(res):
@@ -264,7 +271,7 @@ def _list_tools(opts: internal.Options) -> Callable[..., Result[tuple[dict[str, 
         rpc = res.json()
         error = _get(rpc, "error")
         if _truthy(error):
-            return _rpc_error(res, error, "GET", "tool list")
+            return _rpc_error(res, error, _LIST_METHOD, "tool list")
         # A list on a non-2xx answer is not the endpoint's answer, as for a tool call.
         if not res.ok:
             return unreadable

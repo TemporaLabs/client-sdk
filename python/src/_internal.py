@@ -23,6 +23,9 @@ from .generated.spec import UNKNOWN_CODES, Operation
 
 DEFAULT_TIMEOUT_S: Final = 30.0
 TRACE_HEADER: Final = "x-trace-id"
+RETRY_AFTER_HEADER: Final = "retry-after"
+# The authorization scheme every owner token is sent with.
+AUTH_SCHEME: Final = "Bearer"
 # A call's `body` argument when the caller passed none (None is a value a caller may pass).
 NOT_SET: Final[Any] = object()
 # The longest wait the client passes on as `retry_after`, in seconds: one day. A longer one is left out.
