@@ -8,7 +8,7 @@ This repository is public: every byte you add, commit messages included, is publ
 
 ## Start here
 
-1. [Setup](README.md#setup): prerequisites, install, and the checks to run.
+1. [Contributing](README.md#contributing): prerequisites, install, and the checks to run.
 2. [How the clients are made](docs/how-it-is-made.md), from the API document to the published packages, then
    [one call traced](docs/one-call-traced.md).
 3. The usage doc for the area you touch: [errors](docs/errors.md), [sign-in](docs/sign-in.md),
@@ -79,7 +79,7 @@ Each of these fails a check or breaks a caller when ignored.
 
 ## Reviewing a pull request
 
-Check the change against its sources above, then these, each of which a reviewer is expected to catch:
+Check the change against its sources above, then check:
 
 - Generated files changed only by their generator, with `spec/SOURCE` updated when `spec/` changed.
 - A change to what one client accepts or sends is made in the other client in the same pull request, with
