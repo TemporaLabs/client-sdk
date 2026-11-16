@@ -8,7 +8,7 @@ This repository is public: every byte you add, commit messages included, is publ
 
 ## Start here
 
-1. [Setup](README.md#setup): prerequisites, install, and the checks to run.
+1. [Contributing](README.md#contributing): prerequisites, install, and the checks to run.
 2. [How the clients are made](docs/how-it-is-made.md), from the API document to the published packages, then
    [one call traced](docs/one-call-traced.md).
 3. The usage doc for the area you touch: [errors](docs/errors.md), [sign-in](docs/sign-in.md),
@@ -29,6 +29,7 @@ Copy no fact from prose. Read it from its source.
 | How the Python answer checks match the TypeScript ones, keyword by keyword | `python/src/_schema.py` |
 | The answers both clients must judge alike | `cases/answers.json`, read by `typescript/tests/answers.test.ts` and `python/tests/test_answers.py` |
 | Request behaviour: the origin check, headers, timeout, the outcome of a lost answer | `typescript/src/index.ts` (HTTP) and `typescript/src/mcpClient.ts` (MCP), over `typescript/src/internal.ts`, which both share; in Python, `python/src/client.py` and `python/src/mcp_client.py` over `python/src/_internal.py` |
+| The chains the checks before signing admit, the EIP-55 address check, Keccak-256 | `SERVED_CHAINS` and the functions in `typescript/src/evm.ts` and `python/src/_evm.py`; `SERVED_CHAINS` is the chain list of the API version in `spec/SOURCE` |
 | The default timeout and the trace header name | constants in `typescript/src/internal.ts` and `python/src/_internal.py` |
 | What the published package may contain | `ALLOWED` in `typescript/scripts/client-pack.mjs`, and `files` in `typescript/package.json`; `[tool.setuptools]` in `python/pyproject.toml` |
 | Python versions and dependencies | `requires-python`, `dependencies` and the pinned `dev` tools in `python/pyproject.toml` |
@@ -78,7 +79,7 @@ Each of these fails a check or breaks a caller when ignored.
 
 ## Reviewing a pull request
 
-Check the change against its sources above, then these, each of which a reviewer is expected to catch:
+Check the change against its sources above, then check:
 
 - Generated files changed only by their generator, with `spec/SOURCE` updated when `spec/` changed.
 - A change to what one client accepts or sends is made in the other client in the same pull request, with

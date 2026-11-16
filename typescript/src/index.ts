@@ -1,13 +1,14 @@
 /** The typed HTTP client for the Tempora API: one method per call, every answer a Result that never throws. */
 import { API_VERSION, CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec'
-import { MAX_RETRY_AFTER_S, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, offOrigin, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type InputOf, type Name, type Op, type OutputOf, type Result } from './internal'
+import { AUTH_SCHEME, RETRY_AFTER_HEADER, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, offOrigin, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type InputOf, type Name, type Op, type OutputOf, type Result } from './internal'
 
 export { API_VERSION, CLIENT_KEY_HEADER }
 export type * from './generated/types'
 export type { CallOptions, InputOf, OutputOf, Result }
 export { signIn, withOwnerRetry } from './signIn'
-export { checkStep, checkSteps } from './check'
-export type { StepCheck, StepsCheck, StepToCheck, VaultCall, VaultIntent, VaultOnChain } from './check'
+export { checkBundle, checkStep, checkSteps } from './check'
+export { SERVED_CHAINS } from './evm'
+export type { BundleCheck, BundleToCheck, StepCheck, StepsCheck, StepToCheck, VaultCall, VaultIntent, VaultOnChain } from './check'
 export { checkPortfolioDeposit, checkPortfolioWithdrawal } from './checkPortfolio'
 export type { PortfolioDepositCheck, PortfolioDepositIntent, PortfolioStepToCheck, PortfolioWithdrawalCheck, PortfolioWithdrawalIntent } from './checkPortfolio'
 export type { OwnerRetry, SignedIn, SignInOptions } from './signIn'
@@ -54,7 +55,7 @@ function call(opts: ClientOptions, name: string, op: Op) {
     const headers: Record<string, string> = { accept: 'application/json' }
     if (opts.clientKey !== undefined) headers[CLIENT_KEY_HEADER] = opts.clientKey
     const token = o.ownerToken ?? opts.ownerToken
-    if (op.auth === 'owner' && token !== undefined) headers.authorization = `Bearer ${token}`
+    if (op.auth === 'owner' && token !== undefined) headers.authorization = `${AUTH_SCHEME} ${token}`
     if (input.body !== undefined) headers['content-type'] = 'application/json'
     if (!headersSafe(headers)) return { ok: false, status: 0, error: unsentHeader(name) } as const
     let body: string | undefined
@@ -67,26 +68,25 @@ function call(opts: ClientOptions, name: string, op: Op) {
     try {
       res = await send(opts, url, op.method, headers, body, o.signal)
     } catch {
-      return { ok: false, status: 0, error: local(op.method, 'network_error', `The ${name} call got no answer.`) } as const
+      return { ok: false, status: 0, error: noAnswer(op.method, name) } as const
     }
     const traceId = res.headers.get(TRACE_HEADER) ?? undefined
     const json: unknown = await res.json().catch(() => undefined)
     if (res.ok) {
       const schema = answerSchema(op, input.path)
-      const body = schema === undefined ? { success: false as const } : check(schema, json)
-      return body.success
-        ? ({ ok: true, status: res.status, body: body.data, traceId } as const)
+      const parsed = schema === undefined ? { success: false as const } : check(schema, json)
+      return parsed.success
+        ? ({ ok: true, status: res.status, body: parsed.data, traceId } as const)
         : ({ ok: false, status: res.status, error: schemaMismatch(op.method, name), traceId } as const)
     }
     const error = apiErrorIn(json)
-    // Retry-After in whole seconds, up to a day; a date or anything longer is left out.
-    const wait = res.headers.get('retry-after')
+    const retryAfter = retryAfterSeconds(res.headers.get(RETRY_AFTER_HEADER))
     return {
       ok: false,
       status: res.status,
       error: error ?? local(op.method, 'unreadable_answer', `The ${name} error answer was not readable.`),
       traceId,
-      ...(wait !== null && /^\d+$/.test(wait) && Number(wait) <= MAX_RETRY_AFTER_S ? { retryAfter: Number(wait) } : {}),
+      ...(retryAfter !== undefined ? { retryAfter } : {}),
     } as const
   }
 }

@@ -3,9 +3,20 @@
 The MCP client is in `temporalabs_client.mcp`. Every named shape of the API is in `temporalabs_client.models`.
 """
 
+from ._evm import SERVED_CHAINS
 from ._result import Err, Ok, Result
 from ._version import VERSION
-from .check import StepCheck, StepsCheck, VaultCall, VaultIntent, VaultOnChain, check_step, check_steps
+from .check import (
+    BundleCheck,
+    StepCheck,
+    StepsCheck,
+    VaultCall,
+    VaultIntent,
+    VaultOnChain,
+    check_bundle,
+    check_step,
+    check_steps,
+)
 from .check_portfolio import (
     PortfolioDepositCheck,
     PortfolioDepositIntent,
@@ -26,7 +37,9 @@ __version__ = VERSION
 __all__ = [
     "API_VERSION",
     "CLIENT_KEY_HEADER",
+    "SERVED_CHAINS",
     "ApiError",
+    "BundleCheck",
     "Client",
     "Err",
     "Ok",
@@ -47,6 +60,7 @@ __all__ = [
     "VaultIntent",
     "VaultOnChain",
     "__version__",
+    "check_bundle",
     "check_portfolio_deposit",
     "check_portfolio_withdrawal",
     "check_step",

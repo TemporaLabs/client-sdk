@@ -518,9 +518,10 @@ class TestTheTransferDecoderByteByByte:
             == "the transfer is not a call to transfer(address,uint256)"
         )
 
-    def test_reads_the_selector_whatever_its_case(self) -> None:
+    def test_refuses_a_selector_that_is_not_lower_case_hex(self) -> None:
         upper = TRANSFER.replace("0xa9059cbb", "0xA9059CBB")
-        assert check_portfolio_deposit([send(USDT_ADDR, upper)], deposit) == PortfolioDepositCheck(ok=True)
+        r = check_portfolio_deposit([send(USDT_ADDR, upper)], deposit)
+        assert (r.ok, r.step) == (False, 0)
 
 
 def half(n: str) -> dict[str, Any]:
@@ -647,3 +648,30 @@ class TestRawAmountsAreUint256Sized:
     def test_a_deposit_amount_too_long_for_int_is_compared_not_raised_on(self) -> None:
         r = check_portfolio_deposit([send(USDT_ADDR, TRANSFER)], {**deposit, "amount": HUGE})
         assert r.ok is False and "amount" in reason_of(r)
+
+
+class TestPortfolioChainsAndAddressesNeverLooserThanTheApi:
+    # OWNER and USDT_ADDR are EIP-55 checksummed; flipping one letter's case breaks the checksum.
+    BAD_OWNER = OWNER.replace("f39Fd", "f39FD")
+    BAD_USDT = USDT_ADDR.replace("55d398326f99059fF", "55d398326f99059ff")
+
+    @pytest.mark.parametrize("chain", ["eip155:999999999", "solana:mainnet", "garbage"])
+    def test_refuses_a_deposit_or_a_withdrawal_on_a_chain_the_api_does_not_serve(self, chain: str) -> None:
+        d = check_portfolio_deposit([send(USDT_ADDR, TRANSFER, chainId=chain)], {**deposit, "chain": chain})
+        assert (d.ok, d.step) == (False, None)
+        w = check_portfolio_withdrawal([], {**withdraw, "chain": chain})
+        assert (w.ok, w.step) == (False, None)
+
+    def test_refuses_an_owner_a_token_or_a_transfer_target_whose_checksum_is_wrong(self) -> None:
+        assert self.BAD_OWNER != OWNER
+        w = check_portfolio_withdrawal([], {**withdraw, "owner": self.BAD_OWNER})
+        assert (w.ok, w.step, w.reason) == (False, None, "the owner is not an address")
+        d = check_portfolio_deposit([send(USDT_ADDR, TRANSFER)], {**deposit, "tokenAddress": self.BAD_USDT})
+        assert (d.ok, d.step, d.reason) == (False, None, "the token is not an address")
+        t = check_portfolio_deposit([send(self.BAD_USDT, TRANSFER)], deposit)
+        assert (t.ok, t.step) == (False, 0)
+
+    def test_still_admits_the_same_addresses_in_lower_case(self) -> None:
+        low = USDT_ADDR.lower()
+        r = check_portfolio_deposit([send(low, TRANSFER)], {**deposit, "tokenAddress": low})
+        assert r == PortfolioDepositCheck(ok=True)

@@ -3,6 +3,38 @@
 All notable changes to `@temporalabs/client` and `temporalabs-client` are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [v0.1.2] - 2026-11-16
+
+### Added
+
+- **Generated from API 0.1.4** (`API_VERSION` is `0.1.4`). New in the types and the tool list:
+  - `fee` on a `send_transaction` step: the API's gas and fee estimate, advisory and outside the payload;
+  - `gas: 'self'` on `deposit` and `withdraw` bodies, and the `gas-funds` gate, whose refusal
+    (`insufficient_gas_funds`) carries `funds`;
+  - `bundle` on a vault deposit with an approval: its steps as one EIP-5792 `wallet_sendCalls` batch, and the
+    submit body `{ kind: 'bundle', id, status }`;
+  - `basis` and `earnedUsd` on a position.
+- **`checkBundle`** (`check_bundle` in Python) checks a vault deposit's `bundle` before it goes to the wallet: the
+  steps must pass `checkSteps`, and the batch must be exactly those steps, byte for byte and in order, from the owner,
+  on the vault's chain, all-or-nothing, with no field beyond the API's own. `cases/vault-bundle.json` holds the cases
+  both clients must admit or refuse alike, with the same reason.
+
+### Changed
+
+- **The step checks are never looser than the API.** `checkStep`, `checkSteps`, `checkPortfolioDeposit` and
+  `checkPortfolioWithdrawal` (and the Python `check_*` functions) now refuse:
+  - a vault or portfolio on a chain the API does not serve. The served chains are exported as `SERVED_CHAINS`;
+  - calldata that is not lower-case hex;
+  - a mixed-case address whose EIP-55 checksum is wrong. All lower case and all upper case are still admitted.
+- `SERVED_CHAINS` is frozen in TypeScript, so it cannot be widened at run time, a cast included; in Python it was
+  already a tuple.
+- `PAYLOAD_FIELDS` is read-only in both clients (frozen in TypeScript, each list too; a read-only mapping in
+  Python), and so is the MCP client's protocol metadata. Python's `served_chain` reads the served chains bound at
+  import, so rebinding the module's `SERVED_CHAINS` does not widen it.
+- `cases/vault-steps.json` holds one-step deposits that both clients must admit or refuse alike.
+- The README's install section gives the exact pinned install for both languages, including `uv add` for Python,
+  and a one-line check that the install worked.
+
 ## [v0.1.1] - 2026-11-15
 
 ### Added

@@ -17,11 +17,16 @@
  * that one. Passing the product record read from the same API that builds the steps checks the steps against that
  * API's own record: it catches a wrong step, never a wrong record. No amount of zero is admitted.
  *
+ * The vault's chain must be an EVM chain the API serves (`SERVED_CHAINS`). Every address must be all lower case, all
+ * upper case, or mixed case with a correct EIP-55 checksum.
+ *
  * Every step is a `send_transaction` on the vault's chain carrying no value, and its calldata must be exactly the
- * canonical encoding of what it decodes to: no trailing bytes, no bits set above an address's 20 bytes. A request is
- * `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the network or signs.
+ * canonical encoding of what it decodes to: lower-case hex, no trailing bytes, no bits set above an address's 20
+ * bytes. A request is `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the
+ * network or signs.
  */
 import { decodeCall, type Word } from './abi/calldata'
+import { UINT256_DIGITS, isAddress, same, servedChain } from './evm'
 
 /** The vault as the product record names it (`product.vault`). */
 export type VaultOnChain = { chain: string; vaultAddress: string; assetAddress: string }
@@ -40,13 +45,13 @@ export type StepToCheck = { readonly kind: string; readonly chainId?: unknown; r
 /**
  * The payload fields the API defines for each step kind. A payload carrying any other field is refused: a caller that
  * hands the payload to a wallet would hand that field over too (an EIP-7702 authorization list, another chain, gas, a
- * sender), and no check here reads it.
+ * sender), and no check here reads it. Frozen, each list too, so a caller cannot widen it at run time.
  */
-export const PAYLOAD_FIELDS = {
-  send_transaction: ['generation', 'expiresAt', 'to', 'data', 'value'],
-  sign_message: ['generation', 'expiresAt', 'bytes'],
-  sign_typed_data: ['generation', 'expiresAt', 'typedData'],
-} as const
+export const PAYLOAD_FIELDS = Object.freeze({
+  send_transaction: Object.freeze(['generation', 'expiresAt', 'to', 'data', 'value'] as const),
+  sign_message: Object.freeze(['generation', 'expiresAt', 'bytes'] as const),
+  sign_typed_data: Object.freeze(['generation', 'expiresAt', 'typedData'] as const),
+})
 
 /** The payload as a plain object holding only the fields `kind` defines, or null. An own `__proto__` key is a field like any other, so it is refused. */
 export function payloadOf(payload: unknown, kind: keyof typeof PAYLOAD_FIELDS): Record<string, unknown> | null {
@@ -78,14 +83,12 @@ const ARGS: Readonly<Record<VaultCall, readonly Word[]>> = {
   redeem: ['uint', 'address', 'address'],
 }
 const CALLS = Object.fromEntries(Object.entries(SELECTORS).map(([selector, call]) => [selector, ARGS[call]]))
-const ADDRESS = /^0x[0-9a-fA-F]{40}$/
 // A raw amount is a uint256: at most 78 digits; a longer one is refused as malformed.
-const RAW = /^(0|[1-9][0-9]{0,77})$/
+const RAW = new RegExp(`^(0|[1-9][0-9]{0,${UINT256_DIGITS - 1}})$`)
 /** An approval this large is unlimited in effect, whatever the intent says: never admitted. */
 const UNLIMITED_APPROVAL = 2n ** 128n
 
 const refuse = (reason: string): { ok: false; reason: string } => ({ ok: false, reason })
-const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
 
 type Decoded = { call: VaultCall; words: (bigint | string)[] }
 
@@ -105,7 +108,8 @@ function intentProblem(intent: VaultIntent): string | undefined {
   if (i.action === 'withdraw' && !AMOUNT_KINDS.includes(i.amount?.kind as string)) return `the withdrawal's amount kind ${JSON.stringify(i.amount?.kind)} is not assets, shares or all`
   // Checked here, so every check (checkSteps too, for a step with nothing to sign yet) reads a complete record.
   const v = (intent as { vault?: unknown }).vault as { vaultAddress?: unknown; assetAddress?: unknown; chain?: unknown } | null | undefined
-  if (typeof v !== 'object' || v === null || typeof v.vaultAddress !== 'string' || !ADDRESS.test(v.vaultAddress) || typeof v.assetAddress !== 'string' || !ADDRESS.test(v.assetAddress) || typeof v.chain !== 'string' || !v.chain) return 'the vault record is not complete'
+  if (typeof v !== 'object' || v === null || !isAddress(v.vaultAddress) || !isAddress(v.assetAddress) || typeof v.chain !== 'string' || !v.chain) return 'the vault record is not complete'
+  if (servedChain(v.chain) === null) return `the vault's chain ${JSON.stringify(v.chain)} is not an EVM chain the API serves`
   return undefined
 }
 const AMOUNT_KINDS = ['assets', 'shares', 'all']
@@ -118,8 +122,7 @@ export function checkStep(step: StepToCheck, intent: VaultIntent, expected?: Vau
   const problem = intentProblem(intent)
   if (problem) return refuse(problem)
   const { vault, owner } = intent
-  if (!ADDRESS.test(owner)) return refuse('the owner is not an address')
-  if (!ADDRESS.test(vault.vaultAddress) || !ADDRESS.test(vault.assetAddress) || !vault.chain) return refuse('the vault record is not complete')
+  if (!isAddress(owner)) return refuse('the owner is not an address')
   // An amount of nothing is never asked for: refused before any step is read, so no zero-amount call is admitted.
   const asked = intent.action === 'deposit' ? intent.assets : intent.amount.kind === 'all' ? null : intent.amount.raw
   if (asked !== null && (!RAW.test(asked) || BigInt(asked) === 0n)) return refuse('the amount asked for is zero or not a raw amount')
@@ -130,7 +133,7 @@ export function checkStep(step: StepToCheck, intent: VaultIntent, expected?: Vau
   if (!p) return refuse(`the step's payload is not an object of only ${PAYLOAD_FIELDS.send_transaction.join(', ')}`)
   if (typeof p.to !== 'string' || typeof p.data !== 'string' || typeof p.value !== 'string') return refuse('the step has nothing to sign yet')
   if (p.value !== '0') return refuse('the step sends value; a vault call carries none')
-  if (!ADDRESS.test(p.to)) return refuse('the step is not sent to an address')
+  if (!isAddress(p.to)) return refuse('the step is not sent to an address')
   const d = decode(p.data)
   if (typeof d === 'string') return refuse(d)
   if (expected !== undefined && d.call !== expected) return refuse(`a ${d.call} is not the call this step's position takes: ${expected}`)
@@ -203,4 +206,67 @@ export function checkSteps(steps: readonly StepToCheck[], intent: VaultIntent): 
   const candidates = shapes.filter((s) => s.length === calls.length)
   const at = calls.findIndex((c, i) => c !== null && candidates.every((s) => s[i] !== c))
   return { ok: false, step: at === -1 ? null : at, reason: `the steps are not in an order this client admits for a ${intent.action}` }
+}
+
+/** The EIP-5792 version of the `wallet_sendCalls` params this client admits. */
+export const EIP5792_VERSION = '2.0.0'
+
+/**
+ * The fields the API defines for a bundle and for its `sendCalls`. Any other field is refused: `sendCalls` goes to the
+ * wallet as it is, so an extra field (`capabilities`, a paymaster, an id) would go with it, and no check here reads it.
+ */
+export const BUNDLE_FIELDS = Object.freeze({
+  bundle: Object.freeze(['stepIds', 'sendCalls'] as const),
+  sendCalls: Object.freeze(['version', 'from', 'chainId', 'atomicRequired', 'calls'] as const),
+  call: Object.freeze(['to', 'data', 'value'] as const),
+})
+
+/** The parts of a request `checkBundle` reads. A request as the client returns it fits. */
+export type BundleToCheck = { readonly steps: readonly (StepToCheck & { readonly stepId?: unknown })[]; readonly bundle?: unknown }
+export type BundleCheck = { ok: true } | { ok: false; reason: string }
+
+// A chain id as `wallet_sendCalls` takes it: lower-case hex, no leading zero.
+const HEX_QUANTITY = /^0x(0|[1-9a-f][0-9a-f]*)$/
+// A call's value: every admitted vault call carries none.
+const NO_VALUE = '0x0'
+
+const only = (x: unknown, fields: readonly string[]): x is Record<string, unknown> =>
+  typeof x === 'object' && x !== null && !Array.isArray(x) && Object.keys(x).every((k) => fields.includes(k))
+
+/**
+ * A vault deposit's `bundle`, the steps offered as one `wallet_sendCalls` batch, checked before it goes to the wallet.
+ * The steps themselves must pass `checkSteps` with nothing pending; the bundle must then be exactly those steps: its
+ * `stepIds` every step's id in order, and each call the step's `to` and `data` byte for byte, with no value. Its
+ * `sendCalls` must be from the owner, on the vault's chain, all-or-nothing (`atomicRequired: true`), EIP-5792 version
+ * `2.0.0`, and carry no field beyond those. A request with no bundle is refused: send its steps one at a time.
+ */
+export function checkBundle(request: BundleToCheck, intent: VaultIntent): BundleCheck {
+  const problem = intentProblem(intent)
+  if (problem) return refuse(problem)
+  if (intent.action !== 'deposit') return refuse('a bundle is offered only for a deposit')
+  const steps = (request as { steps?: unknown }).steps
+  if (!Array.isArray(steps)) return refuse('the request has no steps')
+  const s = checkSteps(steps, intent)
+  if (!s.ok) return refuse(s.step === null ? s.reason : `step ${s.step}: ${s.reason}`)
+  if (s.pending.length > 0) return refuse('a step has nothing to sign yet, so the bundle cannot be checked')
+  const b = request.bundle
+  if (b === undefined) return refuse('the request offers no bundle; send its steps one at a time')
+  if (!only(b, BUNDLE_FIELDS.bundle)) return refuse(`the bundle is not an object of only ${BUNDLE_FIELDS.bundle.join(', ')}`)
+  const ids = b.stepIds
+  if (!Array.isArray(ids) || ids.length !== steps.length || ids.some((id, i) => typeof id !== 'string' || id !== steps[i].stepId)) return refuse("the bundle's stepIds are not the request's steps, in order")
+  const sc = b.sendCalls
+  if (!only(sc, BUNDLE_FIELDS.sendCalls)) return refuse(`the bundle's sendCalls is not an object of only ${BUNDLE_FIELDS.sendCalls.join(', ')}`)
+  if (sc.version !== EIP5792_VERSION) return refuse(`the bundle is not EIP-5792 version ${EIP5792_VERSION}`)
+  if (sc.atomicRequired !== true) return refuse('the bundle is not all-or-nothing (atomicRequired is not true)')
+  if (!isAddress(sc.from) || !same(sc.from as string, intent.owner)) return refuse('the bundle is not from the owner')
+  if (typeof sc.chainId !== 'string' || !HEX_QUANTITY.test(sc.chainId) || `eip155:${BigInt(sc.chainId)}` !== intent.vault.chain) return refuse(`the bundle is not on the vault's chain ${intent.vault.chain}`)
+  const calls = sc.calls
+  if (!Array.isArray(calls) || calls.length !== steps.length) return refuse('the bundle does not have one call per step')
+  for (const [i, c] of calls.entries()) {
+    if (!only(c, BUNDLE_FIELDS.call)) return refuse(`call ${i} is not an object of only ${BUNDLE_FIELDS.call.join(', ')}`)
+    const p = steps[i].payload as Record<string, unknown>
+    if (c.to !== p.to || c.data !== p.data) return refuse(`call ${i} is not step ${i}'s to and data, byte for byte`)
+    if (c.value !== NO_VALUE) return refuse(`call ${i} sends value; a vault call carries none`)
+  }
+  return { ok: true }
 }

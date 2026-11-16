@@ -9,7 +9,7 @@ import json
 from typing import Any
 
 import pytest
-from temporalabs_client import StepCheck, StepsCheck, check_step, check_steps
+from temporalabs_client import SERVED_CHAINS, StepCheck, StepsCheck, check_step, check_steps
 
 from conftest import read_case
 
@@ -254,6 +254,13 @@ class TestCheckStepsTheRequestAsAWhole:
         assert (r.ok, r.step) == (False, 1) and "receiver" in str(r.reason)
 
 
+@pytest.mark.parametrize("c", read_case("vault-steps.json")["oneStepDeposits"], ids=lambda c: c["case"])
+def test_one_deposit_step_from_the_shared_cases(c: dict[str, Any]) -> None:
+    intent = {"action": "deposit", "vault": c["vault"], "owner": c["owner"], "assets": "2000000"}
+    s = {"kind": "send_transaction", "chainId": c["vault"]["chain"], "payload": c["step"]}
+    assert check_steps([s], intent).ok is c["admit"]
+
+
 class TestTheApisOwnVaultStepsPass:
     """Steps in the shape the API returns, from cases/vault-steps.json, which the TypeScript tests read
     too."""
@@ -331,9 +338,13 @@ class TestTheCalldataDecoderByteByByte:
             == "the calldata is not the canonical encoding of withdraw"
         )
 
-    def test_reads_the_selector_whatever_its_case(self) -> None:
-        upper = DATA["deposit"].replace("0x6e553f65", "0x6E553F65")
-        assert check_step(step(VAULT, upper), deposit) == StepCheck(ok=True, call="deposit")
+    def test_refuses_calldata_that_is_not_lower_case_hex_in_the_selector_or_an_argument(self) -> None:
+        refused = StepCheck(ok=False, reason="the calldata is not a valid encoding")
+        assert (
+            check_step(step(VAULT, DATA["deposit"].replace("0x6e553f65", "0x6E553F65")), deposit) == refused
+        )
+        assert check_step(step(VAULT, "0x" + DATA["deposit"][2:].upper()), deposit) == refused
+        assert check_step(step(VAULT, DATA["deposit"][:-2] + "A1"), deposit) == refused
 
     def test_reads_every_byte_of_an_amount_word_the_top_one_included(self) -> None:
         assets = 2**255 + 1
@@ -452,3 +463,70 @@ class TestRawAmountsAreUint256Sized:
     def test_an_amount_one_digit_past_a_uint256_is_refused_and_the_largest_is_read(self) -> None:
         r = check_step(step(ASSET, DATA["approve"]), {**deposit, "assets": "1" + "0" * 78})
         assert r.ok is False and "raw amount" in reason_of(r)
+
+
+class TestChainsAndAddressesNeverLooserThanTheApi:
+    # EIP-55's own example, and the same address with one letter's case flipped.
+    GOOD = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+    BAD = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAeD"
+
+    @staticmethod
+    def deposit_for(owner: str) -> str:
+        return f"0x6e553f65{2000000:064x}{'0' * 24}{owner[2:].lower()}"
+
+    @staticmethod
+    def on(chain: str) -> dict[str, Any]:
+        return {"action": "deposit", "vault": {**vault, "chain": chain}, "owner": OWNER, "assets": "2000000"}
+
+    @pytest.mark.parametrize(
+        "chain",
+        [
+            "eip155:999999999",
+            "eip155:08453",
+            "eip155:0",
+            "eip155:",
+            "solana:mainnet",
+            "garbage",
+            "eip155:8453 ",
+        ],
+    )
+    def test_refuses_a_vault_on_a_chain_the_api_does_not_serve(self, chain: str) -> None:
+        assert check_step(step(VAULT, DATA["deposit"], chainId=chain), self.on(chain)).ok is False
+        pending = {"kind": "send_transaction", "chainId": chain}
+        assert check_steps([pending], self.on(chain)).ok is False
+
+    @pytest.mark.parametrize("chain", [f"eip155:{i}" for i in SERVED_CHAINS])
+    def test_admits_a_vault_on_a_chain_the_api_serves(self, chain: str) -> None:
+        r = check_step(step(VAULT, DATA["deposit"], chainId=chain), self.on(chain))
+        assert r == StepCheck(ok=True, call="deposit")
+
+    def test_admits_an_owner_in_lower_upper_or_correctly_checksummed_mixed_case(self) -> None:
+        for owner in (self.GOOD.lower(), "0x" + self.GOOD[2:].upper(), self.GOOD):
+            r = check_step(step(VAULT, self.deposit_for(owner)), {**deposit, "owner": owner})
+            assert r == StepCheck(ok=True, call="deposit")
+
+    def test_refuses_a_mixed_case_owner_whose_checksum_is_wrong(self) -> None:
+        r = check_step(step(VAULT, self.deposit_for(self.BAD)), {**deposit, "owner": self.BAD})
+        assert r == StepCheck(ok=False, reason="the owner is not an address")
+
+    def test_refuses_a_vault_record_or_a_step_naming_a_badly_checksummed_address(self) -> None:
+        bad_vault = {**deposit, "vault": {**vault, "vaultAddress": self.BAD}}
+        assert check_step(step(self.BAD, DATA["deposit"]), bad_vault) == StepCheck(
+            ok=False, reason="the vault record is not complete"
+        )
+        good_vault = {**deposit, "vault": {**vault, "vaultAddress": self.GOOD}}
+        assert check_step(step(self.BAD, DATA["deposit"]), good_vault) == StepCheck(
+            ok=False, reason="the step is not sent to an address"
+        )
+        lower_vault = {**deposit, "vault": {**vault, "vaultAddress": self.GOOD.lower()}}
+        assert check_step(step(self.GOOD, DATA["deposit"]), lower_vault) == StepCheck(ok=True, call="deposit")
+
+
+def test_payload_fields_cannot_be_widened() -> None:
+    from temporalabs_client.check import PAYLOAD_FIELDS
+
+    with pytest.raises(TypeError):
+        PAYLOAD_FIELDS["send_transaction"] = ("to", "data", "value", "gas")  # type: ignore[index]
+    with pytest.raises(TypeError):
+        del PAYLOAD_FIELDS["sign_message"]  # type: ignore[attr-defined]
+    assert isinstance(PAYLOAD_FIELDS["send_transaction"], tuple)

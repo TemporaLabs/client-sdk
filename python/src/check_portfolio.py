@@ -6,26 +6,22 @@ network or signs.
 **A withdrawal** is one or more EIP-712 authorizations, the provider's `Withdrawal` struct. Admitted, and
 nothing else:
   - the struct exactly: its domain name and version (`1` for a plain transfer, `2` for a sale), its field
-  lists IN
-    ORDER (a reordered struct hashes differently), no field shown that is not signed and none signed that is
-    not read;
-  - on the portfolio's chain, debiting the owner's smart account (`verifyingContract`), paying the owner's
-  own wallet
-    (`recipientAccountId`), for the named portfolio;
+    lists IN ORDER (a reordered struct hashes differently), no field shown that is not signed and none signed
+    that is not read;
+  - on the portfolio's chain, debiting the owner's smart account (`verifyingContract`), paying the owner's own
+    wallet (`recipientAccountId`), for the named portfolio;
   - a sale settles in the settlement asset; a plain transfer moves only that asset;
-  - each amount a whole number of units above zero, each asset named once, each entry exactly `{assetId,
-  amountRaw}`;
+  - each amount a whole number of units above zero, each asset named once, each entry exactly
+    `{assetId, amountRaw}`;
   - expiring in the future, and no later than `maxLifetimeSeconds` from now (the provider gives ten minutes);
-  `now`
-    and the lifetime must be finite numbers, the lifetime above zero, or nothing is admitted;
+    `now` and the lifetime must be finite numbers, the lifetime above zero, or nothing is admitted;
   - each batch exactly the plan the API attached to its step (same kind, every asset at exactly its amount,
-  every
-    signed asset planned, none planned twice);
+    every signed asset planned, none planned twice);
   - each asset's total over every batch at most the asked fraction (or all) of what the caller says the smart
-  account
-    holds, which the caller reads from the API's `positions`. An asset not held is refused.
+    account holds, which the caller reads from the API's `positions`. An asset not held is refused.
 Every chain, account and asset id is read with one strict parser: `eip155:<reference>` with no leading zero,
-and a 20-byte address compared in any letter case.
+and a 20-byte address compared in any letter case, refused when mixed case with a wrong EIP-55 checksum. The
+portfolio's chain must be an EVM chain the API serves (`SERVED_CHAINS`).
 
 **A deposit** is the enrol signature (only when not yet enrolled), then the transfer of the deposit token to
 the smart account the API names for this owner. Admitted: `[enrol, transfer]`, `[transfer]`, or `[enrol]` when
@@ -49,7 +45,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Final, Literal, NotRequired, TypedDict
 
-from .abi.calldata import decode_call
+from ._evm import CHAIN, UINT256_DIGITS, same, served_chain
+from .abi.calldata import Word, decode_call
 from .check import (
     PAYLOAD_FIELDS,
     UNDEFINED,
@@ -167,10 +164,9 @@ _MAX_SAFE_INTEGER: Final = 2**53 - 1
 
 # A raw amount is a uint256: at most 78 digits. Anything longer can never match a chain value, so it is
 # refused as malformed, and no client spends unbounded time converting it.
-_RAW_POSITIVE: Final = re.compile(r"[1-9][0-9]{0,77}", re.ASCII)
-_DIGITS: Final = re.compile(r"[0-9]{1,78}", re.ASCII)
+_RAW_POSITIVE: Final = re.compile(rf"[1-9][0-9]{{0,{UINT256_DIGITS - 1}}}", re.ASCII)
+_DIGITS: Final = re.compile(rf"[0-9]{{1,{UINT256_DIGITS}}}", re.ASCII)
 _BYTES32: Final = re.compile(r"0x[0-9a-fA-F]{64}", re.ASCII)
-_CHAIN: Final = re.compile(r"eip155:([1-9][0-9]*)", re.ASCII)
 _ACCOUNT: Final = re.compile(r"eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})", re.ASCII)
 _ASSET: Final = re.compile(r"eip155:([1-9][0-9]*)/erc20:(0x[0-9a-fA-F]{40})", re.ASCII)
 _FRACTION: Final = re.compile(rf"(0|1)(?:\.(\d{{1,{_FRACTION_PLACES}}}))?", re.ASCII)
@@ -179,16 +175,12 @@ _FRACTION: Final = re.compile(rf"(0|1)(?:\.(\d{{1,{_FRACTION_PLACES}}}))?", re.A
 def _asset_key(v: Any) -> str | None:
     """`eip155:<ref>/erc20:<address>` as one comparable string, or None. One parser for every asset id."""
     m = _ASSET.fullmatch(v) if isinstance(v, str) else None
-    return f"eip155:{m.group(1)}/erc20:{m.group(2).lower()}" if m else None
+    return f"eip155:{m.group(1)}/erc20:{m.group(2).lower()}" if m and is_address(m.group(2)) else None
 
 
 def _chain_ref(v: Any) -> str | None:
-    m = _CHAIN.fullmatch(v) if isinstance(v, str) else None
+    m = CHAIN.fullmatch(v) if isinstance(v, str) else None
     return m.group(1) if m else None
-
-
-def _same(a: str, b: str) -> bool:
-    return a.lower() == b.lower()
 
 
 def _keys_are(o: Mapping[str, Any], want: Sequence[str]) -> bool:
@@ -282,9 +274,9 @@ def check_portfolio_withdrawal(
         return whole("the owner is not an address")
     if not is_address(smart_account):
         return whole("the smart account is not an address")
-    ref = _chain_ref(chain)
+    ref = served_chain(chain)
     if not ref:
-        return whole(f"the chain {js_json(chain)} is not an eip155 chain id")
+        return whole(f"the chain {js_json(chain)} is not an EVM chain the API serves")
     settlement = _asset_key(get(intent, "settlementAssetId"))
     if not settlement:
         return whole("the settlement asset is not an asset id")
@@ -370,7 +362,7 @@ def check_portfolio_withdrawal(
         if not _is_number(chain_id) or js_str(chain_id) != ref:
             return refuse(f"it is for chain {js_str(chain_id)}, not {chain}")
         verifying = domain.get("verifyingContract")
-        if not isinstance(verifying, str) or not is_address(verifying) or not _same(verifying, smart_account):
+        if not isinstance(verifying, str) or not is_address(verifying) or not same(verifying, smart_account):
             return refuse(
                 f"it would take funds from {js_str(verifying)}, not the smart account {smart_account}"
             )
@@ -378,7 +370,7 @@ def check_portfolio_withdrawal(
             return refuse("it is for another portfolio")
         recipient = m["recipientAccountId"]
         to = _ACCOUNT.fullmatch(recipient) if isinstance(recipient, str) else None
-        if not to or to.group(1) != ref or not _same(to.group(2), owner):
+        if not to or to.group(1) != ref or not is_address(to.group(2)) or not same(to.group(2), owner):
             return refuse(f"it would pay {js_str(recipient)}, not the owner {owner} on {chain}")
         if sale and _asset_key(m["settlementAssetId"]) != settlement:
             return refuse(
@@ -413,8 +405,7 @@ def check_portfolio_withdrawal(
             ):
                 return refuse(
                     f"it names an asset that is not a token on {chain}, "
-                    "or an amount that is not a whole number of "
-                    "units above zero"
+                    "or an amount that is not a whole number of units above zero"
                 )
             if not _keys_are(x, [f[0] for f in _ASSET_FIELDS]):
                 return not_the_form
@@ -439,8 +430,7 @@ def check_portfolio_withdrawal(
         if not matches:
             return refuse(
                 "it is not the plan the API attached to this step: another kind, another amount, "
-                "an asset added or "
-                "left out, or one named twice"
+                "an asset added or left out, or one named twice"
             )
         kinds.append(shape)
         _add_to(totals, signed)
@@ -475,7 +465,8 @@ def check_portfolio_withdrawal(
     )
 
 
-_TRANSFER: Final = {"0xa9059cbb": ("address", "uint")}  # transfer(address,uint256)
+# transfer(address,uint256)
+_TRANSFER: Final[Mapping[str, Sequence[Word]]] = {"0xa9059cbb": ("address", "uint")}
 _ENROL_PURPOSE: Final = "enrol"
 
 
@@ -488,9 +479,9 @@ def check_portfolio_deposit(
         return PortfolioDepositCheck(ok=False, step=None, reason=reason)
 
     chain = get(intent, "chain")
-    ref = _chain_ref(chain)
+    ref = served_chain(chain)
     if not ref:
-        return whole(f"the chain {js_json(chain)} is not an eip155 chain id")
+        return whole(f"the chain {js_json(chain)} is not an EVM chain the API serves")
     smart_account = get(intent, "smartAccount")
     token = get(intent, "tokenAddress")
     if not is_address(smart_account):
@@ -508,8 +499,7 @@ def check_portfolio_deposit(
     if shape is None:
         return whole(
             f"a portfolio deposit{' with no amount' if no_amount else ''} with {len(steps)} steps "
-            "is not a shape "
-            "this client admits"
+            "is not a shape this client admits"
         )
     pending: list[int] = []
 
@@ -561,15 +551,15 @@ def check_portfolio_deposit(
             return refuse("the transfer has nothing to send")
         if value != "0":
             return refuse("the transfer sends value; a token transfer carries none")
-        if not _same(to, token):
+        if not is_address(to) or not same(to, token):
             return refuse("the transfer is not sent to the deposit token's contract")
-        d = decode_call(data, _TRANSFER)  # type: ignore[arg-type]
+        d = decode_call(data, _TRANSFER)
         if not d.ok and d.refused != "canonical":
             return refuse("the transfer is not a call to transfer(address,uint256)")
         if not d.ok:
             return refuse("the calldata is not the canonical encoding of transfer")
         recipient, sent = d.words[0], d.words[1]
-        if not isinstance(recipient, str) or not _same(recipient, smart_account):
+        if not isinstance(recipient, str) or not same(recipient, smart_account):
             return refuse(f"the transfer pays {recipient}, not the smart account {smart_account}")
         if no_amount or sent != exact_int(amount):
             return refuse("the transfer's amount is not exactly the one asked for")

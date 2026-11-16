@@ -1,6 +1,6 @@
 {
   "name": "@temporalabs/client",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The typed client for the Tempora API, over HTTP and MCP.",
   "keywords": ["tempora", "api-client", "mcp", "typescript"],
   "homepage": "https://github.com/TemporaLabs/client-sdk#readme",
@@ -60,7 +60,7 @@
     "@types/node": "22.20.5",
     "esbuild": "0.28.2",
     "jest": "30.5.2",
-    "rollup": "4.67.3",
+    "rollup": "4.67.4",
     "rollup-plugin-dts": "6.5.1",
     "typescript": "6.0.3"
   },

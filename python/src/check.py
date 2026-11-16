@@ -8,20 +8,22 @@ the request), the owner's own address, and the amount the owner asked for. Nothi
   - `approve(vault, n)` on the vault's asset, for exactly the deposit's amount, never more;
   - `deposit(assets, receiver)` on the vault, for exactly the amount asked, receiver = the owner;
   - `withdraw(assets, receiver, owner)` on the vault, for exactly the assets asked, receiver = owner = the
-  owner;
+    owner;
   - `redeem(shares, receiver, owner)` on the vault, for exactly the shares asked, receiver = owner = the
-  owner. For
-    "all", the shares are not checked (any above zero): only the receiver, the owner and the direction are. A
-    caller that knows the owner's share balance should ask for those shares instead.
+    owner. For "all", the shares are not checked (any above zero): only the receiver, the owner and the
+    direction are. A caller that knows the owner's share balance should ask for those shares instead.
 
 The vault record is the anchor: a caller that holds its own record of the vault (a pinned configuration)
 should pass that one. Passing the product record read from the same API that builds the steps checks the steps
 against that API's own record: it catches a wrong step, never a wrong record. No amount of zero is admitted.
 
+The vault's chain must be an EVM chain the API serves (`SERVED_CHAINS`). Every address must be all lower
+case, all upper case, or mixed case with a correct EIP-55 checksum.
+
 Every step is a `send_transaction` on the vault's chain carrying no value, and its calldata must be exactly
-the canonical encoding of what it decodes to: no trailing bytes, no bits set above an address's 20 bytes. A
-request is `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the network
-or signs.
+the canonical encoding of what it decodes to: lower-case hex, no trailing bytes, no bits set above an
+address's 20 bytes. A request is `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing
+here calls the network or signs.
 
 A step is passed as the client returns it (a `Step` model) or as a plain mapping with the API's wire names; an
 intent is a mapping with the names below.
@@ -34,10 +36,13 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
+from types import MappingProxyType
 from typing import Any, Final, Literal, NotRequired, TypedDict
 
 from pydantic import BaseModel
 
+from ._evm import UINT256_DIGITS, same, served_chain
+from ._evm import is_address as is_address
 from .abi.calldata import Word, decode_call
 
 __all__ = [
@@ -111,12 +116,14 @@ UNDEFINED: Final = _Undefined()
 
 # The payload fields the API defines for each step kind. A payload carrying any other field is refused: a
 # caller that hands the payload to a wallet would hand that field over too (an EIP-7702 authorization list,
-# another chain, gas, a sender), and no check here reads it.
-PAYLOAD_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
-    "send_transaction": ("generation", "expiresAt", "to", "data", "value"),
-    "sign_message": ("generation", "expiresAt", "bytes"),
-    "sign_typed_data": ("generation", "expiresAt", "typedData"),
-}
+# another chain, gas, a sender), and no check here reads it. Read-only, so a caller cannot widen it.
+PAYLOAD_FIELDS: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType(
+    {
+        "send_transaction": ("generation", "expiresAt", "to", "data", "value"),
+        "sign_message": ("generation", "expiresAt", "bytes"),
+        "sign_typed_data": ("generation", "expiresAt", "typedData"),
+    }
+)
 
 
 def plain(x: Any) -> Any:
@@ -181,9 +188,8 @@ _ARGS: Final[Mapping[VaultCall, tuple[Word, ...]]] = {
     "redeem": ("uint", "address", "address"),
 }
 _CALLS: Final = {selector: _ARGS[call] for selector, call in _SELECTORS.items()}
-ADDRESS: Final = re.compile(r"0x[0-9a-fA-F]{40}", re.ASCII)
 # A raw amount is a uint256: at most 78 digits; a longer one is refused as malformed.
-_RAW: Final = re.compile(r"0|[1-9][0-9]{0,77}", re.ASCII)
+_RAW: Final = re.compile(rf"0|[1-9][0-9]{{0,{UINT256_DIGITS - 1}}}", re.ASCII)
 
 
 def exact_int(digits: str) -> int:
@@ -203,16 +209,8 @@ _UNLIMITED_APPROVAL: Final = 2**128
 _AMOUNT_KINDS: Final = ("assets", "shares", "all")
 
 
-def is_address(v: Any) -> bool:
-    return isinstance(v, str) and ADDRESS.fullmatch(v) is not None
-
-
 def _refuse(reason: str) -> StepCheck:
     return StepCheck(ok=False, reason=reason)
-
-
-def _same(a: str, b: str) -> bool:
-    return a.lower() == b.lower()
 
 
 def _decode(data: str) -> tuple[VaultCall, list[int | str]] | str:
@@ -246,6 +244,8 @@ def _intent_problem(intent: Any) -> str | None:
         or not get(vault, "chain")
     ):
         return "the vault record is not complete"
+    if served_chain(get(vault, "chain")) is None:
+        return f"the vault's chain {js_json(get(vault, 'chain'))} is not an EVM chain the API serves"
     return None
 
 
@@ -272,13 +272,6 @@ def check_step(
     owner = get(intent, "owner")
     if not is_address(owner):
         return _refuse("the owner is not an address")
-    if (
-        not is_address(get(vault, "vaultAddress"))
-        or not is_address(get(vault, "assetAddress"))
-        or not isinstance(get(vault, "chain"), str)
-        or not get(vault, "chain")
-    ):
-        return _refuse("the vault record is not complete")
     chain: str = vault["chain"]
     vault_address: str = vault["vaultAddress"]
     asset_address: str = vault["assetAddress"]
@@ -322,9 +315,9 @@ def check_step(
     if call == "approve":
         if action != "deposit":
             return _refuse("an approval is not what was asked for")
-        if not _same(to, asset_address):
+        if not same(to, asset_address):
             return _refuse("the approval is not sent to the vault's asset")
-        if not isinstance(a, str) or not _same(a, vault_address):
+        if not isinstance(a, str) or not same(a, vault_address):
             return _refuse("the approval names a spender other than the vault")
         if isinstance(b, int) and b >= _UNLIMITED_APPROVAL:
             return _refuse("the approval is unlimited in effect (2^128 or more)")
@@ -334,11 +327,11 @@ def check_step(
     if call == "deposit":
         if action != "deposit":
             return _refuse("a deposit is not what was asked for")
-        if not _same(to, vault_address):
+        if not same(to, vault_address):
             return _refuse("the deposit is not sent to the vault")
         if not _exact(get(intent, "assets"), a):
             return _refuse("the deposit's amount is not exactly the one asked for")
-        if not isinstance(b, str) or not _same(b, owner):
+        if not isinstance(b, str) or not same(b, owner):
             return _refuse("the deposit's receiver is not the owner")
         return StepCheck(ok=True, call="deposit")
     # withdraw or redeem
@@ -347,11 +340,11 @@ def check_step(
     wanted = "withdraw" if kind == "assets" else "redeem"
     if call != wanted:
         return _refuse(f"a {call} is not what was asked for: the amount was given in {kind}")
-    if not _same(to, vault_address):
+    if not same(to, vault_address):
         return _refuse(f"the {call} is not sent to the vault")
-    if not isinstance(b, str) or not _same(b, owner):
+    if not isinstance(b, str) or not same(b, owner):
         return _refuse(f"the {call}'s receiver is not the owner")
-    if not isinstance(c, str) or not _same(c, owner):
+    if not isinstance(c, str) or not same(c, owner):
         return _refuse(f"the {call}'s owner is not the owner")
     if kind == "assets" and not _exact(get(amount, "raw"), a):
         return _refuse("the withdrawal's amount is not exactly the one asked for")
@@ -426,3 +419,107 @@ def check_steps(steps: Sequence[Any], intent: VaultIntent | Mapping[str, Any]) -
     return StepsCheck(
         ok=False, step=at, reason=f"the steps are not in an order this client admits for a {action}"
     )
+
+
+# The EIP-5792 version of the `wallet_sendCalls` params this client admits.
+EIP5792_VERSION: Final = "2.0.0"
+
+# The fields the API defines for a bundle and for its `sendCalls`. Any other field is refused: `sendCalls`
+# goes to the wallet as it is, so an extra field (`capabilities`, a paymaster, an id) would go with it, and no
+# check here reads it. Read-only, so a caller cannot widen it.
+BUNDLE_FIELDS: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType(
+    {
+        "bundle": ("stepIds", "sendCalls"),
+        "sendCalls": ("version", "from", "chainId", "atomicRequired", "calls"),
+        "call": ("to", "data", "value"),
+    }
+)
+
+# A chain id as `wallet_sendCalls` takes it: lower-case hex, no leading zero.
+_HEX_QUANTITY: Final = re.compile(r"0x(0|[1-9a-f][0-9a-f]*)", re.ASCII)
+# A call's value: every admitted vault call carries none.
+_NO_VALUE: Final = "0x0"
+
+
+@dataclass(frozen=True)
+class BundleCheck:
+    """`ok`, or not `ok` with the reason."""
+
+    ok: bool
+    reason: str | None = None
+
+
+def _only(x: Any, fields: tuple[str, ...]) -> bool:
+    return isinstance(x, Mapping) and all(k in fields for k in x)
+
+
+def check_bundle(request: Any, intent: VaultIntent | Mapping[str, Any]) -> BundleCheck:
+    """A vault deposit's `bundle`, the steps offered as one `wallet_sendCalls` batch, checked before it goes
+    to the wallet. The steps themselves must pass `check_steps` with nothing pending; the bundle must then be
+    exactly those steps: its `stepIds` every step's id in order, and each call the step's `to` and `data`
+    byte for byte, with no value. Its `sendCalls` must be from the owner, on the vault's chain, all-or-nothing
+    (`atomicRequired: true`), EIP-5792 version `2.0.0`, and carry no field beyond those. A request with no
+    bundle is refused: send its steps one at a time.
+
+    The request is passed as the client returns it (a `Request` model) or as a plain mapping with the API's
+    wire names."""
+    problem = _intent_problem(intent)
+    if problem:
+        return BundleCheck(ok=False, reason=problem)
+    if intent["action"] != "deposit":
+        return BundleCheck(ok=False, reason="a bundle is offered only for a deposit")
+    req = plain(request)
+    steps = get(req, "steps")
+    if not isinstance(steps, list | tuple):
+        return BundleCheck(ok=False, reason="the request has no steps")
+    steps = [plain(s) for s in steps]
+    s = check_steps(steps, intent)
+    if not s.ok:
+        return BundleCheck(ok=False, reason=s.reason if s.step is None else f"step {s.step}: {s.reason}")
+    if s.pending:
+        return BundleCheck(ok=False, reason="a step has nothing to sign yet, so the bundle cannot be checked")
+    b = plain(get(req, "bundle"))
+    if b is UNDEFINED or b is None:
+        return BundleCheck(ok=False, reason="the request offers no bundle; send its steps one at a time")
+    if not _only(b, BUNDLE_FIELDS["bundle"]):
+        return BundleCheck(
+            ok=False, reason=f"the bundle is not an object of only {', '.join(BUNDLE_FIELDS['bundle'])}"
+        )
+    ids = get(b, "stepIds")
+    if (
+        not isinstance(ids, list | tuple)
+        or len(ids) != len(steps)
+        or any(not isinstance(i, str) or i != get(st, "stepId") for i, st in zip(ids, steps, strict=True))
+    ):
+        return BundleCheck(ok=False, reason="the bundle's stepIds are not the request's steps, in order")
+    sc = get(b, "sendCalls")
+    if not _only(sc, BUNDLE_FIELDS["sendCalls"]):
+        return BundleCheck(
+            ok=False,
+            reason=f"the bundle's sendCalls is not an object of only {', '.join(BUNDLE_FIELDS['sendCalls'])}",
+        )
+    if get(sc, "version") != EIP5792_VERSION:
+        return BundleCheck(ok=False, reason=f"the bundle is not EIP-5792 version {EIP5792_VERSION}")
+    if get(sc, "atomicRequired") is not True:
+        return BundleCheck(ok=False, reason="the bundle is not all-or-nothing (atomicRequired is not true)")
+    frm = get(sc, "from")
+    if not is_address(frm) or not same(frm, intent["owner"]):
+        return BundleCheck(ok=False, reason="the bundle is not from the owner")
+    chain = get(get(intent, "vault"), "chain")
+    cid = get(sc, "chainId")
+    if not isinstance(cid, str) or not _HEX_QUANTITY.fullmatch(cid) or f"eip155:{int(cid, 16)}" != chain:
+        return BundleCheck(ok=False, reason=f"the bundle is not on the vault's chain {js_str(chain)}")
+    calls = get(sc, "calls")
+    if not isinstance(calls, list | tuple) or len(calls) != len(steps):
+        return BundleCheck(ok=False, reason="the bundle does not have one call per step")
+    for i, (c, st) in enumerate(zip(calls, steps, strict=True)):
+        if not _only(c, BUNDLE_FIELDS["call"]):
+            return BundleCheck(
+                ok=False, reason=f"call {i} is not an object of only {', '.join(BUNDLE_FIELDS['call'])}"
+            )
+        p = get(st, "payload")
+        if get(c, "to") != get(p, "to") or get(c, "data") != get(p, "data"):
+            return BundleCheck(ok=False, reason=f"call {i} is not step {i}'s to and data, byte for byte")
+        if get(c, "value") != _NO_VALUE:
+            return BundleCheck(ok=False, reason=f"call {i} sends value; a vault call carries none")
+    return BundleCheck(ok=True)

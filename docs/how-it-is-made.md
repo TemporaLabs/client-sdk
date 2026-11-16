@@ -62,7 +62,8 @@ document becomes a method with no edit here. `typescript/src/mcp.ts` is the `@te
 checks, sending a request (the timeout and the refused redirects), the answer checks and the reading of an
 error. Each builds its own headers, and the HTTP client also checks that every call stays on `baseUrl`'s
 origin. `typescript/src/signIn.ts` is the owner sign-in, and
-`typescript/src/check.ts` and `typescript/src/checkPortfolio.ts` are the checks before signing. The
+`typescript/src/check.ts` and `typescript/src/checkPortfolio.ts` are the checks before signing, over
+`typescript/src/evm.ts`: the chains the API serves (`SERVED_CHAINS`), the EIP-55 address check and Keccak-256. The
 types come from `Operations` through `InputOf` and `OutputOf`; `status_lookup` is typed with `OneOf`, so
 exactly one lookup key type-checks. What a call does at run time is in [One call traced](one-call-traced.md).
 
@@ -89,7 +90,7 @@ not for callers.
 | `check:source` | `spec/openapi.json` or `spec/tools.json` is not the copy `spec/SOURCE` describes |
 | `check:generated` | a file in `typescript/src/generated/` or `typescript/llms.txt` differs from what the generator writes from the document: a hand edit, or a document copied in without regenerating |
 | `typecheck` | the hand-written client, the tests or the scripts no longer type-check against the generated types |
-| `test` | behaviour changed: `typescript/tests/generate.test.ts` covers the document, the fail-closed cases, the printed types and the checks themselves; `typescript/tests/client.test.ts` covers requests, credentials, outcomes and answer checks; `typescript/tests/mcp.test.ts` the MCP client; `typescript/tests/signIn.test.ts`, `typescript/tests/check.test.ts` and `typescript/tests/checkPortfolio.test.ts` the sign-in and the checks before signing; `typescript/tests/answers.test.ts` the verdicts in `cases/answers.json`; `typescript/tests/scan.test.ts` the public-text scanner |
+| `test` | behaviour changed: `typescript/tests/generate.test.ts` covers the document, the fail-closed cases, the printed types and the checks themselves; `typescript/tests/client.test.ts` covers requests, credentials, outcomes and answer checks; `typescript/tests/mcp.test.ts` the MCP client; `typescript/tests/signIn.test.ts`, `typescript/tests/check.test.ts` and `typescript/tests/checkPortfolio.test.ts` the sign-in and the checks before signing; `typescript/tests/evm.test.ts` the served chains, the EIP-55 check and Keccak-256; `typescript/tests/answers.test.ts` the verdicts in `cases/answers.json`; `typescript/tests/scan.test.ts` the public-text scanner |
 | `check:public-text` | a tracked file contains text on the deny list in `scripts/public-text/deny.json` |
 | `check:client-pack` | the package holds an unexpected file, builds differently twice, or does not install and type-check |
 | `check:copies` | a package folder's `LICENSE` or `NOTICE` is not the same as the root's |
@@ -137,7 +138,7 @@ first branch that fits and `oneOf` exactly one; an `enum` or `const` matches onl
 
 **The client: `python/src/`.** `client.py` (`create_client`), `mcp.py` and `mcp_client.py` (`create_mcp_client`,
 `tool_breaks`), `sign_in.py`, `check.py` and `check_portfolio.py` are ports of the TypeScript files of the same
-role, over `_internal.py`, the port of `internal.ts`. A call is synchronous, on an `httpx.Client`; it runs on a
+role, over `_internal.py`, the port of `internal.ts`, and `_evm.py`, the port of `evm.ts`. A call is synchronous, on an `httpx.Client`; it runs on a
 thread of its own, so the timeout holds through the answer's last byte whatever the transport does.
 
 **The checks.** `.github/workflows/ci-python.yml` runs, on Python 3.13: `ruff`, `mypy src tests`,

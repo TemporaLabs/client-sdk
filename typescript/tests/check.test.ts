@@ -4,7 +4,8 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { checkStep, checkSteps, type VaultIntent } from '../src/check'
+import { checkStep, checkSteps, PAYLOAD_FIELDS, type VaultIntent } from '../src/check'
+import { SERVED_CHAINS } from '../src/evm'
 
 const VAULT = '0x1111111111111111111111111111111111111111'
 const ASSET = '0x2222222222222222222222222222222222222222'
@@ -102,6 +103,10 @@ describe('checkStep: what each vault call must be', () => {
     expect(reasonOf(checkStep(step(VAULT, zeroRedeem), { ...redeemShares, amount: { kind: 'shares', raw: '0' } }))).toMatch(/zero/)
   })
 
+  it('refuses an amount one digit longer than a uint256 as not a raw amount', () => {
+    expect(reasonOf(checkStep(step(ASSET, DATA.approve), { ...deposit, assets: '1' + '0'.repeat(78) }))).toMatch(/raw amount/)
+  })
+
   it('refuses an "all" withdrawal of no shares', () => {
     const none = `${DATA.redeem.slice(0, 10)}${'0'.repeat(64)}${DATA.redeem.slice(74)}`
     expect(reasonOf(checkStep(step(VAULT, none), redeemAll))).toMatch(/shares/)
@@ -138,8 +143,13 @@ describe("the API's own vault steps pass", () => {
     depositNoApprove: { to: string; data: string; value: string }[]
     withdraw: { to: string; data: string; value: string }
     redeem: { to: string; data: string; value: string }
+    oneStepDeposits: { case: string; admit: boolean; vault: { chain: string; vaultAddress: string; assetAddress: string }; owner: string; step: { to: string; data: string; value: string } }[]
   }
   const asStep = (payload: { to: string; data: string; value: string }) => ({ kind: 'send_transaction', chainId: fx.vault.chain, payload })
+  it.each(fx.oneStepDeposits.map((c) => [c.case, c] as const))('one deposit step: %s', (_name, c) => {
+    const intent = { action: 'deposit' as const, vault: c.vault, owner: c.owner, assets: '2000000' }
+    expect(checkSteps([{ kind: 'send_transaction', chainId: c.vault.chain, payload: c.step }], intent).ok).toBe(c.admit)
+  })
   it('a deposit with its approval, a deposit without one, a withdrawal by assets and a redeem by shares', () => {
     const intent = { action: 'deposit' as const, vault: fx.vault, owner: fx.owner, assets: '2000000' }
     expect(checkSteps(fx.deposit.map(asStep), intent)).toEqual({ ok: true, pending: [] })
@@ -177,8 +187,10 @@ describe('the calldata decoder, byte by byte', () => {
     expect(reasonOf(checkStep(step(VAULT, DATA.withdraw.slice(0, -2)), withdrawAssets))).toBe('the calldata is not the canonical encoding of withdraw')
   })
 
-  it('reads the selector whatever its case', () => {
-    expect(checkStep(step(VAULT, DATA.deposit.replace('0x6e553f65', '0x6E553F65')), deposit)).toEqual({ ok: true, call: 'deposit' })
+  it('refuses calldata that is not lower-case hex, in the selector or an argument', () => {
+    expect(checkStep(step(VAULT, DATA.deposit.replace('0x6e553f65', '0x6E553F65')), deposit)).toEqual({ ok: false, reason: 'the calldata is not a valid encoding' })
+    expect(checkStep(step(VAULT, '0x' + DATA.deposit.slice(2).toUpperCase()), deposit)).toEqual({ ok: false, reason: 'the calldata is not a valid encoding' })
+    expect(checkStep(step(VAULT, DATA.deposit.slice(0, -2) + 'A1'), deposit)).toEqual({ ok: false, reason: 'the calldata is not a valid encoding' })
   })
 
   it('reads every byte of an amount word, the top one included', () => {
@@ -240,5 +252,47 @@ describe('a vault step carries only the payload fields the API defines', () => {
     const s = step(ASSET, DATA.approve)
     const poisoned = { ...s, payload: JSON.parse(JSON.stringify({ ...s.payload }).replace('{', '{"__proto__":{},')) as never }
     expect(reasonOf(checkStep(poisoned, deposit))).toMatch(/payload/)
+  })
+})
+
+describe('chains and addresses: never looser than the API', () => {
+  // EIP-55's own examples: the first is correctly checksummed; the second is the same address with one letter's case flipped.
+  const GOOD = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed'
+  const BAD = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAeD'
+  const depositFor = (owner: string) => `0x6e553f65${(2000000n).toString(16).padStart(64, '0')}${'0'.repeat(24)}${owner.slice(2).toLowerCase()}`
+  const on = (chain: string): VaultIntent => ({ action: 'deposit', vault: { ...vault, chain }, owner: OWNER, assets: '2000000' })
+
+  it.each(['eip155:999999999', 'eip155:08453', 'eip155:0', 'eip155:', 'solana:mainnet', 'garbage', 'eip155:8453 '])('refuses a vault on %j, a chain the API does not serve', (chain) => {
+    const r = checkStep(step(VAULT, DATA.deposit, { chainId: chain }), on(chain))
+    expect(r.ok).toBe(false)
+    expect(checkSteps([step(VAULT, DATA.deposit, { chainId: chain, payload: undefined })], on(chain)).ok).toBe(false)
+  })
+  it.each(SERVED_CHAINS.map((id) => `eip155:${id}`))('admits a vault on %s, a chain the API serves', (chain) => {
+    expect(checkStep(step(VAULT, DATA.deposit, { chainId: chain }), on(chain))).toEqual({ ok: true, call: 'deposit' })
+  })
+  it('admits an owner in lower case, upper case, or mixed case with a correct checksum', () => {
+    for (const owner of [GOOD.toLowerCase(), '0x' + GOOD.slice(2).toUpperCase(), GOOD]) {
+      expect(checkStep(step(VAULT, depositFor(owner)), { ...deposit, owner })).toEqual({ ok: true, call: 'deposit' })
+    }
+  })
+  it('refuses a mixed-case owner whose checksum is wrong', () => {
+    expect(checkStep(step(VAULT, depositFor(BAD)), { ...deposit, owner: BAD })).toEqual({ ok: false, reason: 'the owner is not an address' })
+  })
+  it('refuses a vault record, or a step, naming a mixed-case address with a wrong checksum', () => {
+    const v = { ...vault, vaultAddress: BAD }
+    expect(checkStep(step(BAD, DATA.deposit), { ...deposit, vault: v })).toEqual({ ok: false, reason: 'the vault record is not complete' })
+    expect(checkStep(step(BAD, DATA.deposit), { ...deposit, vault: { ...vault, vaultAddress: GOOD } })).toEqual({ ok: false, reason: 'the step is not sent to an address' })
+    expect(checkStep(step(GOOD, DATA.deposit), { ...deposit, vault: { ...vault, vaultAddress: GOOD.toLowerCase() } })).toEqual({ ok: true, call: 'deposit' })
+  })
+})
+
+describe('PAYLOAD_FIELDS', () => {
+  it('is frozen, each list too, so it cannot be widened at run time', () => {
+    expect(Object.isFrozen(PAYLOAD_FIELDS)).toBe(true)
+    for (const fields of Object.values(PAYLOAD_FIELDS)) expect(Object.isFrozen(fields)).toBe(true)
+    expect(() => (PAYLOAD_FIELDS.send_transaction as unknown as string[]).push('gas')).toThrow(TypeError)
+    expect(() => {
+      ;(PAYLOAD_FIELDS as Record<string, unknown>).sign_message = ['bytes', 'gas']
+    }).toThrow(TypeError)
   })
 })

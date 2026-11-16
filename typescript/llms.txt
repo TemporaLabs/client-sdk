@@ -1,6 +1,6 @@
 # @temporalabs/client
 
-> The typed client for the Tempora API 0.1.3, over HTTP and MCP. Every call returns a result and never throws; every answer is checked against the API's own schema.
+> The typed client for the Tempora API 0.1.4, over HTTP and MCP. Every call returns a result and never throws; every answer is checked against the API's own schema.
 
 This file is generated from the API document in spec/openapi.json. Do not edit it by hand.
 
@@ -62,7 +62,7 @@ The same calls over the API's MCP endpoint, through `createMcpClient` from `@tem
 - `account` (the owner): Read where the owner stands with one product, and the checks a deposit would meet. Read-only.
 - `account_performance` (the owner): Read the owner's performance for one product over time. Read-only.
 - `positions` (the owner): Read the owner's holdings across products. Read-only.
-- `quote` (the owner): Quote a deposit into a vault (expected shares, the share price, and whether the vault would take it) or a withdrawal from one (the position, and how much of it can be withdrawn now, found by simulating withdrawals). Everything is read and simulated at one block. Advice only: the request decides. Read-only.
+- `quote` (the owner): Quote a deposit into a vault (expected shares, the share price, and whether the vault would take it) or a withdrawal from one (the position, and how much of it can be withdrawn now, found by simulating withdrawals). Everything is read and simulated at one block. Advice only: the request decides. Read-only. A quote is for a vault: a portfolio is refused as invalid_input. A vault the API is not running deposits for is refused at its vault-live gate, not quoted; one whose own contract would refuse the deposit is quoted, with the deposit check refused and its reason.
 - `deposit` (the owner): Start a deposit into a product: returns a request with the steps the owner completes. Moves nothing until the owner signs: the owner's own wallet signs or sends each step. Through the MCP endpoint, only a vault's deposit is offered.
 - `withdraw` (the owner): Start a withdrawal from a product: returns a request with the steps the owner completes. Moves nothing until the owner signs: the owner's own wallet signs or sends each step.
 - `submit` (the owner): Hand back one completed step of a request, such as the owner's signature or a sent transaction. Returns the request as it now stands.

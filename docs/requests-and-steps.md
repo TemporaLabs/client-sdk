@@ -53,8 +53,10 @@ if (deposit.ok) console.log(deposit.body.requestId, deposit.body.state, deposit.
 if (!withdrawal.ok) console.error(withdrawal.error.code, withdrawal.error.outcome, withdrawal.error.gates)
 ```
 
-`deposit` takes `product`, and optionally `amount`, `chain`, `token` and `sent`. `withdraw` takes
-`product` and `amount`. An amount is one of:
+`deposit` takes `product`, and optionally `amount`, `chain`, `token`, `sent` and `gas`. `withdraw` takes
+`product` and `amount`, and optionally `gas`. Send `gas: 'self'` when the owner's wallet pays its own gas: the
+API then refuses the request at the `gas-funds` gate if the wallet's native balance cannot pay every step. Leave
+it out for a sponsored or smart-account wallet. It changes nothing the wallet signs. An amount is one of:
 
 | `kind` | Other fields |
 |---|---|
@@ -92,6 +94,11 @@ A `send_transaction` step may carry `verification`, what the API's last look at 
 fields are `hash`, `alsoMoved`, `nonce`, `head`, `message` and `lastLook` (`'unreadable'` when the latest
 look could not read the chain); the document lists them without defining each.
 
+A `send_transaction` step may also carry `fee`, the API's gas and fee estimate for it (`gasLimit`, `fees`,
+`maxCost`, `nativeAsset` and more), marked `advisory: true`. It is for display. It sits beside the
+`payload`, not in it, so the checks below do not read it and it is never handed to the wallet: the wallet
+prices the transaction itself.
+
 ## Check a vault's steps before the owner signs
 
 A product's `kind` says which check applies: `vault` takes `checkSteps` (below), and `portfolio` takes
@@ -104,6 +111,13 @@ about itself (`purpose`, `checks`). A step whose `payload` has any field beyond 
 or `authorizationList` that no check reads. Pass `request.steps` as the client returns it. The `intent` comes from what you know independently of the request:
 the vault's record (`chain`, `vaultAddress`, `assetAddress`), the owner's own address, and the amount they
 asked for, in raw units.
+
+**Never looser than the API.** The checks may refuse what the API would allow, never the reverse. A vault or
+portfolio must be on an EVM chain the API serves (`SERVED_CHAINS`, the chains `chains` lists at the API version this
+client is built from); a chain the API adds later is refused until a client release adds it. Calldata must be
+lower-case hex. Every address must be all lower case, all upper case, or mixed case with a correct
+[EIP-55](https://eips.ethereum.org/EIPS/eip-55) checksum; a mixed-case address whose checksum is wrong is most likely
+mistyped, and is refused.
 
 **Which vault record.** If you hold your own record of the vault (a pinned configuration), pass that one,
 and refuse a product whose `vault` differs from it before you ask for steps. Passing the `vault` read with
@@ -139,6 +153,35 @@ network or signs.
 
 Only amounts given in `assets` or `shares`, or `all`, can be checked exactly. A withdrawal asked as a
 `fraction` or in `usd` has no exact amount to compare against, so it is not an intent this check takes.
+
+## Check a vault deposit's bundle before the wallet batches it
+
+A vault deposit with an approval may also carry `bundle`: its steps as one EIP-5792 `wallet_sendCalls` batch,
+so the owner confirms once. It is an option. A request without one, or a wallet that cannot batch, sends the
+steps one at a time.
+
+`checkBundle(request, intent)` (`check_bundle` in Python) admits the bundle only when it is exactly the checked
+steps. The steps must pass `checkSteps` with nothing pending. Then:
+
+- `stepIds` lists every step's `stepId`, in order;
+- `sendCalls.calls` has one call per step, each with that step's `to` and `data` byte for byte, and `value`
+  `0x0`;
+- `sendCalls.from` is the owner, `chainId` is the vault's chain as lower-case hex, `atomicRequired` is `true`
+  (all or nothing: an approval never lands without its deposit), and `version` is `2.0.0`;
+- no object carries a field beyond these (`capabilities`, for example), because `sendCalls` goes to the wallet as
+  it is.
+
+```ts
+import { checkBundle } from '@temporalabs/client'
+
+declare const provider: { request(args: { method: string; params: unknown[] }): Promise<{ id: string }> }
+
+const verdict = checkBundle(request, intent)
+if (verdict.ok && request.bundle) {
+  const { id } = await provider.request({ method: 'wallet_sendCalls', params: [request.bundle.sendCalls] })
+  // Poll wallet_getCallsStatus, then hand its answer back on the first step (Submit a step, below).
+}
+```
 
 ## Check a portfolio's steps before the owner signs
 
@@ -184,7 +227,7 @@ total. A request whose every step is pending is not admitted. Once a step has it
 `checkPortfolioWithdrawal` over every batch again, not over that batch alone: the bound on each asset's total holds
 only across the whole set.
 
-Every chain, account and asset id is read by one strict parser. Asset ids are ERC-20 (`eip155:<reference>/erc20:<address>`),
+Every chain, account and asset id is read by one strict parser, with the chain and address rules above. Asset ids are ERC-20 (`eip155:<reference>/erc20:<address>`),
 so a withdrawal that names a holding in any other form is refused as a whole. A batch with no `plan` is refused too: the
 API attaches one to every batch.
 
@@ -218,8 +261,13 @@ it now stands. The body is one of:
 | `transaction` | `txHash`, `wallet` (`{ nonce, from, blockNumber }` or `null`) | A `send_transaction` step that was sent. |
 | `attempt` | `attemptId`, `broadcast`: `unknown` or `declined` | A send step's attempt whose broadcast was declined, or is not known. |
 | `refresh` | `expectedGeneration` | A step's payload, by the `generation` you hold. |
+| `bundle` | `id`, `status` | A bundle sent with `wallet_sendCalls`: `id` is the batch id the wallet answered, `status` its raw `wallet_getCallsStatus` answer. Submitted on the bundle's first step. |
 
-The "For" column is guidance from the field names: the API document lists the four body shapes but
+The API acts on a `bundle` body only once the status is final (`200`, `500` or `600`) and its receipts name
+every step; anything else changes nothing, so keep polling and submit again. It still checks each step on its own
+node.
+
+The "For" column is guidance from the field names: the API document lists the body shapes but
 not which step takes which. It does not say which body a `send_solana_transaction` step takes, nor
 exactly what `refresh` returns beyond the request.
 
@@ -328,7 +376,9 @@ if (r.ok) console.log(r.body.state)
 
 A gate is a condition an owner or a request has to meet. Gate ids include `allowlist`, `wallet-check`,
 `minimum`, `product-status`, `token`, `chain`, `enrolled`, `market-hours`, `stand-aside`, `holdings`,
-`sizing`, `vault-live`, `vault-terms`, `allowance` and `rate-limit`, and a newer API may add more. They
+`sizing`, `vault-live`, `vault-terms`, `allowance`, `rate-limit` and `gas-funds`, and a newer API may add more.
+A `gas-funds` refusal (code `insufficient_gas_funds`) carries `funds`: the chain, the address, the native
+balance and the amount `needed`. They
 appear in three places:
 
 - `product.gates`: the gate ids that apply to the product.

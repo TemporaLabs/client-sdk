@@ -7,10 +7,12 @@ import json
 import math
 import re
 from collections.abc import Callable, Mapping, Sequence
+from types import MappingProxyType
 from typing import Any, Final
 
 from . import _internal as internal
 from ._result import Err, Ok, Result
+from ._schema import is_number
 from ._version import VERSION
 from .generated.models import ApiError
 from .generated.spec import CLIENT_KEY_HEADER, OPERATIONS, Operation
@@ -19,17 +21,25 @@ __all__ = ["PROTOCOL_VERSION", "is_tool", "mcp_client_for"]
 
 # The protocol revision this client speaks.
 PROTOCOL_VERSION: Final = "2026-07-28"
-CLIENT_INFO: Final = {"name": "temporalabs-client", "version": VERSION}
+# Read-only, like META below: every call sends them as they are here.
+CLIENT_INFO: Final[Mapping[str, str]] = MappingProxyType({"name": "temporalabs-client", "version": VERSION})
 # The protocol's code for a revision the server does not serve; its data names the ones it does.
 UNSUPPORTED_PROTOCOL: Final = -32022
-META: Final = {
-    "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
-    "io.modelcontextprotocol/clientInfo": CLIENT_INFO,
-    "io.modelcontextprotocol/clientCapabilities": {},
-}
+META: Final[Mapping[str, Any]] = MappingProxyType(
+    {
+        "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
+        "io.modelcontextprotocol/clientInfo": CLIENT_INFO,
+        "io.modelcontextprotocol/clientCapabilities": MappingProxyType({}),
+    }
+)
+# Every message is one JSON-RPC 2.0 request, so one id is enough.
+_JSON_RPC: Final[Mapping[str, Any]] = MappingProxyType({"jsonrpc": "2.0", "id": 1})
+# The tool list goes out as a POST but only reads, so a lost list is `failed`, never `unknown`.
+_LIST_METHOD: Final = "GET"
+# A protocol revision is a date.
+_REVISION: Final = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 STATUS: Final = "status"
 STATUS_LOOKUP: Final = "status_lookup"
-_NOT_SET: Any = object()
 _U = internal.UNDEFINED
 
 
@@ -59,10 +69,6 @@ def _truthy(v: Any) -> bool:
     return True
 
 
-def _is_number(v: Any) -> bool:
-    return isinstance(v, int | float) and not isinstance(v, bool)
-
-
 def _finite(v: Any) -> bool:
     """A JSON number JavaScript reads as finite: an int past a double's range reads as Infinity there."""
     if isinstance(v, int):
@@ -75,7 +81,7 @@ def _finite(v: Any) -> bool:
 
 
 def _seconds(v: Any) -> float | None:
-    if _is_number(v):
+    if is_number(v):
         n: float | None = v if _finite(v) else None
     elif isinstance(v, str):
         n = internal.small_int(v)
@@ -97,12 +103,12 @@ def _rpc_error(res: internal.Answer, error: Any, method: str, name: str) -> Err:
     """A JSON-RPC error as a Result: the endpoint's own refusal (an API error), a protocol revision it no
     longer serves, or unreadable."""
     code = _get(error, "code")
-    if _is_number(code) and code == UNSUPPORTED_PROTOCOL:
+    if is_number(code) and code == UNSUPPORTED_PROTOCOL:
         supported = _get(_get(error, "data"), "supported")
         # Only date-shaped revisions are quoted: the rest of the list is the endpoint's text, not the
         # protocol's.
         dates = (
-            [s for s in supported if isinstance(s, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", s, re.ASCII)]
+            [s for s in supported if isinstance(s, str) and _REVISION.fullmatch(s)]
             if isinstance(supported, list)
             else []
         )
@@ -121,7 +127,7 @@ def _rpc_error(res: internal.Answer, error: Any, method: str, name: str) -> Err:
     api = _api_error(_get(error, "data"))
     if api is None:
         api = _api_error(error)
-    wait = _seconds(res.headers.get("retry-after"))
+    wait = _seconds(res.headers.get(internal.RETRY_AFTER_HEADER))
     if api is None:
         return Err(status=res.status, error=_unreadable(method, name))
     return Err(status=res.status, error=api, trace_id=api.traceId, retry_after=wait)
@@ -143,7 +149,7 @@ def _headers(
     token = token if token is not None else opts.owner_token
     if owner and token is not None:
         # A token that is not text cannot be a header value: the header check refuses the call.
-        headers["authorization"] = f"Bearer {token}" if isinstance(token, str) else "\x00"
+        headers["authorization"] = f"{internal.AUTH_SCHEME} {token}" if isinstance(token, str) else "\x00"
     return headers
 
 
@@ -157,7 +163,7 @@ def _text_value(text: Any) -> Any:
         return _U
     if isinstance(text, str):
         return internal.parse_json_text(text)
-    if text is None or isinstance(text, bool) or (_is_number(text) and _finite(text)):
+    if text is None or isinstance(text, bool) or (is_number(text) and _finite(text)):
         return text
     return _U
 
@@ -175,7 +181,7 @@ def _call_tool(
         *,
         path: Mapping[str, Any] | None = None,
         query: Mapping[str, Any] | None = None,
-        body: Any = _NOT_SET,
+        body: Any = internal.NOT_SET,
         owner_token: str | None = None,
     ) -> Result[Any]:
         # Only mappings are read: a call never raises for what it was given.
@@ -183,7 +189,7 @@ def _call_tool(
             **(path if isinstance(path, Mapping) else {}),
             **(query if isinstance(query, Mapping) else {}),
         }
-        if body is not _NOT_SET and body is not None:
+        if body is not internal.NOT_SET and body is not None:
             args["body"] = body
         headers = _headers(opts, "tools/call", tool["name"], tool["exposure"] == "owner", owner_token)
         if not internal.headers_safe(headers):
@@ -191,8 +197,7 @@ def _call_tool(
         try:
             rpc_body = internal.to_json(
                 {
-                    "jsonrpc": "2.0",
-                    "id": 1,
+                    **_JSON_RPC,
                     "method": "tools/call",
                     "params": {"name": tool["name"], "arguments": args, "_meta": META},
                 }
@@ -223,7 +228,7 @@ def _call_tool(
             status = res.status
             if (
                 res.ok
-                and _is_number(said)
+                and is_number(said)
                 and _finite(said)
                 and float(said).is_integer()
                 and 400 <= said <= 599
@@ -253,14 +258,16 @@ def _list_tools(opts: internal.Options) -> Callable[..., Result[tuple[dict[str, 
         headers = _headers(opts, "tools/list", None, True, owner_token)
         if not internal.headers_safe(headers):
             return Err(status=0, error=internal.unsent_header("tool list"))
-        body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {"_meta": META}})
+        body = json.dumps({**_JSON_RPC, "method": "tools/list", "params": {"_meta": META}}, default=dict)
         try:
             res = internal.send(opts, opts.url, "POST", headers, body)
         except Exception:
-            return Err(status=0, error=internal.local("GET", "network_error", "The tool list got no answer."))
+            return Err(
+                status=0, error=internal.local(_LIST_METHOD, "network_error", "The tool list got no answer.")
+            )
         unreadable = Err(
             status=res.status,
-            error=internal.local("GET", "unreadable_answer", "The tool list was not readable."),
+            error=internal.local(_LIST_METHOD, "unreadable_answer", "The tool list was not readable."),
         )
         # The endpoint answers in JSON, and every item of the list must be a tool.
         if not _is_json(res):
@@ -268,7 +275,7 @@ def _list_tools(opts: internal.Options) -> Callable[..., Result[tuple[dict[str, 
         rpc = res.json()
         error = _get(rpc, "error")
         if _truthy(error):
-            return _rpc_error(res, error, "GET", "tool list")
+            return _rpc_error(res, error, _LIST_METHOD, "tool list")
         # A list on a non-2xx answer is not the endpoint's answer, as for a tool call.
         if not res.ok:
             return unreadable
