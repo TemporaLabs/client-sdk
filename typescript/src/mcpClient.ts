@@ -5,7 +5,7 @@
 import { CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec'
 import { CLIENT_VERSION } from './version'
 import type { ApiError } from './generated/types'
-import { TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type Op, type Result } from './internal'
+import { AUTH_SCHEME, RETRY_AFTER_HEADER, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type Op, type Result } from './internal'
 
 /** Whether a value has a tool's shape: a name, an exposure and an input schema object. */
 export const isTool = (t: unknown): t is Tool => {
@@ -37,6 +37,10 @@ const META = {
   'io.modelcontextprotocol/clientInfo': CLIENT_INFO,
   'io.modelcontextprotocol/clientCapabilities': {},
 }
+// Every message is one JSON-RPC 2.0 request, so one id is enough.
+const JSON_RPC = { jsonrpc: '2.0', id: 1 } as const
+// The tool list goes out as a POST but only reads, so a lost list is `failed`, never `unknown`.
+const LIST_METHOD = 'GET'
 const STATUS = 'status'
 const STATUS_LOOKUP = 'status_lookup'
 
@@ -60,7 +64,7 @@ function rpcError(res: Answer, error: NonNullable<Rpc['error']>, method: string,
   // A refusal before the protocol layer (the origin check; a deployment with no MCP endpoint) is a plain API error body,
   // `{ error: { code, message, outcome } }`, so `error` is itself the API error. A JSON-RPC error's code is a number.
   const api = apiError(error.data) ?? apiError(error)
-  const retryAfter = retryAfterSeconds(res.headers.get('retry-after'))
+  const retryAfter = retryAfterSeconds(res.headers.get(RETRY_AFTER_HEADER))
   return api
     ? { ok: false, status: res.status, error: api, ...(api.traceId !== undefined && { traceId: api.traceId }), ...(retryAfter !== undefined && { retryAfter }) }
     : { ok: false, status: res.status, error: unreadable(method, name) }
@@ -79,7 +83,7 @@ function headersFor(opts: McpClientOptions, method: string, name: string | undef
   }
   if (opts.clientKey !== undefined) headers[CLIENT_KEY_HEADER] = opts.clientKey
   const token = o.ownerToken ?? opts.ownerToken
-  if (owner && token !== undefined) headers.authorization = `Bearer ${token}`
+  if (owner && token !== undefined) headers.authorization = `${AUTH_SCHEME} ${token}`
   return headers
 }
 
@@ -94,7 +98,7 @@ function callTool(opts: McpClientOptions, tool: Tool, name: string, op: Op) {
     if (!headersSafe(headers)) return { ok: false, status: 0, error: unsentHeader(name) }
     let rpcBody: string
     try {
-      rpcBody = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: tool.name, arguments: args, _meta: META } })
+      rpcBody = JSON.stringify({ ...JSON_RPC, method: 'tools/call', params: { name: tool.name, arguments: args, _meta: META } })
     } catch {
       return { ok: false, status: 0, error: unwritableBody(name) }
     }
@@ -142,15 +146,15 @@ function listTools(opts: McpClientOptions) {
     if (!headersSafe(headers)) return { ok: false, status: 0, error: unsentHeader('tool list') }
     let res: Answer
     try {
-      res = await post(opts, headers, JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: META } }), o.signal)
+      res = await post(opts, headers, JSON.stringify({ ...JSON_RPC, method: 'tools/list', params: { _meta: META } }), o.signal)
     } catch {
-      return { ok: false, status: 0, error: local('GET', 'network_error', 'The tool list got no answer.') }
+      return { ok: false, status: 0, error: local(LIST_METHOD, 'network_error', 'The tool list got no answer.') }
     }
-    const unreadableList = { ok: false, status: res.status, error: local('GET', 'unreadable_answer', 'The tool list was not readable.') } as const
+    const unreadableList = { ok: false, status: res.status, error: local(LIST_METHOD, 'unreadable_answer', 'The tool list was not readable.') } as const
     // The endpoint answers in JSON, and every item of the list must be a tool.
     if (!(res.headers.get('content-type') ?? '').includes('application/json')) return unreadableList
     const rpc = (await res.json().catch(() => undefined)) as Rpc | undefined
-    if (rpc?.error) return rpcError(res, rpc.error, 'GET', 'tool list')
+    if (rpc?.error) return rpcError(res, rpc.error, LIST_METHOD, 'tool list')
     // A list on a non-2xx answer is not the endpoint's answer, as for a tool call.
     if (!res.ok) return unreadableList
     const tools = rpc?.result?.tools

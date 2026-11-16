@@ -25,7 +25,7 @@
  * `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the network or signs.
  */
 import { decodeCall, type Word } from './abi/calldata'
-import { isAddress, same, servedChain } from './evm'
+import { UINT256_DIGITS, isAddress, same, servedChain } from './evm'
 
 /** The vault as the product record names it (`product.vault`). */
 export type VaultOnChain = { chain: string; vaultAddress: string; assetAddress: string }
@@ -83,7 +83,7 @@ const ARGS: Readonly<Record<VaultCall, readonly Word[]>> = {
 }
 const CALLS = Object.fromEntries(Object.entries(SELECTORS).map(([selector, call]) => [selector, ARGS[call]]))
 // A raw amount is a uint256: at most 78 digits; a longer one is refused as malformed.
-const RAW = /^(0|[1-9][0-9]{0,77})$/
+const RAW = new RegExp(`^(0|[1-9][0-9]{0,${UINT256_DIGITS - 1}})$`)
 /** An approval this large is unlimited in effect, whatever the intent says: never admitted. */
 const UNLIMITED_APPROVAL = 2n ** 128n
 

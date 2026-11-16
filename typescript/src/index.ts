@@ -1,6 +1,6 @@
 /** The typed HTTP client for the Tempora API: one method per call, every answer a Result that never throws. */
 import { API_VERSION, CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec'
-import { TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, offOrigin, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type InputOf, type Name, type Op, type OutputOf, type Result } from './internal'
+import { AUTH_SCHEME, RETRY_AFTER_HEADER, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, offOrigin, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type InputOf, type Name, type Op, type OutputOf, type Result } from './internal'
 
 export { API_VERSION, CLIENT_KEY_HEADER }
 export type * from './generated/types'
@@ -55,7 +55,7 @@ function call(opts: ClientOptions, name: string, op: Op) {
     const headers: Record<string, string> = { accept: 'application/json' }
     if (opts.clientKey !== undefined) headers[CLIENT_KEY_HEADER] = opts.clientKey
     const token = o.ownerToken ?? opts.ownerToken
-    if (op.auth === 'owner' && token !== undefined) headers.authorization = `Bearer ${token}`
+    if (op.auth === 'owner' && token !== undefined) headers.authorization = `${AUTH_SCHEME} ${token}`
     if (input.body !== undefined) headers['content-type'] = 'application/json'
     if (!headersSafe(headers)) return { ok: false, status: 0, error: unsentHeader(name) } as const
     let body: string | undefined
@@ -80,7 +80,7 @@ function call(opts: ClientOptions, name: string, op: Op) {
         : ({ ok: false, status: res.status, error: schemaMismatch(op.method, name), traceId } as const)
     }
     const error = apiErrorIn(json)
-    const retryAfter = retryAfterSeconds(res.headers.get('retry-after'))
+    const retryAfter = retryAfterSeconds(res.headers.get(RETRY_AFTER_HEADER))
     return {
       ok: false,
       status: res.status,

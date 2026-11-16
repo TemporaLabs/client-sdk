@@ -146,7 +146,7 @@ def _call(opts: internal.Options, name: str, op: Operation) -> Callable[..., Res
         if op.auth == "owner" and token is not None:
             if not isinstance(token, str):
                 return _err(0, internal.unsent_header(name))
-            headers["authorization"] = f"Bearer {token}"
+            headers["authorization"] = f"{internal.AUTH_SCHEME} {token}"
         has_body = body is not internal.NOT_SET and body is not None
         if has_body:
             headers["content-type"] = "application/json"
@@ -175,7 +175,7 @@ def _call(opts: internal.Options, name: str, op: Operation) -> Callable[..., Res
             if error is not None
             else internal.local(op.method, "unreadable_answer", f"The {name} error answer was not readable."),
             trace_id,
-            internal.retry_after(res.headers.get("retry-after")),
+            internal.retry_after(res.headers.get(internal.RETRY_AFTER_HEADER)),
         )
 
     call.__name__ = name

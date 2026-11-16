@@ -103,6 +103,10 @@ describe('checkStep: what each vault call must be', () => {
     expect(reasonOf(checkStep(step(VAULT, zeroRedeem), { ...redeemShares, amount: { kind: 'shares', raw: '0' } }))).toMatch(/zero/)
   })
 
+  it('refuses an amount one digit longer than a uint256 as not a raw amount', () => {
+    expect(reasonOf(checkStep(step(ASSET, DATA.approve), { ...deposit, assets: '1' + '0'.repeat(78) }))).toMatch(/raw amount/)
+  })
+
   it('refuses an "all" withdrawal of no shares', () => {
     const none = `${DATA.redeem.slice(0, 10)}${'0'.repeat(64)}${DATA.redeem.slice(74)}`
     expect(reasonOf(checkStep(step(VAULT, none), redeemAll))).toMatch(/shares/)

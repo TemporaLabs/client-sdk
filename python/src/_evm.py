@@ -15,6 +15,9 @@ from typing import Any, Final
 # looser.
 SERVED_CHAINS: Final[tuple[str, ...]] = ("1", "56", "143", "4663", "8453", "42161")
 
+# A uint256 written in decimal has at most this many digits.
+UINT256_DIGITS: Final = 78
+
 # An `eip155:<id>` chain, its id captured.
 CHAIN: Final = re.compile(r"eip155:([1-9][0-9]*)", re.ASCII)
 _ADDRESS_SHAPE: Final = re.compile(r"0x[0-9a-fA-F]{40}", re.ASCII)

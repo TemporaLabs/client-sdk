@@ -27,6 +27,9 @@ export type SharedOptions = { clientKey?: string; ownerToken?: string; timeoutMs
 
 const DEFAULT_TIMEOUT_MS = 30_000
 export const TRACE_HEADER = 'x-trace-id'
+export const RETRY_AFTER_HEADER = 'retry-after'
+/** The authorization scheme every owner token is sent with. */
+export const AUTH_SCHEME = 'Bearer'
 
 const validators = new Map<unknown, z.ZodType>()
 const validator = (schema: unknown): z.ZodType => {

@@ -33,7 +33,7 @@
  * for signing.
  */
 import { decodeCall } from './abi/calldata'
-import { CHAIN, isAddress, same, servedChain } from './evm'
+import { CHAIN, UINT256_DIGITS, isAddress, same, servedChain } from './evm'
 import { PAYLOAD_FIELDS, payloadOf } from './check'
 
 /** What the owner asked to withdraw from a portfolio, and what the caller knows independently of the steps. */
@@ -125,8 +125,8 @@ const FRACTION_PLACES = 18
 
 // A raw amount is a uint256: at most 78 digits. Anything longer can never match a chain value, so it is refused
 // as malformed, and no client spends unbounded time converting it.
-const RAW_POSITIVE = /^[1-9][0-9]{0,77}$/
-const DIGITS = /^[0-9]{1,78}$/
+const RAW_POSITIVE = new RegExp(`^[1-9][0-9]{0,${UINT256_DIGITS - 1}}$`)
+const DIGITS = new RegExp(`^[0-9]{1,${UINT256_DIGITS}}$`)
 const BYTES32 = /^0x[0-9a-fA-F]{64}$/
 const ACCOUNT = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/
 const ASSET = /^eip155:([1-9][0-9]*)\/erc20:(0x[0-9a-fA-F]{40})$/
