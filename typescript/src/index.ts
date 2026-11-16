@@ -6,9 +6,9 @@ export { API_VERSION, CLIENT_KEY_HEADER }
 export type * from './generated/types'
 export type { CallOptions, InputOf, OutputOf, Result }
 export { signIn, withOwnerRetry } from './signIn'
-export { checkStep, checkSteps } from './check'
+export { checkBundle, checkStep, checkSteps } from './check'
 export { SERVED_CHAINS } from './evm'
-export type { StepCheck, StepsCheck, StepToCheck, VaultCall, VaultIntent, VaultOnChain } from './check'
+export type { BundleCheck, BundleToCheck, StepCheck, StepsCheck, StepToCheck, VaultCall, VaultIntent, VaultOnChain } from './check'
 export { checkPortfolioDeposit, checkPortfolioWithdrawal } from './checkPortfolio'
 export type { PortfolioDepositCheck, PortfolioDepositIntent, PortfolioStepToCheck, PortfolioWithdrawalCheck, PortfolioWithdrawalIntent } from './checkPortfolio'
 export type { OwnerRetry, SignedIn, SignInOptions } from './signIn'

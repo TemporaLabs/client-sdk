@@ -5,6 +5,20 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ## [v0.1.2] - 2026-11-16
 
+### Added
+
+- **Generated from API 0.1.4** (`API_VERSION` is `0.1.4`). New in the types and the tool list:
+  - `fee` on a `send_transaction` step: the API's gas and fee estimate, advisory and outside the payload;
+  - `gas: 'self'` on `deposit` and `withdraw` bodies, and the `gas-funds` gate, whose refusal
+    (`insufficient_gas_funds`) carries `funds`;
+  - `bundle` on a vault deposit with an approval: its steps as one EIP-5792 `wallet_sendCalls` batch, and the
+    submit body `{ kind: 'bundle', id, status }`;
+  - `basis` and `earnedUsd` on a position.
+- **`checkBundle`** (`check_bundle` in Python) checks a vault deposit's `bundle` before it goes to the wallet: the
+  steps must pass `checkSteps`, and the batch must be exactly those steps, byte for byte and in order, from the owner,
+  on the vault's chain, all-or-nothing, with no field beyond the API's own. `cases/vault-bundle.json` holds the cases
+  both clients must admit or refuse alike, with the same reason.
+
 ### Changed
 
 - **The step checks are never looser than the API.** `checkStep`, `checkSteps`, `checkPortfolioDeposit` and
