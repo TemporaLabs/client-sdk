@@ -74,6 +74,13 @@ def test_refuses_what_is_not_an_address(v: Any) -> None:
     assert not is_address(v)
 
 
+def test_served_chains_cannot_be_widened_at_run_time() -> None:
+    assert isinstance(SERVED_CHAINS, tuple)
+    with pytest.raises(AttributeError):
+        SERVED_CHAINS.append("999")  # type: ignore[attr-defined]
+    assert served_chain("eip155:999") is None
+
+
 @pytest.mark.parametrize("i", SERVED_CHAINS)
 def test_reads_a_served_chain(i: str) -> None:
     assert served_chain(f"eip155:{i}") == i

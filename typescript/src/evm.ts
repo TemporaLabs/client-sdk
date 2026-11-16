@@ -8,8 +8,9 @@
 /**
  * The EVM chains the API serves (`GET /v1/chains`, API 0.1.3), by chain id. A step or a vault on any other chain is
  * refused. A chain the API adds later is refused until a client release adds it here: stricter, never looser.
+ * Frozen, so a caller cannot widen the list at run time, a cast included.
  */
-export const SERVED_CHAINS: readonly string[] = ['1', '56', '143', '4663', '8453', '42161']
+export const SERVED_CHAINS: readonly string[] = Object.freeze(['1', '56', '143', '4663', '8453', '42161'])
 
 const CHAIN = /^eip155:([1-9][0-9]*)$/
 
