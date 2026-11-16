@@ -74,7 +74,7 @@ describe('the client', () => {
     const { client } = make(() => Promise.reject(new TypeError('fetch failed')))
     const input = name === 'withdraw' ? { body: { product: 'example-product', amount: { kind: 'all' as const } } } : {}
     const r = await (client[name] as (i: unknown) => ReturnType<typeof client.positions>)(input)
-    expect(r).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome } })
+    expect(r).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome, message: `The ${name} call got no answer.` } })
   })
 
   it('treats an answer that is not the contract as unreadable, unknown on a write', async () => {

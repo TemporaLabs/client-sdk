@@ -33,7 +33,7 @@
  * for signing.
  */
 import { decodeCall } from './abi/calldata'
-import { isAddress, servedChain } from './evm'
+import { CHAIN, isAddress, same, servedChain } from './evm'
 import { PAYLOAD_FIELDS, payloadOf } from './check'
 
 /** What the owner asked to withdraw from a portfolio, and what the caller knows independently of the steps. */
@@ -128,7 +128,6 @@ const FRACTION_PLACES = 18
 const RAW_POSITIVE = /^[1-9][0-9]{0,77}$/
 const DIGITS = /^[0-9]{1,78}$/
 const BYTES32 = /^0x[0-9a-fA-F]{64}$/
-const CHAIN = /^eip155:([1-9][0-9]*)$/
 const ACCOUNT = /^eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/
 const ASSET = /^eip155:([1-9][0-9]*)\/erc20:(0x[0-9a-fA-F]{40})$/
 
@@ -138,7 +137,6 @@ const assetKey = (v: unknown): string | null => {
   return m && isAddress(m[2]) ? `eip155:${m[1]}/erc20:${m[2]!.toLowerCase()}` : null
 }
 const chainRef = (v: unknown): string | null => (typeof v === 'string' ? (CHAIN.exec(v)?.[1] ?? null) : null)
-const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
 const keysAre = (o: object, want: readonly string[]) => {
   const k = Object.keys(o)
   return k.length === want.length && want.every((w) => k.includes(w))

@@ -25,7 +25,7 @@
  * `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the network or signs.
  */
 import { decodeCall, type Word } from './abi/calldata'
-import { isAddress, servedChain } from './evm'
+import { isAddress, same, servedChain } from './evm'
 
 /** The vault as the product record names it (`product.vault`). */
 export type VaultOnChain = { chain: string; vaultAddress: string; assetAddress: string }
@@ -88,7 +88,6 @@ const RAW = /^(0|[1-9][0-9]{0,77})$/
 const UNLIMITED_APPROVAL = 2n ** 128n
 
 const refuse = (reason: string): { ok: false; reason: string } => ({ ok: false, reason })
-const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
 
 type Decoded = { call: VaultCall; words: (bigint | string)[] }
 

@@ -12,7 +12,11 @@
  */
 export const SERVED_CHAINS: readonly string[] = Object.freeze(['1', '56', '143', '4663', '8453', '42161'])
 
-const CHAIN = /^eip155:([1-9][0-9]*)$/
+/** An `eip155:<id>` chain, its id captured. */
+export const CHAIN = /^eip155:([1-9][0-9]*)$/
+
+/** Two addresses alike in any case. */
+export const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
 
 /** The chain id of an `eip155:<id>` chain the API serves, or null for any other value. */
 export function servedChain(value: unknown): string | null {

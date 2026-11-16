@@ -1,6 +1,6 @@
 /** The typed HTTP client for the Tempora API: one method per call, every answer a Result that never throws. */
 import { API_VERSION, CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec'
-import { MAX_RETRY_AFTER_S, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, offOrigin, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type InputOf, type Name, type Op, type OutputOf, type Result } from './internal'
+import { TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, offOrigin, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type InputOf, type Name, type Op, type OutputOf, type Result } from './internal'
 
 export { API_VERSION, CLIENT_KEY_HEADER }
 export type * from './generated/types'
@@ -68,7 +68,7 @@ function call(opts: ClientOptions, name: string, op: Op) {
     try {
       res = await send(opts, url, op.method, headers, body, o.signal)
     } catch {
-      return { ok: false, status: 0, error: local(op.method, 'network_error', `The ${name} call got no answer.`) } as const
+      return { ok: false, status: 0, error: noAnswer(op.method, name) } as const
     }
     const traceId = res.headers.get(TRACE_HEADER) ?? undefined
     const json: unknown = await res.json().catch(() => undefined)
@@ -80,14 +80,13 @@ function call(opts: ClientOptions, name: string, op: Op) {
         : ({ ok: false, status: res.status, error: schemaMismatch(op.method, name), traceId } as const)
     }
     const error = apiErrorIn(json)
-    // Retry-After in whole seconds, up to a day; a date or anything longer is left out.
-    const wait = res.headers.get('retry-after')
+    const retryAfter = retryAfterSeconds(res.headers.get('retry-after'))
     return {
       ok: false,
       status: res.status,
       error: error ?? local(op.method, 'unreadable_answer', `The ${name} error answer was not readable.`),
       traceId,
-      ...(wait !== null && /^\d+$/.test(wait) && Number(wait) <= MAX_RETRY_AFTER_S ? { retryAfter: Number(wait) } : {}),
+      ...(retryAfter !== undefined ? { retryAfter } : {}),
     } as const
   }
 }

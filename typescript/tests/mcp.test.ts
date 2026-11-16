@@ -160,7 +160,7 @@ describe('createMcpClient', () => {
     const { client } = make(() => {
       throw new TypeError('fetch failed')
     })
-    expect(await client.products({})).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome: 'failed' } })
+    expect(await client.products({})).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome: 'failed', message: 'The products call got no answer.' } })
     expect(await client.withdraw({ body: { product: 'p', amount: { kind: 'all' } } } as never)).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome: 'unknown' } })
   })
 
