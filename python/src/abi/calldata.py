@@ -14,7 +14,8 @@ Word = Literal["address", "uint"]
 SELECTOR_HEX = 8
 WORD_HEX = 64
 ADDRESS_HEX = 40
-HEX_BYTES = re.compile(r"0x(?:[0-9a-fA-F]{2})*", re.ASCII)
+# Lower-case hex only: calldata the API prepares is lower case, and any other spelling is not that calldata.
+HEX_BYTES = re.compile(r"0x(?:[0-9a-f]{2})*", re.ASCII)
 
 
 @dataclass(frozen=True)
@@ -28,9 +29,9 @@ class Decoded:
 
 @dataclass(frozen=True)
 class Refused:
-    """Why not: `encoding`, not whole hex bytes with a selector; `selector`, a selector not in the list;
-    `canonical`, a known selector whose arguments are not exactly their canonical encoding (a wrong length, or
-    bits set above an address's 20 bytes)."""
+    """Why not: `encoding`, not whole lower-case hex bytes with a selector; `selector`, a selector not in the
+    list; `canonical`, a known selector whose arguments are not exactly their canonical encoding (a wrong
+    length, or bits set above an address's 20 bytes)."""
 
     ok: Literal[False]
     refused: Literal["encoding", "selector", "canonical"]
@@ -40,7 +41,7 @@ class Refused:
 def decode_call(data: str, calls: Mapping[str, Sequence[Word]]) -> Decoded | Refused:
     if not isinstance(data, str) or not HEX_BYTES.fullmatch(data) or len(data) < 2 + SELECTOR_HEX:
         return Refused(ok=False, refused="encoding")
-    selector = data[: 2 + SELECTOR_HEX].lower()
+    selector = data[: 2 + SELECTOR_HEX]
     args = calls.get(selector)
     if args is None:
         return Refused(ok=False, refused="selector", selector=selector)

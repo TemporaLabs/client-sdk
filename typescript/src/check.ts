@@ -17,11 +17,15 @@
  * that one. Passing the product record read from the same API that builds the steps checks the steps against that
  * API's own record: it catches a wrong step, never a wrong record. No amount of zero is admitted.
  *
+ * The vault's chain must be an EVM chain the API serves (`SERVED_CHAINS`). Every address must be all lower case, all
+ * upper case, or mixed case with a correct EIP-55 checksum.
+ *
  * Every step is a `send_transaction` on the vault's chain carrying no value, and its calldata must be exactly the
- * canonical encoding of what it decodes to: no trailing bytes, no bits set above an address's 20 bytes. A request is
+ * canonical encoding of what it decodes to: lower-case hex, no trailing bytes, no bits set above an address's 20 bytes. A request is
  * `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the network or signs.
  */
 import { decodeCall, type Word } from './abi/calldata'
+import { isAddress, servedChain } from './evm'
 
 /** The vault as the product record names it (`product.vault`). */
 export type VaultOnChain = { chain: string; vaultAddress: string; assetAddress: string }
@@ -78,7 +82,6 @@ const ARGS: Readonly<Record<VaultCall, readonly Word[]>> = {
   redeem: ['uint', 'address', 'address'],
 }
 const CALLS = Object.fromEntries(Object.entries(SELECTORS).map(([selector, call]) => [selector, ARGS[call]]))
-const ADDRESS = /^0x[0-9a-fA-F]{40}$/
 // A raw amount is a uint256: at most 78 digits; a longer one is refused as malformed.
 const RAW = /^(0|[1-9][0-9]{0,77})$/
 /** An approval this large is unlimited in effect, whatever the intent says: never admitted. */
@@ -105,7 +108,8 @@ function intentProblem(intent: VaultIntent): string | undefined {
   if (i.action === 'withdraw' && !AMOUNT_KINDS.includes(i.amount?.kind as string)) return `the withdrawal's amount kind ${JSON.stringify(i.amount?.kind)} is not assets, shares or all`
   // Checked here, so every check (checkSteps too, for a step with nothing to sign yet) reads a complete record.
   const v = (intent as { vault?: unknown }).vault as { vaultAddress?: unknown; assetAddress?: unknown; chain?: unknown } | null | undefined
-  if (typeof v !== 'object' || v === null || typeof v.vaultAddress !== 'string' || !ADDRESS.test(v.vaultAddress) || typeof v.assetAddress !== 'string' || !ADDRESS.test(v.assetAddress) || typeof v.chain !== 'string' || !v.chain) return 'the vault record is not complete'
+  if (typeof v !== 'object' || v === null || !isAddress(v.vaultAddress) || !isAddress(v.assetAddress) || typeof v.chain !== 'string' || !v.chain) return 'the vault record is not complete'
+  if (servedChain(v.chain) === null) return `the vault's chain ${JSON.stringify(v.chain)} is not an EVM chain the API serves`
   return undefined
 }
 const AMOUNT_KINDS = ['assets', 'shares', 'all']
@@ -118,8 +122,7 @@ export function checkStep(step: StepToCheck, intent: VaultIntent, expected?: Vau
   const problem = intentProblem(intent)
   if (problem) return refuse(problem)
   const { vault, owner } = intent
-  if (!ADDRESS.test(owner)) return refuse('the owner is not an address')
-  if (!ADDRESS.test(vault.vaultAddress) || !ADDRESS.test(vault.assetAddress) || !vault.chain) return refuse('the vault record is not complete')
+  if (!isAddress(owner)) return refuse('the owner is not an address')
   // An amount of nothing is never asked for: refused before any step is read, so no zero-amount call is admitted.
   const asked = intent.action === 'deposit' ? intent.assets : intent.amount.kind === 'all' ? null : intent.amount.raw
   if (asked !== null && (!RAW.test(asked) || BigInt(asked) === 0n)) return refuse('the amount asked for is zero or not a raw amount')
@@ -130,7 +133,7 @@ export function checkStep(step: StepToCheck, intent: VaultIntent, expected?: Vau
   if (!p) return refuse(`the step's payload is not an object of only ${PAYLOAD_FIELDS.send_transaction.join(', ')}`)
   if (typeof p.to !== 'string' || typeof p.data !== 'string' || typeof p.value !== 'string') return refuse('the step has nothing to sign yet')
   if (p.value !== '0') return refuse('the step sends value; a vault call carries none')
-  if (!ADDRESS.test(p.to)) return refuse('the step is not sent to an address')
+  if (!isAddress(p.to)) return refuse('the step is not sent to an address')
   const d = decode(p.data)
   if (typeof d === 'string') return refuse(d)
   if (expected !== undefined && d.call !== expected) return refuse(`a ${d.call} is not the call this step's position takes: ${expected}`)

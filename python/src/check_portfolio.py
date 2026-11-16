@@ -25,7 +25,8 @@ nothing else:
   account
     holds, which the caller reads from the API's `positions`. An asset not held is refused.
 Every chain, account and asset id is read with one strict parser: `eip155:<reference>` with no leading zero,
-and a 20-byte address compared in any letter case.
+and a 20-byte address compared in any letter case, refused when mixed case with a wrong EIP-55 checksum. The
+portfolio's chain must be an EVM chain the API serves (`SERVED_CHAINS`).
 
 **A deposit** is the enrol signature (only when not yet enrolled), then the transfer of the deposit token to
 the smart account the API names for this owner. Admitted: `[enrol, transfer]`, `[transfer]`, or `[enrol]` when
@@ -49,6 +50,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Final, Literal, NotRequired, TypedDict
 
+from ._evm import served_chain
 from .abi.calldata import decode_call
 from .check import (
     PAYLOAD_FIELDS,
@@ -179,7 +181,7 @@ _FRACTION: Final = re.compile(rf"(0|1)(?:\.(\d{{1,{_FRACTION_PLACES}}}))?", re.A
 def _asset_key(v: Any) -> str | None:
     """`eip155:<ref>/erc20:<address>` as one comparable string, or None. One parser for every asset id."""
     m = _ASSET.fullmatch(v) if isinstance(v, str) else None
-    return f"eip155:{m.group(1)}/erc20:{m.group(2).lower()}" if m else None
+    return f"eip155:{m.group(1)}/erc20:{m.group(2).lower()}" if m and is_address(m.group(2)) else None
 
 
 def _chain_ref(v: Any) -> str | None:
@@ -282,9 +284,9 @@ def check_portfolio_withdrawal(
         return whole("the owner is not an address")
     if not is_address(smart_account):
         return whole("the smart account is not an address")
-    ref = _chain_ref(chain)
+    ref = served_chain(chain)
     if not ref:
-        return whole(f"the chain {js_json(chain)} is not an eip155 chain id")
+        return whole(f"the chain {js_json(chain)} is not an EVM chain the API serves")
     settlement = _asset_key(get(intent, "settlementAssetId"))
     if not settlement:
         return whole("the settlement asset is not an asset id")
@@ -378,7 +380,7 @@ def check_portfolio_withdrawal(
             return refuse("it is for another portfolio")
         recipient = m["recipientAccountId"]
         to = _ACCOUNT.fullmatch(recipient) if isinstance(recipient, str) else None
-        if not to or to.group(1) != ref or not _same(to.group(2), owner):
+        if not to or to.group(1) != ref or not is_address(to.group(2)) or not _same(to.group(2), owner):
             return refuse(f"it would pay {js_str(recipient)}, not the owner {owner} on {chain}")
         if sale and _asset_key(m["settlementAssetId"]) != settlement:
             return refuse(
@@ -488,9 +490,9 @@ def check_portfolio_deposit(
         return PortfolioDepositCheck(ok=False, step=None, reason=reason)
 
     chain = get(intent, "chain")
-    ref = _chain_ref(chain)
+    ref = served_chain(chain)
     if not ref:
-        return whole(f"the chain {js_json(chain)} is not an eip155 chain id")
+        return whole(f"the chain {js_json(chain)} is not an EVM chain the API serves")
     smart_account = get(intent, "smartAccount")
     token = get(intent, "tokenAddress")
     if not is_address(smart_account):
@@ -561,7 +563,7 @@ def check_portfolio_deposit(
             return refuse("the transfer has nothing to send")
         if value != "0":
             return refuse("the transfer sends value; a token transfer carries none")
-        if not _same(to, token):
+        if not is_address(to) or not _same(to, token):
             return refuse("the transfer is not sent to the deposit token's contract")
         d = decode_call(data, _TRANSFER)  # type: ignore[arg-type]
         if not d.ok and d.refused != "canonical":

@@ -105,6 +105,13 @@ or `authorizationList` that no check reads. Pass `request.steps` as the client r
 the vault's record (`chain`, `vaultAddress`, `assetAddress`), the owner's own address, and the amount they
 asked for, in raw units.
 
+**Never looser than the API.** The checks may refuse what the API would allow, never the reverse. A vault or
+portfolio must be on an EVM chain the API serves (`SERVED_CHAINS`, the chains `chains` lists at the API version this
+client is built from); a chain the API adds later is refused until a client release adds it. Calldata must be
+lower-case hex. Every address must be all lower case, all upper case, or mixed case with a correct
+[EIP-55](https://eips.ethereum.org/EIPS/eip-55) checksum; a mixed-case address whose checksum is wrong is most likely
+mistyped, and is refused.
+
 **Which vault record.** If you hold your own record of the vault (a pinned configuration), pass that one,
 and refuse a product whose `vault` differs from it before you ask for steps. Passing the `vault` read with
 `product` from the same API that builds the steps checks the steps against that API's own record: it
@@ -184,7 +191,7 @@ total. A request whose every step is pending is not admitted. Once a step has it
 `checkPortfolioWithdrawal` over every batch again, not over that batch alone: the bound on each asset's total holds
 only across the whole set.
 
-Every chain, account and asset id is read by one strict parser. Asset ids are ERC-20 (`eip155:<reference>/erc20:<address>`),
+Every chain, account and asset id is read by one strict parser, with the chain and address rules above. Asset ids are ERC-20 (`eip155:<reference>/erc20:<address>`),
 so a withdrawal that names a holding in any other form is refused as a whole. A batch with no `plan` is refused too: the
 API attaches one to every batch.
 

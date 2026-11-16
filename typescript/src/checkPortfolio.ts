@@ -17,7 +17,8 @@
  *   - each asset's total over every batch at most the asked fraction (or all) of what the caller says the smart account
  *     holds, which the caller reads from the API's `positions`. An asset not held is refused.
  * Every chain, account and asset id is read with one strict parser: `eip155:<reference>` with no leading zero, and a
- * 20-byte address compared in any letter case.
+ * 20-byte address compared in any letter case, refused when mixed case with a wrong EIP-55 checksum. The portfolio's
+ * chain must be an EVM chain the API serves (`SERVED_CHAINS`).
  *
  * **A deposit** is the enrol signature (only when not yet enrolled), then the transfer of the deposit token to the
  * smart account the API names for this owner. Admitted: `[enrol, transfer]`, `[transfer]`, or `[enrol]` when no amount
@@ -32,6 +33,7 @@
  * for signing.
  */
 import { decodeCall } from './abi/calldata'
+import { isAddress, servedChain } from './evm'
 import { PAYLOAD_FIELDS, payloadOf } from './check'
 
 /** What the owner asked to withdraw from a portfolio, and what the caller knows independently of the steps. */
@@ -121,7 +123,6 @@ const DEFAULT_LIFETIME_S = 3_600
 const MS_PER_S = 1_000
 const FRACTION_PLACES = 18
 
-const ADDRESS = /^0x[0-9a-fA-F]{40}$/
 // A raw amount is a uint256: at most 78 digits. Anything longer can never match a chain value, so it is refused
 // as malformed, and no client spends unbounded time converting it.
 const RAW_POSITIVE = /^[1-9][0-9]{0,77}$/
@@ -134,7 +135,7 @@ const ASSET = /^eip155:([1-9][0-9]*)\/erc20:(0x[0-9a-fA-F]{40})$/
 /** `eip155:<ref>/erc20:<address>` as one comparable string, or null. One parser for every asset id. */
 const assetKey = (v: unknown): string | null => {
   const m = typeof v === 'string' ? ASSET.exec(v) : null
-  return m ? `eip155:${m[1]}/erc20:${m[2]!.toLowerCase()}` : null
+  return m && isAddress(m[2]) ? `eip155:${m[1]}/erc20:${m[2]!.toLowerCase()}` : null
 }
 const chainRef = (v: unknown): string | null => (typeof v === 'string' ? (CHAIN.exec(v)?.[1] ?? null) : null)
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
@@ -161,10 +162,10 @@ function fractionOf(a: PortfolioWithdrawalIntent['amount']): { num: bigint; den:
 /** Every step of a portfolio withdrawal, together: each batch's authorization, then the totals against the holdings. */
 export function checkPortfolioWithdrawal(steps: readonly PortfolioStepToCheck[], intent: PortfolioWithdrawalIntent): PortfolioWithdrawalCheck {
   const whole = (reason: string) => ({ ok: false as const, step: null, reason })
-  if (!ADDRESS.test(intent.owner)) return whole('the owner is not an address')
-  if (!ADDRESS.test(intent.smartAccount)) return whole('the smart account is not an address')
-  const ref = chainRef(intent.chain)
-  if (!ref) return whole(`the chain ${JSON.stringify(intent.chain)} is not an eip155 chain id`)
+  if (!isAddress(intent.owner)) return whole('the owner is not an address')
+  if (!isAddress(intent.smartAccount)) return whole('the smart account is not an address')
+  const ref = servedChain(intent.chain)
+  if (!ref) return whole(`the chain ${JSON.stringify(intent.chain)} is not an EVM chain the API serves`)
   const settlement = assetKey(intent.settlementAssetId)
   if (!settlement) return whole('the settlement asset is not an asset id')
   const fraction = fractionOf(intent.amount)
@@ -217,12 +218,12 @@ export function checkPortfolioWithdrawal(steps: readonly PortfolioStepToCheck[],
     if (!keysAre(m, FIELDS[shape].map((f) => f[0]))) return notTheForm
 
     if (typeof domain['chainId'] !== 'number' || String(domain['chainId']) !== ref) return refuse(`it is for chain ${String(domain['chainId'])}, not ${intent.chain}`)
-    if (typeof domain['verifyingContract'] !== 'string' || !ADDRESS.test(domain['verifyingContract']) || !same(domain['verifyingContract'], intent.smartAccount)) {
+    if (typeof domain['verifyingContract'] !== 'string' || !isAddress(domain['verifyingContract']) || !same(domain['verifyingContract'], intent.smartAccount)) {
       return refuse(`it would take funds from ${String(domain['verifyingContract'])}, not the smart account ${intent.smartAccount}`)
     }
     if (m['portfolioId'] !== intent.portfolioId) return refuse('it is for another portfolio')
     const to = typeof m['recipientAccountId'] === 'string' ? ACCOUNT.exec(m['recipientAccountId']) : null
-    if (!to || to[1] !== ref || !same(to[2]!, intent.owner)) return refuse(`it would pay ${String(m['recipientAccountId'])}, not the owner ${intent.owner} on ${intent.chain}`)
+    if (!to || to[1] !== ref || !isAddress(to[2]) || !same(to[2]!, intent.owner)) return refuse(`it would pay ${String(m['recipientAccountId'])}, not the owner ${intent.owner} on ${intent.chain}`)
     if (sale && assetKey(m['settlementAssetId']) !== settlement) return refuse(`it settles in ${String(m['settlementAssetId'])}, not ${intent.settlementAssetId}`)
     if (typeof m['nonce'] !== 'string' || !BYTES32.test(m['nonce'])) return notTheForm
 
@@ -309,10 +310,10 @@ function readPlan(plan: unknown): Amounts | null {
 /** A portfolio deposit's steps: the enrol signature when there is one, then the transfer. */
 export function checkPortfolioDeposit(steps: readonly PortfolioStepToCheck[], intent: PortfolioDepositIntent): PortfolioDepositCheck {
   const whole = (reason: string) => ({ ok: false as const, step: null, reason })
-  const ref = chainRef(intent.chain)
-  if (!ref) return whole(`the chain ${JSON.stringify(intent.chain)} is not an eip155 chain id`)
-  if (!ADDRESS.test(intent.smartAccount)) return whole('the smart account is not an address')
-  if (!ADDRESS.test(intent.tokenAddress)) return whole('the token is not an address')
+  const ref = servedChain(intent.chain)
+  if (!ref) return whole(`the chain ${JSON.stringify(intent.chain)} is not an EVM chain the API serves`)
+  if (!isAddress(intent.smartAccount)) return whole('the smart account is not an address')
+  if (!isAddress(intent.tokenAddress)) return whole('the token is not an address')
   if (intent.amount !== undefined && !RAW_POSITIVE.test(intent.amount)) return whole('the amount asked for is zero or not a raw amount')
 
   const want: ('enrol' | 'transfer')[][] = intent.amount === undefined ? [['enrol']] : [['enrol', 'transfer'], ['transfer']]
@@ -346,7 +347,7 @@ export function checkPortfolioDeposit(steps: readonly PortfolioStepToCheck[], in
     if (!p) return refuse(`the transfer's payload is not an object of only ${PAYLOAD_FIELDS.send_transaction.join(', ')}`)
     if (typeof p.to !== 'string' || typeof p.data !== 'string' || typeof p.value !== 'string') return refuse('the transfer has nothing to send')
     if (p.value !== '0') return refuse('the transfer sends value; a token transfer carries none')
-    if (!same(p.to, intent.tokenAddress)) return refuse("the transfer is not sent to the deposit token's contract")
+    if (!isAddress(p.to) || !same(p.to, intent.tokenAddress)) return refuse("the transfer is not sent to the deposit token's contract")
     const d = decodeCall(p.data, TRANSFER)
     if (!d.ok && d.refused !== 'canonical') return refuse('the transfer is not a call to transfer(address,uint256)')
     if (!d.ok) return refuse('the calldata is not the canonical encoding of transfer')

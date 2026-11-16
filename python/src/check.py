@@ -18,10 +18,13 @@ The vault record is the anchor: a caller that holds its own record of the vault 
 should pass that one. Passing the product record read from the same API that builds the steps checks the steps
 against that API's own record: it catches a wrong step, never a wrong record. No amount of zero is admitted.
 
+The vault's chain must be an EVM chain the API serves (`SERVED_CHAINS`). Every address must be all lower
+case, all upper case, or mixed case with a correct EIP-55 checksum.
+
 Every step is a `send_transaction` on the vault's chain carrying no value, and its calldata must be exactly
-the canonical encoding of what it decodes to: no trailing bytes, no bits set above an address's 20 bytes. A
-request is `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the network
-or signs.
+the canonical encoding of what it decodes to: lower-case hex, no trailing bytes, no bits set above an
+address's 20 bytes. A request is `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing
+here calls the network or signs.
 
 A step is passed as the client returns it (a `Step` model) or as a plain mapping with the API's wire names; an
 intent is a mapping with the names below.
@@ -38,6 +41,8 @@ from typing import Any, Final, Literal, NotRequired, TypedDict
 
 from pydantic import BaseModel
 
+from ._evm import is_address as is_address
+from ._evm import served_chain
 from .abi.calldata import Word, decode_call
 
 __all__ = [
@@ -181,7 +186,6 @@ _ARGS: Final[Mapping[VaultCall, tuple[Word, ...]]] = {
     "redeem": ("uint", "address", "address"),
 }
 _CALLS: Final = {selector: _ARGS[call] for selector, call in _SELECTORS.items()}
-ADDRESS: Final = re.compile(r"0x[0-9a-fA-F]{40}", re.ASCII)
 # A raw amount is a uint256: at most 78 digits; a longer one is refused as malformed.
 _RAW: Final = re.compile(r"0|[1-9][0-9]{0,77}", re.ASCII)
 
@@ -201,10 +205,6 @@ def exact_str(n: int) -> str:
 # An approval this large is unlimited in effect, whatever the intent says: never admitted.
 _UNLIMITED_APPROVAL: Final = 2**128
 _AMOUNT_KINDS: Final = ("assets", "shares", "all")
-
-
-def is_address(v: Any) -> bool:
-    return isinstance(v, str) and ADDRESS.fullmatch(v) is not None
 
 
 def _refuse(reason: str) -> StepCheck:
@@ -246,6 +246,8 @@ def _intent_problem(intent: Any) -> str | None:
         or not get(vault, "chain")
     ):
         return "the vault record is not complete"
+    if served_chain(get(vault, "chain")) is None:
+        return f"the vault's chain {js_json(get(vault, 'chain'))} is not an EVM chain the API serves"
     return None
 
 
