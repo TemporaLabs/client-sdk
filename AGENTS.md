@@ -37,7 +37,7 @@ Copy no fact from prose. Read it from its source.
 | Node versions | `typescript/.nvmrc` for tooling, `engines` in `typescript/package.json` for the client |
 | The TypeScript compiler, test runner and other tool versions | `devDependencies` in `typescript/package.json`, each pinned exactly, and `typescript/package-lock.json` |
 | Which commits need a sign-off, and which are exempt | `.github/scripts/dco-check.sh` and its test `.github/scripts/dco-check.test.sh`; the signing key it trusts for the dependency bot's commits is `.github/keys/github-web-flow.asc` |
-| Where dependency-update pull requests go | `.github/workflows/dependabot-to-cycle-branch.yml` (onto the current `release/vX.Y.Z` branch) and `.github/dependabot.yml` |
+| Where dependency-update pull requests go | `.github/workflows/dependabot-to-cycle-branch.yml` (a sweep, daily and when a version branch is created, moves them onto the current `release/vX.Y.Z` branch) and `.github/dependabot.yml` |
 | What CI runs | `.github/workflows/ci-repo.yml` (the whole repository), `.github/workflows/ci-typescript.yml` (the npm package), `.github/workflows/ci-python.yml` (the Python package) and `.github/workflows/dco.yml` (sign-offs), and the `check` script in `typescript/package.json` |
 | How a release is published | `.github/workflows/publish.yml`, run by hand from a release tag; nothing publishes on a merge |
 
@@ -72,7 +72,8 @@ Each of these fails a check or breaks a caller when ignored.
    in files, commit messages or pull request text. `npm run check:public-text` scans the files; CI also
    scans every commit message.
 11. **Every commit is signed off** (`git commit -s`), as [CONTRIBUTING.md](CONTRIBUTING.md) says. The DCO check runs
-    the checker from the pull request's base commit, not the pull request's own copy.
+    the checker from the pull request's base commit, not the pull request's own copy, and `.github/workflows/dco.yml`
+    as it is on `main` is a required check on every pull request into `main` or a `release/vX.Y.Z` branch.
 12. **Checks:** `npm run check` in `typescript/`, tests with one worker (`npm test` already passes `--maxWorkers=1`).
     In `python/`: `ruff check . && ruff format --check .`, `mypy src tests`, `python scripts/generate.py --check` and
     `pytest` (one process). At the root: `node scripts/check-copies.mjs`.
