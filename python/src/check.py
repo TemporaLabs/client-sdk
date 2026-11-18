@@ -507,7 +507,10 @@ def check_bundle(request: Any, intent: VaultIntent | Mapping[str, Any]) -> Bundl
         return BundleCheck(ok=False, reason="the bundle is not from the owner")
     chain = get(get(intent, "vault"), "chain")
     cid = get(sc, "chainId")
-    if not isinstance(cid, str) or not _HEX_QUANTITY.fullmatch(cid) or f"eip155:{int(cid, 16)}" != chain:
+    # The vault's chain, a served one, written as hex. A chain id is never converted to decimal: thousands of
+    # digits would raise there instead of refusing.
+    want = f"0x{int(str(served_chain(chain))):x}"
+    if not isinstance(cid, str) or not _HEX_QUANTITY.fullmatch(cid) or cid != want:
         return BundleCheck(ok=False, reason=f"the bundle is not on the vault's chain {js_str(chain)}")
     calls = get(sc, "calls")
     if not isinstance(calls, list | tuple) or len(calls) != len(steps):
