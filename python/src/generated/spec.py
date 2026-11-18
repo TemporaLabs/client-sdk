@@ -8,7 +8,7 @@ from typing import Any, Final, Literal
 from . import models
 
 # The API version this client was generated from.
-API_VERSION: Final = '0.1.4'
+API_VERSION: Final = '0.1.5'
 # The header that carries the client key.
 CLIENT_KEY_HEADER: Final = 'Tempora-Client-Key'
 # The codes whose error outcome is always `unknown`: a request may have moved.
