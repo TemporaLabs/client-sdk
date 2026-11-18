@@ -28,7 +28,7 @@ owner asked for. Your code then hands the signed result back.
 ## Install
 
 ```bash
-npm install --save-exact @temporalabs/client@0.1.2
+npm install --save-exact @temporalabs/client@0.1.3
 ```
 
 Pin the exact version: before `1.0.0` a minor version may change the interface.
