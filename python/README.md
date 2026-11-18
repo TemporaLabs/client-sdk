@@ -23,13 +23,13 @@ owner asked for. Your code then hands the signed result back.
 ## Install
 
 ```bash
-pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.2#subdirectory=python"
+pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.3#subdirectory=python"
 ```
 
 With uv:
 
 ```bash
-uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.2#subdirectory=python"
+uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.3#subdirectory=python"
 ```
 
 It installs from this repository at a release tag; it is not on PyPI. In a `requirements.txt`, or under `dependencies`
@@ -129,7 +129,7 @@ if isinstance(signed_in, Ok):
 
 ## Compatibility
 
-`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.1.4`.
+`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.1.5`.
 Within an API version the API only adds: new optional inputs, new answer fields, new calls. The client keeps
 answer fields it does not know yet. See [versioning](https://github.com/TemporaLabs/client-sdk/blob/main/docs/versioning.md).
 

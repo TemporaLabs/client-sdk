@@ -3,6 +3,25 @@
 All notable changes to `@temporalabs/client` and `temporalabs-client` are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [v0.1.3] - 2026-11-18
+
+### Changed
+
+- **Generated from API 0.1.5** (`API_VERSION` is `0.1.5`). The API document and its tool list are unchanged from
+  0.1.4 apart from their version, so every call, shape and tool is the same, and a client generated from 0.1.4
+  works with an API 0.1.5 server.
+
+### Fixed
+
+- **`check_bundle` (Python) refuses a chain id thousands of digits long** instead of raising `ValueError`. It
+  compares the bundle's `chainId` with the vault's chain written as hex, and never converts it to decimal.
+  `checkBundle` in TypeScript already refused it; both now run the case from `cases/vault-bundle.json`.
+
+### Tests
+
+- `cases/vault-bundle.json` admits a deposit in the shape the API sends: steps `s1` and `s2`, the second
+  `waiting` after the first with its payload already present.
+
 ## [v0.1.2] - 2026-11-16
 
 ### Added

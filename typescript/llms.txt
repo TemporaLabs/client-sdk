@@ -1,6 +1,6 @@
 # @temporalabs/client
 
-> The typed client for the Tempora API 0.1.4, over HTTP and MCP. Every call returns a result and never throws; every answer is checked against the API's own schema.
+> The typed client for the Tempora API 0.1.5, over HTTP and MCP. Every call returns a result and never throws; every answer is checked against the API's own schema.
 
 This file is generated from the API document in spec/openapi.json. Do not edit it by hand.
 

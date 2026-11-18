@@ -28,7 +28,7 @@ owner asked for. Your code then hands the signed result back.
 ## Install
 
 ```bash
-npm install --save-exact @temporalabs/client@0.1.2
+npm install --save-exact @temporalabs/client@0.1.3
 ```
 
 Pin the exact version: before `1.0.0` a minor version may change the interface.
@@ -132,7 +132,7 @@ Three consistency checks the API makes on its own answers are not repeated here:
 
 ## Compatibility
 
-`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.1.4`.
+`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.1.5`.
 Within an API version the API only adds: new optional inputs, new answer fields, new calls. The client keeps
 answer fields it does not know yet. See [versioning](https://github.com/TemporaLabs/client-sdk/blob/main/docs/versioning.md).
 
