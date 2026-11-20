@@ -26,7 +26,7 @@ Pin an exact version in both languages.
 ### TypeScript
 
 ```bash
-npm install --save-exact @temporalabs/client@0.1.3
+npm install --save-exact @temporalabs/client@0.1.4
 ```
 
 The package has two entry points: `@temporalabs/client` for the HTTP API and `@temporalabs/client/mcp` for the MCP
@@ -41,17 +41,17 @@ node -e "import('@temporalabs/client').then((m) => console.log(m.API_VERSION))" 
 Install from this repository at the release tag. With pip:
 
 ```bash
-pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.3#subdirectory=python"
+pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.4#subdirectory=python"
 ```
 
 With uv:
 
 ```bash
-uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.3#subdirectory=python"
+uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.4#subdirectory=python"
 ```
 
 In a `requirements.txt`, or under `dependencies` in a `pyproject.toml`, use the same quoted string. Keep the
-`@v0.1.3` tag: without it, pip installs whatever `main` holds at the time. The MCP client is in
+`@v0.1.4` tag: without it, pip installs whatever `main` holds at the time. The MCP client is in
 `temporalabs_client.mcp`. Check the install:
 
 ```bash
