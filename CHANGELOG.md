@@ -5,6 +5,8 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ## [Unreleased]
 
+## [v0.1.4] - 2026-11-20
+
 ### Changed
 
 - **Generated from API 0.1.6** (`API_VERSION` is `0.1.6`). The API document and its tool list are unchanged from
