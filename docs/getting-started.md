@@ -6,7 +6,7 @@ quick start is [below](#in-python).
 ## Install
 
 ```sh
-npm install --save-exact @temporalabs/client@0.1.3
+npm install --save-exact @temporalabs/client@0.1.4
 ```
 
 The client needs Node.js 22 or later (`engines` in `typescript/package.json`) and is an ES module. It has one runtime
@@ -150,7 +150,7 @@ Owner calls (`account`, `account_performance`, `positions`, and everything in
 ## In Python
 
 ```sh
-pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.3#subdirectory=python"
+pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.4#subdirectory=python"
 ```
 
 It installs from this repository at a release tag; it is not on PyPI. Pin the tag, as above.
