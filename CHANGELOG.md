@@ -9,9 +9,10 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 - **Needs Node.js 26 or later** (`engines` is `>=26`) and **Python 3.14 or later** (`requires-python` is `>=3.14`).
   Both packages dropped their support for earlier versions: this is why this release is 0.2.0 and not 0.1.5.
-- **Toolchain.** The build and the typecheck use TypeScript 7.0.2, with `@types/node` 26.6.6; the script that prints the
-  comment-free build output uses `@typescript/typescript6`, since TypeScript 7 no longer ships the compiler API it needs.
-  CI and the publish workflow run Node 26 and its bundled npm, and the Python package is checked on Python 3.14.
+- **Toolchain.** The build and the typecheck use TypeScript 7.0.2, with `@types/node` 26.6.6. TypeScript 7 no longer ships the
+  compiler API, so the script that prints the comment-free build output and the declaration bundler (`rollup-plugin-dts`) use
+  `@typescript/typescript6`. CI and the publish workflow run Node 26.13.1 and its bundled npm, and the Python package is
+  checked on Python 3.14.
 
 ### Fixed
 

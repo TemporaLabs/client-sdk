@@ -35,7 +35,7 @@ uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v
 It installs from this repository at a release tag; it is not on PyPI. In a `requirements.txt`, or under `dependencies`
 in a `pyproject.toml`, use the same quoted string. Keep the tag: without it, pip installs whatever `main` holds.
 
-It needs Python 3.14. Its runtime dependencies are `httpx` and `pydantic`. The client is synchronous.
+It needs Python 3.14 or later. Its runtime dependencies are `httpx` and `pydantic`. The client is synchronous.
 
 ## A first call
 

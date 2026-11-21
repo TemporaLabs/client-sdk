@@ -16,7 +16,7 @@ and withdrawals into its vaults and portfolios, over the API's HTTP routes or it
 | | TypeScript | Python |
 |---|---|---|
 | Package | `@temporalabs/client` | `temporalabs-client` (imported as `temporalabs_client`) |
-| Needs | Node.js 26 or later; an ES module | Python 3.14 |
+| Needs | Node.js 26 or later; an ES module | Python 3.14 or later |
 | Runtime dependencies | `zod`; no install scripts | `httpx`, `pydantic` |
 | Published to | npm | this repository, at a release tag (not on PyPI) |
 | Package guide | [typescript/README.md](typescript/README.md) | [python/README.md](python/README.md) |
@@ -137,7 +137,7 @@ print([p.id for p in r.body.products] if isinstance(r, Ok) else (r.error.code, r
 
 ## Contributing
 
-You need Node.js 26 or later (`typescript/.nvmrc` names it), Python 3.14 and git. The tests make no network calls
+You need Node.js 26 or later (`typescript/.nvmrc` names it), Python 3.14 or later and git. The tests make no network calls
 and need no key.
 
 ```bash

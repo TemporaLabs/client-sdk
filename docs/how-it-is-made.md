@@ -71,8 +71,8 @@ exactly one lookup key type-checks. What a call does at run time is in [One call
 one ES module of its own, with `zod` left external (it is the one runtime dependency). The declarations are emitted by `tsc` and bundled by
 `rollup-plugin-dts`, rather than inferred again, so the order of union members is stable. Last, the
 TypeScript printer rewrites both files without comments: notes in the source are for this repository,
-not for callers. The printer comes from `@typescript/typescript6`, because TypeScript 7, which type-checks and emits the
-declarations, no longer ships the compiler API.
+not for callers. The printer, and the declaration bundler, use `@typescript/typescript6`, because TypeScript 7, which type-checks and
+emits the declarations, no longer ships the compiler API.
 
 **6. The package.** `files` in `typescript/package.json` names what is packed. `typescript/scripts/client-pack.mjs`:
 
