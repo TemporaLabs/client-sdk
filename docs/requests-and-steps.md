@@ -202,6 +202,10 @@ The intent (`PortfolioWithdrawalIntent`) is:
 - `settlementAssetId`: the settlement asset, as a CAIP-19 id;
 - `amount`: `{ kind: 'all' }` or `{ kind: 'fraction', value }`;
 - `holdings`: what the smart account holds, read from `positions`, as raw units by asset id;
+  The withdrawal check refuses an asset the account is not given as holding. A funded account that has not rebalanced yet
+  lists its idle USDT in `idleUsd` only, with `balances: []`, so holdings built from `balances` alone are empty and the
+  check refuses with "does not hold". `idleUsd` is a rounded USD figure, not raw units: read the exact USDT balance of
+  the smart account from the chain and put that in `holdings`, and check that it agrees with `idleUsd`;
 - `now`: the current time in milliseconds since the epoch, required;
 - `maxLifetimeSeconds`: optional, one hour when left out.
 
