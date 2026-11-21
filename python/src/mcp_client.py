@@ -202,7 +202,7 @@ def _call_tool(
                     "params": {"name": tool["name"], "arguments": args, "_meta": META},
                 }
             )
-        except (TypeError, ValueError, RecursionError):
+        except TypeError, ValueError, RecursionError:
             return Err(status=0, error=internal.unwritable_body(name))
         try:
             res = internal.send(opts, opts.url, "POST", headers, rpc_body)

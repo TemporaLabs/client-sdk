@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.13']
+        python-version: ['3.14']
     defaults:
       run:
         working-directory: python
@@ -57,7 +57,7 @@ jobs:
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/clean/bin/python" -c "import temporalabs_client, temporalabs_client.mcp; print(temporalabs_client.__version__, temporalabs_client.API_VERSION, len(temporalabs_client.mcp.TOOLS))"
       - name: Audit the runtime dependencies
-        if: matrix.python-version == '3.13'
+        if: matrix.python-version == '3.14'
         run: |
           "$RUNNER_TEMP/clean/bin/python" -m pip freeze --exclude temporalabs-client > "$RUNNER_TEMP/runtime.txt"
           pip-audit --strict --no-deps --disable-pip -r "$RUNNER_TEMP/runtime.txt"
