@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { build } from 'esbuild'
 import { rollup } from 'rollup'
 import { dts } from 'rollup-plugin-dts'
-import ts from 'typescript'
+import ts from '@typescript/typescript6'
 
 const root = join(import.meta.dirname, '..')
 process.chdir(root)
@@ -25,6 +25,8 @@ await build({
   legalComments: 'none',
 })
 
+// TypeScript 7 emits the declarations and type-checks; its compiler API is gone, so @typescript/typescript6 prints the
+// comment-free output below.
 // Types are bundled from the declarations tsc emits, not re-inferred from source, so union order is stable.
 execFileSync(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.build.json'], { stdio: 'inherit' })
 // One bundle per entry, so each .d.ts stands alone (no shared chunk file).

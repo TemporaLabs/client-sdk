@@ -71,7 +71,8 @@ exactly one lookup key type-checks. What a call does at run time is in [One call
 one ES module of its own, with `zod` left external (it is the one runtime dependency). The declarations are emitted by `tsc` and bundled by
 `rollup-plugin-dts`, rather than inferred again, so the order of union members is stable. Last, the
 TypeScript printer rewrites both files without comments: notes in the source are for this repository,
-not for callers.
+not for callers. The printer comes from `@typescript/typescript6`, because TypeScript 7, which type-checks and emits the
+declarations, no longer ships the compiler API.
 
 **6. The package.** `files` in `typescript/package.json` names what is packed. `typescript/scripts/client-pack.mjs`:
 
@@ -141,7 +142,7 @@ first branch that fits and `oneOf` exactly one; an `enum` or `const` matches onl
 role, over `_internal.py`, the port of `internal.ts`, and `_evm.py`, the port of `evm.ts`. A call is synchronous, on an `httpx.Client`; it runs on a
 thread of its own, so the timeout holds through the answer's last byte whatever the transport does.
 
-**The checks.** `.github/workflows/ci-python.yml` runs, on Python 3.13: `ruff`, `mypy src tests`,
+**The checks.** `.github/workflows/ci-python.yml` runs, on Python 3.14: `ruff`, `mypy src tests`,
 `python scripts/generate.py --check`, `pytest`, then builds the wheel, installs it into a clean environment and
 imports it from outside the repository; it also audits the runtime dependencies with `pip-audit`.
 
