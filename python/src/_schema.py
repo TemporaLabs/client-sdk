@@ -329,10 +329,10 @@ def _domain_ok(host: str) -> bool:
             ascii_host = decoded.lower()
             for label in ascii_host.split("."):
                 if label.startswith("xn--"):
-                    # A punycode label must decode to something, and to text a host may hold: an empty or
-                    # control-character decoding is refused, as the WHATWG URL parser refuses it.
+                    # A punycode label must decode to something, and to text a host may hold: an empty, plain
+                    # ASCII or control-character decoding is refused, as the WHATWG URL parser refuses it.
                     unicode = label[4:].encode("ascii").decode("punycode")
-                    if unicode == "":
+                    if unicode == "" or unicode.isascii():
                         return False
                     encodings.idna.ToASCII(unicode)
         else:
