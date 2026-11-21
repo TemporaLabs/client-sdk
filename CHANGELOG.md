@@ -7,6 +7,25 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ### Changed
 
+- **Needs Node.js 26 or later** (`engines` is `>=26`) and **Python 3.14 or later** (`requires-python` is `>=3.14`).
+  Both packages dropped their support for earlier versions: this is why this release is 0.2.0 and not 0.1.5.
+- **Toolchain.** The build and the typecheck use TypeScript 7.0.2, with `@types/node` 26.6.6. TypeScript 7 no longer ships the
+  compiler API, so the script that prints the comment-free build output and the declaration bundler (`rollup-plugin-dts`) use
+  `@typescript/typescript6`. CI and the publish workflow run Node 26.13.1 and its bundled npm, and the Python package is
+  checked on Python 3.14.
+
+### Fixed
+
+- **The TypeScript client refuses a `uri` answer whose host has an `xn--` label that cannot be decoded**, on every Node.js
+  version. Node 26's URL parser accepts such a host (`https://xn--abc.com`), which Node 22 and 24 and the Python client
+  refuse, so the two clients would have judged the same answer differently.
+- **The Python client refuses a `uri` answer whose host has an `xn--` label that decodes to plain ASCII** (`xn--abc-`),
+  as the TypeScript client does. A host whose scheme is not a web scheme is read as an opaque host by both.
+
+## [v0.1.4] - 2026-11-20
+
+### Changed
+
 - **Generated from API 0.1.6** (`API_VERSION` is `0.1.6`). The API document and its tool list are unchanged from
   0.1.5 apart from their version, so every call, shape and tool is the same, and a client generated from 0.1.5
   works with an API 0.1.6 server.

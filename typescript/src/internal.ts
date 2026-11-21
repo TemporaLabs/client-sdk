@@ -41,10 +41,97 @@ const validator = (schema: unknown): z.ZodType => {
   return v
 }
 
+// The URL parser of a runtime is not one parser: Node 26's accepts a host with a punycode label that cannot be decoded
+// (`xn--abc`), which Node 22 and 24 and the Python client refuse. So the `uri` answers get this check on top of zod's:
+// each `xn--` label must decode (RFC 3492) to text the URL parser accepts and writes as an `xn--` host again.
+const PUNY_BASE = 36
+const PUNY_TMIN = 1
+const PUNY_TMAX = 26
+const punyAdapt = (delta: number, points: number, first: boolean): number => {
+  let d = first ? Math.floor(delta / 700) : delta >> 1
+  d += Math.floor(d / points)
+  let k = 0
+  for (; d > ((PUNY_BASE - PUNY_TMIN) * PUNY_TMAX) >> 1; k += PUNY_BASE) d = Math.floor(d / (PUNY_BASE - PUNY_TMIN))
+  return k + Math.floor(((PUNY_BASE - PUNY_TMIN + 1) * d) / (d + 38))
+}
+// A host from the URL parser is lower case ASCII, so a digit is 0-9 or a-z.
+const punyDigit = (c: number): number => (c >= 48 && c <= 57 ? c - 22 : c >= 97 && c <= 122 ? c - 97 : PUNY_BASE)
+const punyDecode = (input: string): string | null => {
+  const out: number[] = []
+  const basic = input.lastIndexOf('-')
+  for (let j = 0; j < Math.max(basic, 0); j++) out.push(input.charCodeAt(j))
+  let n = 128
+  let i = 0
+  let bias = 72
+  for (let at = basic >= 0 ? basic + 1 : 0; at < input.length; ) {
+    const before = i
+    let weight = 1
+    for (let k = PUNY_BASE; ; k += PUNY_BASE) {
+      if (at >= input.length) return null
+      const digit = punyDigit(input.charCodeAt(at++))
+      if (digit >= PUNY_BASE) return null
+      i += digit * weight
+      if (i > 0x7fffffff) return null
+      const t = k <= bias ? PUNY_TMIN : k >= bias + PUNY_TMAX ? PUNY_TMAX : k - bias
+      if (digit < t) break
+      weight *= PUNY_BASE - t
+    }
+    bias = punyAdapt(i - before, out.length + 1, before === 0)
+    n += Math.floor(i / (out.length + 1))
+    i %= out.length + 1
+    out.splice(i++, 0, n)
+  }
+  // fromCodePoint throws on a point above U+10FFFF, and `check` reads a throw as a refusal.
+  return out.length === 0 ? null : String.fromCodePoint(...out)
+}
+// The schemes whose host the URL parser treats as a domain; the host of any other is opaque and is not read as one.
+const DOMAIN_SCHEMES = ['http:', 'https:', 'ws:', 'wss:', 'ftp:', 'file:']
+const punycodeHostOk = (value: string): boolean => {
+  let host: string
+  try {
+    const url = new URL(value)
+    if (!DOMAIN_SCHEMES.includes(url.protocol)) return true
+    host = url.hostname
+  } catch {
+    return true
+  }
+  return host.split('.').every((label) => {
+    if (!label.startsWith('xn--')) return true
+    const text = punyDecode(label.slice(4))
+    if (text === null) return false
+    try {
+      return new URL(`https://${text}`).hostname.startsWith('xn--')
+    } catch {
+      return false
+    }
+  })
+}
+type Node = Record<string, unknown>
+const isNode = (v: unknown): v is Node => typeof v === 'object' && v !== null && !Array.isArray(v)
+/** Whether every `uri` string in `data` that `schema` places has a host `punycodeHostOk` accepts. It only narrows what zod accepted. A union passes when a branch the data fits does. */
+const uriHostsOk = (schema: unknown, data: unknown): boolean => {
+  if (!isNode(schema)) return true
+  const ref = schema.$ref
+  if (typeof ref === 'string') return uriHostsOk((DEFS as Record<string, unknown>)[ref.slice('#/$defs/'.length)], data)
+  for (const key of ['anyOf', 'oneOf'] as const) {
+    const branches = schema[key]
+    if (Array.isArray(branches) && !branches.some((b) => validator(b).safeParse(data).success && uriHostsOk(b, data))) return false
+  }
+  if (Array.isArray(schema.allOf) && !schema.allOf.every((b) => uriHostsOk(b, data))) return false
+  if (typeof data === 'string') return schema.format !== 'uri' || punycodeHostOk(data)
+  if (Array.isArray(data)) return !isNode(schema.items) || data.every((d) => uriHostsOk(schema.items, d))
+  if (isNode(data)) {
+    const props = isNode(schema.properties) ? schema.properties : {}
+    return Object.entries(data).every(([k, v]) => uriHostsOk(Object.hasOwn(props, k) ? props[k] : schema.additionalProperties, v))
+  }
+  return true
+}
+
 // A schema that cannot be turned into a validator leaves the answer unread, never a thrown call.
 export const check = (schema: unknown, json: unknown): { success: true; data: unknown } | { success: false } => {
   try {
-    return validator(schema).safeParse(json)
+    const parsed = validator(schema).safeParse(json)
+    return parsed.success && !uriHostsOk(schema, parsed.data) ? { success: false } : parsed
   } catch {
     return { success: false }
   }
