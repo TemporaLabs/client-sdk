@@ -6,8 +6,8 @@ const url = { type: 'string', format: 'uri' }
 const ok = (schema: unknown, value: unknown) => check(schema, value).success
 
 describe('the host of a uri answer', () => {
-  const bad = ['https://xn--abc.com/x', 'https://xn--a.com/', 'https://xn--.com/', 'https://xn--zzzzzzzzz.com/', 'https://ok.example.xn--abc/']
-  const good = ['https://xn--zckzah.example', 'https://xn--bcher-kva.example/x', 'https://xn--ls8h.example', 'https://xn--nxasmq6b.com', 'https://XN--BCHER-KVA.example', 'https://example.com', 'https://[::1]:8080/p', 'https://123.45.67.89']
+  const bad = ['https://xn--abc.com/x', 'https://xn--a.com/', 'https://xn--.com/', 'https://xn--zzzzzzzzz.com/', 'https://ok.example.xn--abc/', 'https://xn--abc-.com/x']
+  const good = ['https://xn---4kq.com', 'https://xn--4kq.com', 'foo://xn--abc.com/x', 'ipfs://xn--abc/', 'foo://xn--BCHER-kva.example', 'https://xn--zckzah.example', 'https://xn--bcher-kva.example/x', 'https://xn--ls8h.example', 'https://xn--nxasmq6b.com', 'https://XN--BCHER-KVA.example', 'https://example.com', 'https://[::1]:8080/p', 'https://123.45.67.89']
   it.each(bad)('refuses %s', (v) => expect(ok(url, v)).toBe(false))
   it.each(good)('accepts %s', (v) => expect(ok(url, v)).toBe(true))
   it('is applied where the schema places the uri: a property, an array item, a nullable one, and one branch of a union', () => {
@@ -18,6 +18,11 @@ describe('the host of a uri answer', () => {
     expect(ok(obj, { a: 'https://example.com', b: null, list: ['https://xn--ls8h.example'], plain: 'xn--abc' })).toBe(true)
     expect(ok({ anyOf: [{ type: 'object', properties: { u: url } }, { type: 'null' }] }, { u: 'https://xn--abc.com' })).toBe(false)
     expect(ok({ anyOf: [{ type: 'object', properties: { u: url } }, { type: 'null' }] }, null)).toBe(true)
+  })
+  it('reads a key the schema does not name by additionalProperties, not by the object prototype', () => {
+    const obj = { type: 'object', properties: {}, additionalProperties: url }
+    expect(ok(obj, { constructor: 'https://xn--abc.com', other: 'https://example.com' })).toBe(false)
+    expect(ok({ type: 'object', properties: {} }, { constructor: 'https://xn--abc.com' })).toBe(true)
   })
   it('does not look at a string the schema does not call a uri', () => {
     expect(ok({ type: 'string' }, 'https://xn--abc.com')).toBe(true)

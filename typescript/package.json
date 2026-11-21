@@ -41,7 +41,7 @@
   "scripts": {
     "generate": "node --experimental-strip-types --no-warnings scripts/generate.ts",
     "build": "node scripts/build.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
     "test": "jest --maxWorkers=1",
     "check:generated": "node --experimental-strip-types --no-warnings scripts/check-generated.ts",
     "check:source": "node ../scripts/check-source.mjs",

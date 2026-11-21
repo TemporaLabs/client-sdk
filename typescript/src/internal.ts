@@ -43,7 +43,7 @@ const validator = (schema: unknown): z.ZodType => {
 
 // The URL parser of a runtime is not one parser: Node 26's accepts a host with a punycode label that cannot be decoded
 // (`xn--abc`), which Node 22 and 24 and the Python client refuse. So the `uri` answers get this check on top of zod's:
-// each `xn--` label must decode (RFC 3492) to text the URL parser turns back into that same label.
+// each `xn--` label must decode (RFC 3492) to text the URL parser accepts and writes as an `xn--` host again.
 const PUNY_BASE = 36
 const PUNY_TMIN = 1
 const PUNY_TMAX = 26
@@ -63,7 +63,7 @@ const punyDecode = (input: string): string | null => {
   let n = 128
   let i = 0
   let bias = 72
-  for (let at = basic > 0 ? basic + 1 : 0; at < input.length; ) {
+  for (let at = basic >= 0 ? basic + 1 : 0; at < input.length; ) {
     const before = i
     let weight = 1
     for (let k = PUNY_BASE; ; k += PUNY_BASE) {
@@ -84,10 +84,14 @@ const punyDecode = (input: string): string | null => {
   // fromCodePoint throws on a point above U+10FFFF, and `check` reads a throw as a refusal.
   return out.length === 0 ? null : String.fromCodePoint(...out)
 }
+// The schemes whose host the URL parser treats as a domain; the host of any other is opaque and is not read as one.
+const DOMAIN_SCHEMES = ['http:', 'https:', 'ws:', 'wss:', 'ftp:', 'file:']
 const punycodeHostOk = (value: string): boolean => {
   let host: string
   try {
-    host = new URL(value).hostname
+    const url = new URL(value)
+    if (!DOMAIN_SCHEMES.includes(url.protocol)) return true
+    host = url.hostname
   } catch {
     return true
   }
@@ -96,7 +100,7 @@ const punycodeHostOk = (value: string): boolean => {
     const text = punyDecode(label.slice(4))
     if (text === null) return false
     try {
-      return new URL(`https://${text}`).hostname === label
+      return new URL(`https://${text}`).hostname.startsWith('xn--')
     } catch {
       return false
     }
@@ -118,7 +122,7 @@ const uriHostsOk = (schema: unknown, data: unknown): boolean => {
   if (Array.isArray(data)) return !isNode(schema.items) || data.every((d) => uriHostsOk(schema.items, d))
   if (isNode(data)) {
     const props = isNode(schema.properties) ? schema.properties : {}
-    return Object.entries(data).every(([k, v]) => uriHostsOk(k in props ? props[k] : schema.additionalProperties, v))
+    return Object.entries(data).every(([k, v]) => uriHostsOk(Object.hasOwn(props, k) ? props[k] : schema.additionalProperties, v))
   }
   return true
 }
