@@ -134,7 +134,9 @@ allows null. `spec.py` holds `API_VERSION`, `CLIENT_KEY_HEADER`, `UNKNOWN_CODES`
 from each JSON Schema. Each keyword's check in `_schema.py` does what that validator does: a value is never
 coerced from one JSON type to another; an integer is a whole number within JavaScript's safe range; a pattern is
 the JavaScript regular expression, translated so that `$`, `.`, `\d`, `\w` and `\s` mean what they mean in
-JavaScript; `uri` is what a WHATWG URL parser accepts and `date-time` is RFC 3339 with seconds; `anyOf` takes the
+JavaScript; `uri` is what a WHATWG URL parser accepts, and a host whose `xn--` label does not decode is refused (the
+TypeScript client checks that itself in `typescript/src/internal.ts`, because Node 26's URL parser accepts such a host
+where earlier versions refuse it); `date-time` is RFC 3339 with seconds; `anyOf` takes the
 first branch that fits and `oneOf` exactly one; an `enum` or `const` matches only a value of the same JSON type.
 
 **The client: `python/src/`.** `client.py` (`create_client`), `mcp.py` and `mcp_client.py` (`create_mcp_client`,

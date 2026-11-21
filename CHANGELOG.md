@@ -13,6 +13,12 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
   comment-free build output uses `@typescript/typescript6`, since TypeScript 7 no longer ships the compiler API it needs.
   CI and the publish workflow run Node 26 and its bundled npm, and the Python package is checked on Python 3.14.
 
+### Fixed
+
+- **The TypeScript client refuses a `uri` answer whose host has an `xn--` label that cannot be decoded**, on every Node.js
+  version. Node 26's URL parser accepts such a host (`https://xn--abc.com`), which Node 22 and 24 and the Python client
+  refuse, so the two clients would have judged the same answer differently.
+
 ## [v0.1.4] - 2026-11-20
 
 ### Changed
