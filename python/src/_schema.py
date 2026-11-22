@@ -13,6 +13,7 @@ import encodings.idna
 import ipaddress
 import math
 import re
+import unicodedata
 from collections.abc import Callable
 from typing import Any, ClassVar
 
@@ -323,6 +324,16 @@ def _host_port_ok(host_port: str, *, special: bool) -> bool:
 _LABEL_DOTS = (".", "\u3002", "\uff0e", "\uff61")
 
 
+def _label_text_ok(text: str) -> bool:
+    """Whether a decoded label is text one host label may hold: none of the characters a URL parser reads
+    as a dot, and, once its compatibility forms are folded (fullwidth to ASCII, as the URL parser does), no
+    forbidden host character. A fullwidth solidus would otherwise show a label as a path."""
+    if any(dot in text for dot in _LABEL_DOTS):
+        return False
+    folded = unicodedata.normalize("NFKC", text)
+    return not any(ch in _FORBIDDEN_DOMAIN or ch == "." for ch in folded)
+
+
 def _domain_ok(host: str) -> bool:
     try:
         decoded = _percent_decode(host).decode("utf-8")
@@ -337,7 +348,7 @@ def _domain_ok(host: str) -> bool:
                     # ASCII or control-character decoding is refused, as the WHATWG URL parser refuses it, and
                     # so is one holding a full stop, which the parser would read as two labels.
                     unicode = label[4:].encode("ascii").decode("punycode")
-                    if unicode == "" or unicode.isascii() or any(dot in unicode for dot in _LABEL_DOTS):
+                    if unicode == "" or unicode.isascii() or not _label_text_ok(unicode):
                         return False
                     encodings.idna.ToASCII(unicode)
         else:

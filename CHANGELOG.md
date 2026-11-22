@@ -27,6 +27,9 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 - **The TypeScript client accepts an `xn--` label with a leading hyphen or in a non-canonical form** (`xn---4kq`,
   `xn--bank-fna`) when it decodes to a single label the URL parser accepts, as the Python client does. A label whose
   decoded text holds a full stop, so that it would re-parse as two labels, is refused by both.
+- **The Python client refuses a punycode label whose text, with its compatibility forms folded, holds a character a host
+  may not** (a fullwidth solidus `／`, `＃`, `＼` or `：`), as the TypeScript client and the URL parser do. Such a label
+  could show a host as a path.
 
 ## [v0.1.4] - 2026-11-20
 

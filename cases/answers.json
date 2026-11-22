@@ -1044,7 +1044,11 @@
      {"explorer":"https://xn--.com/x","venue":"https://example.com/x"},
      {"explorer":"https://xn--abc-.com/x","venue":"https://example.com/x"},
      {"explorer":"https://xn--evil-zra2433e.example/x","venue":"https://example.com/x"},
-     {"explorer":"https://xn--neb286sh23k.example/x","venue":"https://example.com/x"}
+     {"explorer":"https://xn--neb286sh23k.example/x","venue":"https://example.com/x"},
+     {"explorer":"https://xn--x-9fa0036q.example/x","venue":"https://example.com/x"},
+     {"explorer":"https://xn--x-9fa4626q.example/x","venue":"https://example.com/x"},
+     {"explorer":"https://xn--x-9fa5346q.example/x","venue":"https://example.com/x"},
+     {"explorer":"https://xn--x-9fa3336q.example/x","venue":"https://example.com/x"}
    ]
   },
   "Route": {
