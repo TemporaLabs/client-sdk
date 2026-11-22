@@ -44,25 +44,41 @@ const validator = (schema: unknown): z.ZodType => {
 // The URL parser of a runtime is not one parser: Node 26's accepts a host with a punycode label that cannot be decoded
 // (`xn--abc`), which Node 22 and 24 and the Python client refuse. So the `uri` answers get this check on top of zod's:
 // each `xn--` label must decode (RFC 3492) to text the URL parser accepts and writes as an `xn--` host again.
+// The Punycode parameter values, named as in RFC 3492 section 5.
 const PUNY_BASE = 36
 const PUNY_TMIN = 1
 const PUNY_TMAX = 26
+const PUNY_SKEW = 38
+const PUNY_DAMP = 700
+const PUNY_INITIAL_BIAS = 72
+const PUNY_INITIAL_N = 128
+const PUNY_MAXINT = 0x7fffffff
 const punyAdapt = (delta: number, points: number, first: boolean): number => {
-  let d = first ? Math.floor(delta / 700) : delta >> 1
+  let d = first ? Math.floor(delta / PUNY_DAMP) : delta >> 1
   d += Math.floor(d / points)
   let k = 0
   for (; d > ((PUNY_BASE - PUNY_TMIN) * PUNY_TMAX) >> 1; k += PUNY_BASE) d = Math.floor(d / (PUNY_BASE - PUNY_TMIN))
-  return k + Math.floor(((PUNY_BASE - PUNY_TMIN + 1) * d) / (d + 38))
+  return k + Math.floor(((PUNY_BASE - PUNY_TMIN + 1) * d) / (d + PUNY_SKEW))
 }
-// A host from the URL parser is lower case ASCII, so a digit is 0-9 or a-z.
-const punyDigit = (c: number): number => (c >= 48 && c <= 57 ? c - 22 : c >= 97 && c <= 122 ? c - 97 : PUNY_BASE)
+// A host from the URL parser is lower case ASCII, so a digit is 0-9 (26-35) or a-z (0-25); anything else is not one.
+const punyDigit = (c: number): number => {
+  if (c >= 0x30 && c <= 0x39) return c - 0x30 + 26
+  if (c >= 0x61 && c <= 0x7a) return c - 0x61
+  return PUNY_BASE
+}
+// The threshold t of RFC 3492 section 6.2: k - bias, clamped to [tmin, tmax].
+const punyThreshold = (k: number, bias: number): number => {
+  if (k <= bias) return PUNY_TMIN
+  if (k >= bias + PUNY_TMAX) return PUNY_TMAX
+  return k - bias
+}
 const punyDecode = (input: string): string | null => {
   const out: number[] = []
   const basic = input.lastIndexOf('-')
   for (let j = 0; j < Math.max(basic, 0); j++) out.push(input.charCodeAt(j))
-  let n = 128
+  let n = PUNY_INITIAL_N
   let i = 0
-  let bias = 72
+  let bias = PUNY_INITIAL_BIAS
   for (let at = basic >= 0 ? basic + 1 : 0; at < input.length; ) {
     const before = i
     let weight = 1
@@ -71,8 +87,8 @@ const punyDecode = (input: string): string | null => {
       const digit = punyDigit(input.charCodeAt(at++))
       if (digit >= PUNY_BASE) return null
       i += digit * weight
-      if (i > 0x7fffffff) return null
-      const t = k <= bias ? PUNY_TMIN : k >= bias + PUNY_TMAX ? PUNY_TMAX : k - bias
+      if (i > PUNY_MAXINT) return null
+      const t = punyThreshold(k, bias)
       if (digit < t) break
       weight *= PUNY_BASE - t
     }
