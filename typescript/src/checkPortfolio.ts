@@ -32,9 +32,9 @@
  * is guarded only by the API, which refuses an enrolment whose agent is not on its allow list before the hash is offered
  * for signing.
  */
-import { decodeCall } from './abi/calldata'
-import { CHAIN, UINT256_DIGITS, isAddress, same, servedChain } from './evm'
-import { PAYLOAD_FIELDS, payloadOf } from './check'
+import { decodeCall } from './abi/calldata.js'
+import { CHAIN, UINT256_DIGITS, isAddress, same, servedChain } from './evm.js'
+import { PAYLOAD_FIELDS, payloadOf } from './check.js'
 
 /** What the owner asked to withdraw from a portfolio, and what the caller knows independently of the steps. */
 export type PortfolioWithdrawalIntent = {

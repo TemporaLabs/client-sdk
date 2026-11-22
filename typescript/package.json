@@ -2,7 +2,12 @@
   "name": "@temporalabs/client",
   "version": "0.2.0",
   "description": "The typed client for the Tempora API, over HTTP and MCP.",
-  "keywords": ["tempora", "api-client", "mcp", "typescript"],
+  "keywords": [
+    "tempora",
+    "api-client",
+    "mcp",
+    "typescript"
+  ],
   "homepage": "https://github.com/TemporaLabs/client-sdk#readme",
   "bugs": "https://github.com/TemporaLabs/client-sdk/issues",
   "repository": {
@@ -54,15 +59,14 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@babel/generator": "7.29.13",
+    "@babel/parser": "7.29.13",
     "@swc/core": "1.16.21",
     "@swc/jest": "0.2.39",
     "@types/jest": "30.0.0",
     "@types/node": "26.6.6",
-    "@typescript/typescript6": "6.0.2",
     "esbuild": "0.28.2",
     "jest": "30.5.2",
-    "rollup": "4.67.4",
-    "rollup-plugin-dts": "6.5.1",
     "typescript": "7.0.2"
   },
   "overrides": {

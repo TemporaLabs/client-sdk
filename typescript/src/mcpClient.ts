@@ -2,10 +2,10 @@
  * The MCP client: the HTTP client's calls, each one `tools/call` POST to the API's MCP endpoint, with the same Result.
  * Credentials travel in headers, never in a tool's arguments.
  */
-import { CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec'
-import { CLIENT_VERSION } from './version'
-import type { ApiError } from './generated/types'
-import { AUTH_SCHEME, RETRY_AFTER_HEADER, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type Op, type Result } from './internal'
+import { CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec.js'
+import { CLIENT_VERSION } from './version.js'
+import type { ApiError } from './generated/types.js'
+import { AUTH_SCHEME, RETRY_AFTER_HEADER, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type Op, type Result } from './internal.js'
 
 /** Whether a value has a tool's shape: a name, an exposure and an input schema object. */
 export const isTool = (t: unknown): t is Tool => {

@@ -1,8 +1,8 @@
 /** What both entry points share: the call and result types, the answer checks, and the option checks. Not a package entry point. */
 import { z } from 'zod'
 
-import { DEFS, ERROR_BODY, UNKNOWN_CODES } from './generated/spec'
-import type { ApiError, Operations } from './generated/types'
+import { DEFS, ERROR_BODY, UNKNOWN_CODES } from './generated/spec.js'
+import type { ApiError, Operations } from './generated/types.js'
 
 export type Name = keyof Operations
 type Part<K extends string, T> = [T] extends [never] ? unknown : { [P in K]: T }

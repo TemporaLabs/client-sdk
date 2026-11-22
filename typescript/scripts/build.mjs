@@ -1,17 +1,16 @@
-// Builds the published files, without comments: build/index.js and build/mcp.js (ESM, zod external), each with its .d.ts.
+// Builds the published files: build/index.js and build/mcp.js (ESM bundles, zod external), and the declarations
+// TypeScript 7 emits next to them (build/index.d.ts, build/mcp.d.ts and the modules they import), all without comments.
 import { execFileSync } from 'node:child_process'
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { generate } from '@babel/generator'
+import { parse } from '@babel/parser'
 import { build } from 'esbuild'
-import { rollup } from 'rollup'
-import { dts } from 'rollup-plugin-dts'
-import ts from '@typescript/typescript6'
 
 const root = join(import.meta.dirname, '..')
 process.chdir(root)
 rmSync('build', { recursive: true, force: true })
-rmSync('dist', { recursive: true, force: true })
 const ENTRIES = ['index', 'mcp']
 await build({
   entryPoints: ENTRIES.map((e) => `src/${e}.ts`),
@@ -24,19 +23,13 @@ await build({
   external: ['zod'],
   legalComments: 'none',
 })
-
-// TypeScript 7 emits the declarations and type-checks; its compiler API is gone, so @typescript/typescript6 prints the
-// comment-free output below.
-// Types are bundled from the declarations tsc emits, not re-inferred from source, so union order is stable.
-execFileSync(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.build.json'], { stdio: 'inherit' })
-// One bundle per entry, so each .d.ts stands alone (no shared chunk file).
+// Notes in the source are for this repository, not for callers: each bundle is parsed and printed again without its
+// comments. The code is the same; only the layout is the printer's.
 for (const e of ENTRIES) {
-  const types = await rollup({ input: `dist/${e}.d.ts`, external: ['zod'], plugins: [dts({ respectExternal: true })] })
-  await types.write({ file: `build/${e}.d.ts`, format: 'es' })
+  const file = `build/${e}.js`
+  const ast = parse(readFileSync(file, 'utf8'), { sourceType: 'module' })
+  writeFileSync(file, `${generate(ast, { comments: false }).code}\n`)
 }
-rmSync('dist', { recursive: true, force: true })
 
-const printer = ts.createPrinter({ removeComments: true })
-for (const file of ENTRIES.flatMap((e) => [`build/${e}.js`, `build/${e}.d.ts`])) {
-  writeFileSync(file, printer.printFile(ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest)))
-}
+// The declarations are emitted by TypeScript 7's tsc from the source, with comments removed (tsconfig.build.json).
+execFileSync(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.build.json'], { stdio: 'inherit' })

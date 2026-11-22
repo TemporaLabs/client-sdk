@@ -2,13 +2,17 @@
 // Packs @temporalabs/client and proves the tarball is safe to hand out: only the allowed files, no
 // internal text, no private dependency, and it installs and type-checks in a clean project.
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
 const pkgDir = root
-const ALLOWED = ['package.json', 'README.md', 'LICENSE', 'NOTICE', 'llms.txt', 'build/index.js', 'build/index.d.ts', 'build/mcp.js', 'build/mcp.d.ts']
+// The two bundles, and one declaration file per source module: TypeScript 7 emits them next to the bundles.
+const DECLARATIONS = readdirSync(join(root, 'src'), { recursive: true })
+  .filter((f) => f.endsWith('.ts'))
+  .map((f) => `build/${f.replace(/\.ts$/, '.d.ts')}`)
+const ALLOWED = ['package.json', 'README.md', 'LICENSE', 'NOTICE', 'llms.txt', 'build/index.js', 'build/mcp.js', ...DECLARATIONS]
 const BUILT = ALLOWED.filter((f) => f.startsWith('build/'))
 const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] })
 const fail = (why) => {
