@@ -33,7 +33,7 @@ The package has two entry points: `@temporalabs/client` for the HTTP API and `@t
 endpoint. Check the install:
 
 ```bash
-node -e "import('@temporalabs/client').then((m) => console.log(m.API_VERSION))"   # prints 0.1.6
+node -e "import('@temporalabs/client').then((m) => console.log(m.API_VERSION))"   # prints 0.2.0
 ```
 
 ### Python
@@ -55,7 +55,7 @@ In a `requirements.txt`, or under `dependencies` in a `pyproject.toml`, use the 
 `temporalabs_client.mcp`. Check the install:
 
 ```bash
-python -c "import temporalabs_client as t; print(t.__version__, t.API_VERSION)"     # prints 0.2.0 0.1.6
+python -c "import temporalabs_client as t; print(t.__version__, t.API_VERSION)"     # prints 0.2.0 0.2.0
 ```
 
 ## Quick start

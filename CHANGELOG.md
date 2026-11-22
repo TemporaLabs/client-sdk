@@ -7,6 +7,9 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ### Changed
 
+- **Generated from API 0.2.0** (`API_VERSION` is `0.2.0`). The API document and its tool list are unchanged from
+  0.1.6 apart from their version, so every call, shape and tool is the same, and a client generated from 0.1.6
+  works with an API 0.2.0 server.
 - **Needs Node.js 26 or later** (`engines` is `>=26`) and **Python 3.14 or later** (`requires-python` is `>=3.14`).
   Both packages dropped their support for earlier versions: this is why this release is 0.2.0 and not 0.1.5.
 - **Toolchain.** The build and the typecheck use TypeScript 7.0.2, with `@types/node` 26.6.6. TypeScript 7 no longer ships the
