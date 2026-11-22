@@ -19,7 +19,7 @@ spec/tools.json ───┘                     ├▶ src/generated/spec.ts   
    │                                                │
    │                                      scripts/build.mjs
    │                                                ▼
-   │                         build/index.js, build/mcp.js and their .d.ts ──npm pack──▶ the package
+   │                         build/index.js, build/mcp.js, build/**/*.d.ts ──npm pack──▶ the package
 ```
 
 ## The layers, and who owns each
@@ -74,7 +74,8 @@ not for callers. TypeScript 7's `tsc` emits the declarations next to the bundles
 comments removed (`typescript/tsconfig.build.json`); `build/index.d.ts` and `build/mcp.d.ts` are the two entry points.
 That is why the source imports its own modules with a `.js` extension: a published declaration must name the file it
 imports, or a project resolving modules the way Node.js does cannot load it. The package's `exports` expose only the two
-entry points, so the other declaration files are reachable as types and never as imports.
+entry points, so with the module resolution that reads `exports` (`node16`, `nodenext` or `bundler`) the other
+declaration files are reachable only through those two.
 
 **6. The package.** `files` in `typescript/package.json` names what is packed. `typescript/scripts/client-pack.mjs`:
 

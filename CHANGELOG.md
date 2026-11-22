@@ -17,7 +17,8 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
   Python 3.14 only.
 - **The declarations are one file per module.** TypeScript 7's `tsc` emits them next to the two bundles, instead of a
   single bundled `index.d.ts` and `mcp.d.ts`; the package's entry points and every exported value and type are the same.
-  The bundles' code is unchanged.
+  The declarations need TypeScript 5.0 or later in a project that checks library files (`skipLibCheck: false`). The
+  bundles hold the same code as before, laid out differently.
 
 ### Fixed
 

@@ -127,7 +127,8 @@ jobs:
           file="$(npm pack --ignore-scripts --pack-destination dist-pack --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s)[0].filename))')"
           files="$(tar -tzf "dist-pack/${file}" | sed 's|^package/||' | sort)"
           echo "$files"
-          for f in build/index.js build/index.d.ts build/mcp.js build/mcp.d.ts; do
+          # The two bundles, and the declaration file tsc emits for each source module.
+          for f in build/index.js build/mcp.js $(cd src && find . -name '*.ts' | sed 's|^\./|build/|; s|\.ts$|.d.ts|'); do
             grep -qx "$f" <<<"$files" || { echo "::error::the tarball is missing $f"; exit 1; }
           done
           sum="$(sha256sum "dist-pack/${file}" | cut -d' ' -f1)"
