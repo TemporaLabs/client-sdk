@@ -72,7 +72,8 @@ const punyThreshold = (k: number, bias: number): number => {
   if (k >= bias + PUNY_TMAX) return PUNY_TMAX
   return k - bias
 }
-const punyDecode = (input: string): string | null => {
+/** Decodes the part of an `xn--` label after the prefix (RFC 3492 section 6.2), or null when it is not valid Punycode. Exported for its tests only. */
+export const punyDecode = (input: string): string | null => {
   const out: number[] = []
   const basic = input.lastIndexOf('-')
   for (let j = 0; j < Math.max(basic, 0); j++) out.push(input.charCodeAt(j))
