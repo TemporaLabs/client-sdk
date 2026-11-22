@@ -1,7 +1,7 @@
 name: CI Python
 
-# The Python package in python/: lint, types, its generation check and tests, on the Python version it supports (3.14,
-# the oldest it accepts), then the built wheel installed into a clean environment and imported from outside the
+# The Python package in python/: lint, types, its generation check and tests, on each Python version it supports (3.13,
+# the oldest it accepts, and 3.14), then the built wheel installed into a clean environment and imported from outside the
 # repository, and an audit of its runtime dependencies. On every push to a version branch (vX.Y.Z or release/vX.Y.Z)
 # or main and on every pull request into one. The checks that cover the whole repository are in ci-repo.yml. This
 # workflow publishes nothing.
@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.14']
+        python-version: ['3.13', '3.14']
     defaults:
       run:
         working-directory: python
