@@ -19,7 +19,7 @@ spec/tools.json ───┘                     ├▶ src/generated/spec.ts   
    │                                                │
    │                                      scripts/build.mjs
    │                                                ▼
-   │                         build/index.js, build/mcp.js and their .d.ts ──npm pack──▶ the package
+   │                         build/index.js, build/mcp.js, build/**/*.d.ts ──npm pack──▶ the package
 ```
 
 ## The layers, and who owns each
@@ -68,16 +68,19 @@ types come from `Operations` through `InputOf` and `OutputOf`; `status_lookup` i
 exactly one lookup key type-checks. What a call does at run time is in [One call traced](one-call-traced.md).
 
 **5. The build: `typescript/scripts/build.mjs`.** esbuild bundles each entry, `typescript/src/index.ts` and `typescript/src/mcp.ts`, into
-one ES module of its own, with `zod` left external (it is the one runtime dependency). The declarations are emitted by `tsc` and bundled by
-`rollup-plugin-dts`, rather than inferred again, so the order of union members is stable. Last, the
-TypeScript printer rewrites both files without comments: notes in the source are for this repository,
-not for callers. The printer, and the declaration bundler, use `@typescript/typescript6`, because TypeScript 7, which type-checks and
-emits the declarations, no longer ships the compiler API.
+one ES module of its own, with `zod` left external (it is the one runtime dependency). Each bundle is then parsed and
+printed again without its comments (`@babel/parser` and `@babel/generator`): notes in the source are for this repository,
+not for callers. TypeScript 7's `tsc` emits the declarations next to the bundles, one `.d.ts` per source module with
+comments removed (`typescript/tsconfig.build.json`); `build/index.d.ts` and `build/mcp.d.ts` are the two entry points.
+That is why the source imports its own modules with a `.js` extension: a published declaration must name the file it
+imports, or a project resolving modules the way Node.js does cannot load it. The package's `exports` expose only the two
+entry points, so with the module resolution that reads `exports` (`node16`, `nodenext` or `bundler`) the other
+declaration files are reachable only through those two.
 
 **6. The package.** `files` in `typescript/package.json` names what is packed. `typescript/scripts/client-pack.mjs`:
 
 - builds and packs twice and requires the same integrity hash;
-- requires exactly the files in `ALLOWED`;
+- requires exactly the files in `ALLOWED`: the two bundles, one declaration file per source module, and the docs;
 - runs the public-text scan over the unpacked tarball;
 - refuses a comment in the built files and any `@temporalabs/` dependency;
 - then installs the tarball into an empty project and type-checks a file that uses it. That file includes a

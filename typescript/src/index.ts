@@ -1,17 +1,17 @@
 /** The typed HTTP client for the Tempora API: one method per call, every answer a Result that never throws. */
-import { API_VERSION, CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec'
-import { AUTH_SCHEME, RETRY_AFTER_HEADER, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, offOrigin, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type InputOf, type Name, type Op, type OutputOf, type Result } from './internal'
+import { API_VERSION, CLIENT_KEY_HEADER, OPERATIONS } from './generated/spec.js'
+import { AUTH_SCHEME, RETRY_AFTER_HEADER, TRACE_HEADER, answerSchema, type Answer, apiErrorIn, check, checkOptions, headersSafe, local, noAnswer, offOrigin, retryAfterSeconds, schemaMismatch, send, unsentHeader, unwritableBody, type CallOptions, type InputOf, type Name, type Op, type OutputOf, type Result } from './internal.js'
 
 export { API_VERSION, CLIENT_KEY_HEADER }
-export type * from './generated/types'
+export type * from './generated/types.js'
 export type { CallOptions, InputOf, OutputOf, Result }
-export { signIn, withOwnerRetry } from './signIn'
-export { checkBundle, checkStep, checkSteps } from './check'
-export { SERVED_CHAINS } from './evm'
-export type { BundleCheck, BundleToCheck, StepCheck, StepsCheck, StepToCheck, VaultCall, VaultIntent, VaultOnChain } from './check'
-export { checkPortfolioDeposit, checkPortfolioWithdrawal } from './checkPortfolio'
-export type { PortfolioDepositCheck, PortfolioDepositIntent, PortfolioStepToCheck, PortfolioWithdrawalCheck, PortfolioWithdrawalIntent } from './checkPortfolio'
-export type { OwnerRetry, SignedIn, SignInOptions } from './signIn'
+export { signIn, withOwnerRetry } from './signIn.js'
+export { checkBundle, checkStep, checkSteps } from './check.js'
+export { SERVED_CHAINS } from './evm.js'
+export type { BundleCheck, BundleToCheck, StepCheck, StepsCheck, StepToCheck, VaultCall, VaultIntent, VaultOnChain } from './check.js'
+export { checkPortfolioDeposit, checkPortfolioWithdrawal } from './checkPortfolio.js'
+export type { PortfolioDepositCheck, PortfolioDepositIntent, PortfolioStepToCheck, PortfolioWithdrawalCheck, PortfolioWithdrawalIntent } from './checkPortfolio.js'
+export type { OwnerRetry, SignedIn, SignInOptions } from './signIn.js'
 
 export type Client = { [N in Name]: (input: InputOf<N>, options?: CallOptions) => Promise<Result<OutputOf<N>>> }
 

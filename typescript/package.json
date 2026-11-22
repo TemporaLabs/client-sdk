@@ -54,15 +54,14 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@babel/generator": "7.29.13",
+    "@babel/parser": "7.29.13",
     "@swc/core": "1.16.21",
     "@swc/jest": "0.2.39",
     "@types/jest": "30.0.0",
     "@types/node": "26.6.6",
-    "@typescript/typescript6": "6.0.2",
     "esbuild": "0.28.2",
     "jest": "30.5.2",
-    "rollup": "4.67.4",
-    "rollup-plugin-dts": "6.5.1",
     "typescript": "7.0.2"
   },
   "overrides": {

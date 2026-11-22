@@ -12,10 +12,13 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
   works with an API 0.2.0 server.
 - **Needs Node.js 26 or later** (`engines` is `>=26`) and **Python 3.14 or later** (`requires-python` is `>=3.14`).
   Both packages dropped their support for earlier versions: this is why this release is 0.2.0 and not 0.1.5.
-- **Toolchain.** The build and the typecheck use TypeScript 7.0.2, with `@types/node` 26.6.6. TypeScript 7 no longer ships the
-  compiler API, so the script that prints the comment-free build output and the declaration bundler (`rollup-plugin-dts`) use
-  `@typescript/typescript6`. CI and the publish workflow run Node 26.13.1 and its bundled npm, and the Python package is
-  checked on Python 3.14.
+- **Toolchain.** The build and the typecheck use TypeScript 7.0.2 only, with `@types/node` 26.6.6; no earlier TypeScript is a
+  dependency. CI and the publish workflow run Node 26.13.1 and its bundled npm, and the Python package is checked on
+  Python 3.14 only.
+- **The declarations are one file per module.** TypeScript 7's `tsc` emits them next to the two bundles, instead of a
+  single bundled `index.d.ts` and `mcp.d.ts`; the package's entry points and every exported value and type are the same.
+  The declarations need TypeScript 5.0 or later in a project that checks library files (`skipLibCheck: false`). The
+  bundles hold the same code as before, laid out differently.
 
 ### Fixed
 
