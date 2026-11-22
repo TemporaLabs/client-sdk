@@ -23,19 +23,19 @@ owner asked for. Your code then hands the signed result back.
 ## Install
 
 ```bash
-pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.4#subdirectory=python"
+pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.0#subdirectory=python"
 ```
 
 With uv:
 
 ```bash
-uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.1.4#subdirectory=python"
+uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.0#subdirectory=python"
 ```
 
 It installs from this repository at a release tag; it is not on PyPI. In a `requirements.txt`, or under `dependencies`
 in a `pyproject.toml`, use the same quoted string. Keep the tag: without it, pip installs whatever `main` holds.
 
-It needs Python 3.13. Its runtime dependencies are `httpx` and `pydantic`. The client is synchronous.
+It needs Python 3.14 or later. Its runtime dependencies are `httpx` and `pydantic`. The client is synchronous.
 
 ## A first call
 
@@ -129,7 +129,7 @@ if isinstance(signed_in, Ok):
 
 ## Compatibility
 
-`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.1.6`.
+`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.2.0`.
 Within an API version the API only adds: new optional inputs, new answer fields, new calls. The client keeps
 answer fields it does not know yet. See [versioning](https://github.com/TemporaLabs/client-sdk/blob/main/docs/versioning.md).
 

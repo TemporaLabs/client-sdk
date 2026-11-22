@@ -7,6 +7,37 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ### Changed
 
+- **Generated from API 0.2.0** (`API_VERSION` is `0.2.0`). The API document and its tool list are unchanged from
+  0.1.6 apart from their version, so every call, shape and tool is the same, and a client generated from 0.1.6
+  works with an API 0.2.0 server.
+- **Needs Node.js 26 or later** (`engines` is `>=26`) and **Python 3.14 or later** (`requires-python` is `>=3.14`).
+  Both packages dropped their support for earlier versions: this is why this release is 0.2.0 and not 0.1.5.
+- **Toolchain.** The build and the typecheck use TypeScript 7.0.2 only, with `@types/node` 26.6.6; no earlier TypeScript is a
+  dependency. CI and the publish workflow run Node 26.13.1 and its bundled npm, and the Python package is checked on
+  Python 3.14 only.
+- **The declarations are one file per module.** TypeScript 7's `tsc` emits them next to the two bundles, instead of a
+  single bundled `index.d.ts` and `mcp.d.ts`; the package's entry points and every exported value and type are the same.
+  The declarations need TypeScript 5.0 or later in a project that checks library files (`skipLibCheck: false`). The
+  bundles hold the same code as before, laid out differently.
+
+### Fixed
+
+- **The TypeScript client refuses a `uri` answer whose host has an `xn--` label that cannot be decoded**, on every Node.js
+  version. Node 26's URL parser accepts such a host (`https://xn--abc.com`), which Node 22 and 24 and the Python client
+  refuse, so the two clients would have judged the same answer differently.
+- **The Python client refuses a `uri` answer whose host has an `xn--` label that decodes to plain ASCII** (`xn--abc-`),
+  as the TypeScript client does. A host whose scheme is not a web scheme is read as an opaque host by both.
+- **The TypeScript client accepts an `xn--` label with a leading hyphen or in a non-canonical form** (`xn---4kq`,
+  `xn--bank-fna`) when it decodes to a single label the URL parser accepts, as the Python client does. A label whose
+  decoded text holds a full stop, so that it would re-parse as two labels, is refused by both.
+- **The Python client refuses a punycode label whose text, with its compatibility forms folded, holds a character a host
+  may not** (a fullwidth solidus `／`, `＃`, `＼` or `：`), as the TypeScript client and the URL parser do. Such a label
+  could show a host as a path.
+
+## [v0.1.4] - 2026-11-20
+
+### Changed
+
 - **Generated from API 0.1.6** (`API_VERSION` is `0.1.6`). The API document and its tool list are unchanged from
   0.1.5 apart from their version, so every call, shape and tool is the same, and a client generated from 0.1.5
   works with an API 0.1.6 server.

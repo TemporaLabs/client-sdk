@@ -28,12 +28,12 @@ owner asked for. Your code then hands the signed result back.
 ## Install
 
 ```bash
-npm install --save-exact @temporalabs/client@0.1.4
+npm install --save-exact @temporalabs/client@0.2.0
 ```
 
 Pin the exact version: before `1.0.0` a minor version may change the interface.
 
-It needs Node.js 22 or later and is an ES module: load it with `import` (`require()` works only on Node.js versions that can load ES modules). It has one runtime dependency (zod) and no install scripts.
+It needs Node.js 26 or later and is an ES module. Load it with `import`; `require()` works too, since every Node.js version it supports can load ES modules. It has one runtime dependency (zod) and no install scripts.
 More in [Getting started](https://github.com/TemporaLabs/client-sdk/blob/main/docs/getting-started.md).
 
 ## A first call
@@ -132,7 +132,7 @@ Three consistency checks the API makes on its own answers are not repeated here:
 
 ## Compatibility
 
-`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.1.6`.
+`API_VERSION` names the Tempora API version the client was generated from; this release speaks API `0.2.0`.
 Within an API version the API only adds: new optional inputs, new answer fields, new calls. The client keeps
 answer fields it does not know yet. See [versioning](https://github.com/TemporaLabs/client-sdk/blob/main/docs/versioning.md).
 

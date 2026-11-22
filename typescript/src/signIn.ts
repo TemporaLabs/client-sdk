@@ -1,7 +1,7 @@
 /** The owner sign-in as one call, and a wrapper that signs in again once when an owner call is refused for it. */
-import type { ApiError } from './generated/types'
-import type { Client } from './index'
-import type { OutputOf, Result } from './internal'
+import type { ApiError } from './generated/types.js'
+import type { Client } from './index.js'
+import type { OutputOf, Result } from './internal.js'
 
 /** What a sign-in returns: the owner token and when it stops working. */
 export type SignedIn = OutputOf<'sign_in_verify'>

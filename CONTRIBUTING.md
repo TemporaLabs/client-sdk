@@ -19,15 +19,14 @@ follows one call end to end.
 
 ## Before you open a pull request
 
-Work with the Node.js version in `typescript/.nvmrc` (22). The generator and checks need Node.js 22.6 or later, since they
-run TypeScript directly with `--experimental-strip-types`. The `engines` range in `typescript/package.json` (22 or later) is
-for the published client, not for these scripts.
+Work with the Node.js version in `typescript/.nvmrc` (26.13.1). The generator and checks run TypeScript directly with
+`--experimental-strip-types`. The `engines` range in `typescript/package.json` (26 or later) is for the published client.
 
 `npm run check`, run in `typescript/`, must pass. It runs the source and generation checks, the typecheck, the
 tests (one worker), the public-text scan, the package check, and that each package folder's `LICENSE` and
 `NOTICE` match the root's. Add a test for any behaviour you change.
 
-For the Python package, work in `python/` with Python 3.13, in a virtual environment:
+For the Python package, work in `python/` with Python 3.14 (the version CI tests), in a virtual environment:
 
 ```sh
 python -m venv .venv && . .venv/bin/activate

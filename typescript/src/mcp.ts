@@ -2,10 +2,10 @@
  * `@temporalabs/client/mcp`: the Tempora API's calls over its MCP endpoint, with the same names and the same Result as the
  * HTTP client, and the API's published tool list to pin. Every call returns a result and never throws.
  */
-import { API_VERSION } from './generated/spec'
-import { TOOLS } from './generated/tools'
-import type { CallOptions, InputOf, Name, OutputOf, Result } from './internal'
-import { isTool, mcpClientFor, PROTOCOL_VERSION, type McpClientOptions, type Tool } from './mcpClient'
+import { API_VERSION } from './generated/spec.js'
+import { TOOLS } from './generated/tools.js'
+import type { CallOptions, InputOf, Name, OutputOf, Result } from './internal.js'
+import { isTool, mcpClientFor, PROTOCOL_VERSION, type McpClientOptions, type Tool } from './mcpClient.js'
 
 export { PROTOCOL_VERSION, TOOLS }
 

@@ -25,8 +25,8 @@
  * bytes. A request is `[approve, deposit]`, `[deposit]` or one withdrawal, in that order. Nothing here calls the
  * network or signs.
  */
-import { decodeCall, type Word } from './abi/calldata'
-import { UINT256_DIGITS, isAddress, same, servedChain } from './evm'
+import { decodeCall, type Word } from './abi/calldata.js'
+import { UINT256_DIGITS, isAddress, same, servedChain } from './evm.js'
 
 /** The vault as the product record names it (`product.vault`). */
 export type VaultOnChain = { chain: string; vaultAddress: string; assetAddress: string }
