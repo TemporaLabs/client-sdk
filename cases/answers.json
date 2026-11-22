@@ -1010,7 +1010,8 @@
      {"explorer":"https://e.x","venue":"https://[::1]/"},
      {"explorer":"https://xn--bcher-kva.example/x","venue":"https://example.com/x"},
      {"explorer":"https://xn--ls8h.example/x","venue":"https://example.com/x"},
-     {"explorer":"https://xn---4kq.example/x","venue":"https://example.com/x"}
+     {"explorer":"https://xn---4kq.example/x","venue":"https://example.com/x"},
+     {"explorer":"https://example.com/x","venue":"foo://xn--abc.com/x"}
    ],
    "reject": [
      {"explorer":"http://09/x","venue":null},
@@ -1041,7 +1042,9 @@
      {"explorer":"https://xn--abc.com/x","venue":"https://example.com/x"},
      {"explorer":"https://xn--a.com/x","venue":"https://example.com/x"},
      {"explorer":"https://xn--.com/x","venue":"https://example.com/x"},
-     {"explorer":"https://xn--abc-.com/x","venue":"https://example.com/x"}
+     {"explorer":"https://xn--abc-.com/x","venue":"https://example.com/x"},
+     {"explorer":"https://xn--evil-zra2433e.example/x","venue":"https://example.com/x"},
+     {"explorer":"https://xn--neb286sh23k.example/x","venue":"https://example.com/x"}
    ]
   },
   "Route": {

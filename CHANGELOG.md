@@ -24,6 +24,9 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
   refuse, so the two clients would have judged the same answer differently.
 - **The Python client refuses a `uri` answer whose host has an `xn--` label that decodes to plain ASCII** (`xn--abc-`),
   as the TypeScript client does. A host whose scheme is not a web scheme is read as an opaque host by both.
+- **The TypeScript client accepts an `xn--` label with a leading hyphen or in a non-canonical form** (`xn---4kq`,
+  `xn--bank-fna`) when it decodes to a single label the URL parser accepts, as the Python client does. A label whose
+  decoded text holds a full stop, so that it would re-parse as two labels, is refused by both.
 
 ## [v0.1.4] - 2026-11-20
 

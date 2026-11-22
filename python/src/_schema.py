@@ -319,6 +319,10 @@ def _host_port_ok(host_port: str, *, special: bool) -> bool:
     return _domain_ok(host)
 
 
+# The characters a URL parser reads as the dot between labels (Unicode UTS 46).
+_LABEL_DOTS = (".", "\u3002", "\uff0e", "\uff61")
+
+
 def _domain_ok(host: str) -> bool:
     try:
         decoded = _percent_decode(host).decode("utf-8")
@@ -330,9 +334,10 @@ def _domain_ok(host: str) -> bool:
             for label in ascii_host.split("."):
                 if label.startswith("xn--"):
                     # A punycode label must decode to something, and to text a host may hold: an empty, plain
-                    # ASCII or control-character decoding is refused, as the WHATWG URL parser refuses it.
+                    # ASCII or control-character decoding is refused, as the WHATWG URL parser refuses it, and
+                    # so is one holding a full stop, which the parser would read as two labels.
                     unicode = label[4:].encode("ascii").decode("punycode")
-                    if unicode == "" or unicode.isascii():
+                    if unicode == "" or unicode.isascii() or any(dot in unicode for dot in _LABEL_DOTS):
                         return False
                     encodings.idna.ToASCII(unicode)
         else:
