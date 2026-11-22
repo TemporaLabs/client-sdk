@@ -72,7 +72,8 @@ const punyThreshold = (k: number, bias: number): number => {
   if (k >= bias + PUNY_TMAX) return PUNY_TMAX
   return k - bias
 }
-/** Decodes the part of an `xn--` label after the prefix (RFC 3492 section 6.2), or null when it is not valid Punycode. Exported for its tests only. */
+/** Decodes the part of an `xn--` label after the prefix (RFC 3492 section 6.2, except that a delimiter at the start is
+ * consumed, as Python's codec and the URL parser do), or null when it is not valid Punycode. Exported for its tests only. */
 export const punyDecode = (input: string): string | null => {
   const out: number[] = []
   const basic = input.lastIndexOf('-')
@@ -117,7 +118,9 @@ const punycodeHostOk = (value: string): boolean => {
     const text = punyDecode(label.slice(4))
     if (text === null) return false
     try {
-      return new URL(`https://${text}`).hostname.startsWith('xn--')
+      // One label in, one label out: decoded text holding a full stop would re-parse as two labels.
+      const host = new URL(`https://${text}`).hostname
+      return host.startsWith('xn--') && !host.includes('.')
     } catch {
       return false
     }
