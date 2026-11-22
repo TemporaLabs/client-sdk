@@ -28,12 +28,12 @@ owner asked for. Your code then hands the signed result back.
 ## Install
 
 ```bash
-npm install --save-exact @temporalabs/client@0.2.0
+npm install --save-exact @temporalabs/client@0.2.1
 ```
 
 Pin the exact version: before `1.0.0` a minor version may change the interface.
 
-It needs Node.js 22.12 or later and is an ES module, and its types need TypeScript 6.0 or later. Load it with `import`; `require()` works too, since every Node.js version it supports can load ES modules. It has one runtime dependency (zod) and no install scripts.
+It needs Node.js 22.12 or later and is an ES module, and its types need TypeScript 6.0 or later; CI tests Node.js 22.12.0 and the 22, 24 and 26 lines. Load it with `import`; `require()` works too, since every Node.js version it supports can load ES modules. It has one runtime dependency (zod) and no install scripts.
 More in [Getting started](https://github.com/TemporaLabs/client-sdk/blob/main/docs/getting-started.md).
 
 ## A first call
@@ -102,7 +102,8 @@ if (signedIn.ok) {
 - **Pinning the tools:** `TOOLS` is the API's published tool list and `RELEASED` the same list with its
   version. `toolBreaks(released, current)` lists what a newer list changed that a pinned consumer would
   notice: a tool or input removed, an input made required, an output schema dropped, a changed exposure. It does not
-  compare a field's type, an enum's members or an output schema's content, so pin those with your own tests.
+  compare a field's type, an enum's members or an output schema's content, so pin those with your own tests. The endpoint lists the owner tools only to a caller that sends an owner token,
+  so compare against a `listTools()` made with one: without it, every owner tool reads as removed.
 
 ## Security
 

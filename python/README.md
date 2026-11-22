@@ -23,13 +23,13 @@ owner asked for. Your code then hands the signed result back.
 ## Install
 
 ```bash
-pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.0#subdirectory=python"
+pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.1#subdirectory=python"
 ```
 
 With uv:
 
 ```bash
-uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.0#subdirectory=python"
+uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.1#subdirectory=python"
 ```
 
 It installs from this repository at a release tag; it is not on PyPI. In a `requirements.txt`, or under `dependencies`
@@ -112,7 +112,9 @@ if isinstance(signed_in, Ok):
   `unsupported_protocol`. Upgrade the package.
 - **Pinning the tools:** `TOOLS` is the API's published tool list and `RELEASED` the same list with its version.
   `tool_breaks(released, current)` lists what a newer list changed that a pinned consumer would notice: a tool or
-  input removed, an input made required, an output schema dropped, a changed exposure.
+  input removed, an input made required, an output schema dropped, a changed exposure. The endpoint lists the owner
+  tools only to a caller that sends an owner token, so compare against a `list_tools()` made with one: without it,
+  every owner tool reads as removed.
 
 ## Security
 
