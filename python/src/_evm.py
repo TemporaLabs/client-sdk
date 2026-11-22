@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import Any, Final
 
-# The EVM chains the API serves (`GET /v1/chains` at API 0.1.6, the version in
+# The EVM chains the API serves (`GET /v1/chains` at API 0.2.0, the version in
 # `spec/SOURCE`), by chain id. A step or a vault on any other
 # chain is refused. A chain the API adds later is refused until a client release adds it here: stricter, never
 # looser.
