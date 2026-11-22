@@ -1,6 +1,7 @@
 name: CI TypeScript
 
-# The npm package in typescript/: its generation check, typecheck, tests and the client-pack check, on every push to
+# The npm package in typescript/: its generation check, typecheck, tests and the client-pack check on the Node.js version
+# in .nvmrc, then the tests, the build and loading the built package on the older Node.js versions it supports. On every push to
 # a version branch (vX.Y.Z or release/vX.Y.Z) or main and on every pull request into one. The checks that cover the
 # whole repository are in ci-repo.yml. This workflow publishes nothing.
 on:
@@ -43,3 +44,34 @@ jobs:
         run: npm test
       - name: The client package packs clean and installs in a clean project
         run: npm run check:client-pack
+
+  # The package supports Node.js 22.12 or later (`engines`). Its oldest version, the latest 22 and 24 run the tests,
+  # build the package and load both entry points with `import` and with `require()`.
+  runtimes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['22.12.0', '22', '24']
+    defaults:
+      run:
+        working-directory: typescript
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: typescript/package-lock.json
+      - name: Install from the lockfile, with no install scripts
+        run: npm ci --ignore-scripts
+      - name: Tests (one worker)
+        run: npm test
+      - name: The package builds and both entry points load
+        run: |
+          npm run build
+          node --input-type=module -e "const m = await import('./build/index.js'); const p = await import('./build/mcp.js'); if (typeof m.createClient !== 'function' || typeof p.createMcpClient !== 'function') process.exit(1)"
+          node -e "const m = require('./build/index.js'); const p = require('./build/mcp.js'); if (typeof m.createClient !== 'function' || typeof p.createMcpClient !== 'function') process.exit(1)"

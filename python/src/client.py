@@ -154,7 +154,7 @@ def _call(opts: internal.Options, name: str, op: Operation) -> Callable[..., Res
             return _err(0, internal.unsent_header(name))
         try:
             text = internal.to_json(body) if has_body else None
-        except TypeError, ValueError, RecursionError:
+        except (TypeError, ValueError, RecursionError):
             return _err(0, internal.unwritable_body(name))
         try:
             res = internal.send(opts, url, op.method, headers, text)

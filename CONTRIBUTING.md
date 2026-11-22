@@ -26,7 +26,7 @@ Work with the Node.js version in `typescript/.nvmrc` (26.13.1). The generator an
 tests (one worker), the public-text scan, the package check, and that each package folder's `LICENSE` and
 `NOTICE` match the root's. Add a test for any behaviour you change.
 
-For the Python package, work in `python/` with Python 3.14 (the version CI tests), in a virtual environment:
+For the Python package, work in `python/` with Python 3.14 (CI also tests 3.13, the oldest the package supports), in a virtual environment:
 
 ```sh
 python -m venv .venv && . .venv/bin/activate

@@ -147,9 +147,9 @@ first branch that fits and `oneOf` exactly one; an `enum` or `const` matches onl
 role, over `_internal.py`, the port of `internal.ts`, and `_evm.py`, the port of `evm.ts`. A call is synchronous, on an `httpx.Client`; it runs on a
 thread of its own, so the timeout holds through the answer's last byte whatever the transport does.
 
-**The checks.** `.github/workflows/ci-python.yml` runs, on Python 3.14: `ruff`, `mypy src tests`,
+**The checks.** `.github/workflows/ci-python.yml` runs, on Python 3.13 and 3.14: `ruff`, `mypy src tests`,
 `python scripts/generate.py --check`, `pytest`, then builds the wheel, installs it into a clean environment and
-imports it from outside the repository; it also audits the runtime dependencies with `pip-audit`.
+imports it from outside the repository; on 3.14 it also audits the runtime dependencies with `pip-audit`.
 
 ## One verdict for both clients
 
