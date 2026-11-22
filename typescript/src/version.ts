@@ -1,2 +1,2 @@
 /** This package's version, as `package.json` names it (a test holds the two equal). */
-export const CLIENT_VERSION = '0.2.0'
+export const CLIENT_VERSION = '0.2.1'
