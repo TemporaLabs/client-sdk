@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   typescript:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
     defaults:
       run:
@@ -48,7 +48,7 @@ jobs:
   # The package supports Node.js 22.12 or later (`engines`). Its oldest version, the latest 22 and 24 run the tests,
   # build the package and load both entry points with `import` and with `require()`.
   runtimes:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
     strategy:
       fail-fast: false

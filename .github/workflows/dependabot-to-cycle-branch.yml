@@ -39,7 +39,7 @@ jobs:
       (github.event_name == 'create' && github.event.ref_type == 'branch'
         && (startsWith(github.event.ref, 'v') || startsWith(github.event.ref, 'release/v')))
       || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 5
     steps:
       - name: Move Dependabot PRs to the cycle branch
