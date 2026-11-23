@@ -5,6 +5,8 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ## [Unreleased]
 
+## [v0.2.1] - 2026-11-23
+
 ### Changed
 
 - **Runs on Node.js 22.12 or later** (`engines` is `>=22.12`) **and Python 3.13 or later** (`requires-python` is
