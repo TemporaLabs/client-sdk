@@ -195,6 +195,18 @@ jobs:
           set -euo pipefail
           echo "${SUM}  pkg/${FILE}" | sha256sum -c -
 
+      # Whatever npm would do with an empty or unexpected --tag, this job refuses any dist-tag but the two
+      # verify can produce, before either publish step runs.
+      - name: the dist-tag is latest or next
+        env:
+          DIST_TAG: ${{ needs.verify.outputs.dist_tag }}
+        run: |
+          set -euo pipefail
+          case "${DIST_TAG}" in
+            latest|next) echo "dist-tag ${DIST_TAG}" >> "$GITHUB_STEP_SUMMARY" ;;
+            *) echo "::error::dist-tag '${DIST_TAG}' is neither latest nor next; nothing is published"; exit 1 ;;
+          esac
+
       - name: dry run — nothing is published
         if: ${{ inputs.dry_run }}
         env:
