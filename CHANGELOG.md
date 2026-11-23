@@ -5,12 +5,6 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ## [Unreleased]
 
-### Added
-
-- **Prereleases.** A tag `vX.Y.Z-rc.N` on the release branch can be published to npm under the dist-tag `next`, so
-  `latest` never moves to a prerelease. Releases still publish from `main` under `latest`. See
-  [Versioning](docs/versioning.md#release-tags).
-
 ## [v0.2.1] - 2026-11-23
 
 ### Changed

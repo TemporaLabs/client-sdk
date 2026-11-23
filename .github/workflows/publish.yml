@@ -5,13 +5,11 @@
 # is the point of no return. Someone chooses the tag, looks at it, and then chooses to publish it.
 #
 # Run it FROM the tag (the "Use workflow from" choice is the tag itself), so this file is the copy the
-# tag holds. It runs only on the public repository, TemporaLabs/client-sdk; a copy anywhere else skips
-# both jobs.
+# tag holds, which the gates below require to be on main. It runs only on the public repository,
+# TemporaLabs/client-sdk; a copy anywhere else skips both jobs.
 #
-# Two kinds of tag publish, and nothing else (typescript/scripts/release-tag.mjs decides):
-#   - a release, vX.Y.Z, must be on main and is published under the npm dist-tag `latest`;
-#   - a prerelease, vX.Y.Z-rc.N, must be on its release branch, release/vX.Y.Z, and is published under
-#     `next`, so `latest` never moves to a prerelease.
+# Only a release is published: a tag vX.Y.Z, on main, under the npm dist-tag `latest`. Any other tag
+# shape, a prerelease such as vX.Y.Z-rc.N included, is refused (typescript/scripts/release-tag.mjs).
 #
 # Two jobs, so that nothing but the publish holds the publishing identity:
 #   - verify: every gate, the full check and the build, run from the tag with no id-token. It packs
@@ -36,7 +34,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "the existing tag to publish, e.g. v0.2.2 or v0.2.2-rc.1. Run the workflow from that same tag."
+        description: "the existing tag to publish, e.g. v0.2.2. Run the workflow from that same tag."
         type: string
         required: true
       dry_run:
@@ -64,7 +62,6 @@ jobs:
       sha256: ${{ steps.pack.outputs.sha256 }}
       name: ${{ steps.pack.outputs.name }}
       version: ${{ steps.pack.outputs.version }}
-      dist_tag: ${{ steps.tag.outputs.dist_tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -78,15 +75,13 @@ jobs:
         with:
           node-version: 26.13.1
 
-      - name: the tag must be a release or a prerelease, and agree with package.json
-        id: tag
+      - name: the tag must be a release, vX.Y.Z, and agree with package.json
         env:
           TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          out="$(node scripts/release-tag.mjs "$TAG")" || { echo "::error::tag ${TAG} cannot be published; see the line above"; exit 1; }
-          echo "$out" >> "$GITHUB_OUTPUT"
-          echo "tag ${TAG} == package.json; $(tr '\n' ' ' <<<"$out")" >> "$GITHUB_STEP_SUMMARY"
+          node scripts/release-tag.mjs "$TAG" || { echo "::error::tag ${TAG} cannot be published; see the line above"; exit 1; }
+          echo "tag ${TAG} is a release and matches package.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: package.json must not be private
         run: |
@@ -106,15 +101,13 @@ jobs:
           fi
           echo "${name}@${ver} is not on the registry" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: the tag must be on its branch (main for a release, release/vX.Y.Z for a prerelease)
-        env:
-          BRANCH: ${{ steps.tag.outputs.branch }}
+      - name: the tag must be an ancestor of main — never publish off a branch that did not ship
         run: |
           set -euo pipefail
-          git fetch --no-tags --depth=200 origin "refs/heads/${BRANCH}"
+          git fetch --no-tags --depth=200 origin main
           git merge-base --is-ancestor HEAD FETCH_HEAD || {
-            echo "::error::this tag is not reachable from origin/${BRANCH}; it names a tree that was never merged there"; exit 1; }
-          echo "tag is an ancestor of ${BRANCH}" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::this tag is not reachable from origin/main; it names a tree that was never merged"; exit 1; }
+          echo "tag is an ancestor of main" >> "$GITHUB_STEP_SUMMARY"
 
       - run: npm ci --ignore-scripts
 
@@ -195,35 +188,21 @@ jobs:
           set -euo pipefail
           echo "${SUM}  pkg/${FILE}" | sha256sum -c -
 
-      # Whatever npm would do with an empty or unexpected --tag, this job refuses any dist-tag but the two
-      # verify can produce, before either publish step runs.
-      - name: the dist-tag is latest or next
-        env:
-          DIST_TAG: ${{ needs.verify.outputs.dist_tag }}
-        run: |
-          set -euo pipefail
-          case "${DIST_TAG}" in
-            latest|next) echo "dist-tag ${DIST_TAG}" >> "$GITHUB_STEP_SUMMARY" ;;
-            *) echo "::error::dist-tag '${DIST_TAG}' is neither latest nor next; nothing is published"; exit 1 ;;
-          esac
-
       - name: dry run — nothing is published
         if: ${{ inputs.dry_run }}
         env:
           FILE: ${{ needs.verify.outputs.file }}
-          DIST_TAG: ${{ needs.verify.outputs.dist_tag }}
         run: |
           set -euo pipefail
-          npm publish "./pkg/${FILE}" --access public --tag "${DIST_TAG}" --dry-run
+          npm publish "./pkg/${FILE}" --access public --tag latest --dry-run
           echo "dry_run was true: every gate passed and nothing was published." >> "$GITHUB_STEP_SUMMARY"
 
       - name: publish (trusted publishing; provenance from this job's OIDC identity)
         if: ${{ !inputs.dry_run }}
         env:
           FILE: ${{ needs.verify.outputs.file }}
-          DIST_TAG: ${{ needs.verify.outputs.dist_tag }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish "./pkg/${FILE}" --access public --tag "${DIST_TAG}" --provenance
+        run: npm publish "./pkg/${FILE}" --access public --tag latest --provenance
 
       # The registry can take minutes to serve a freshly published scoped package. This step polls for
       # ten minutes and, if the version has still not resolved, records a WARNING rather than a failure:
