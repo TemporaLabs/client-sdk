@@ -5,8 +5,13 @@
 # is the point of no return. Someone chooses the tag, looks at it, and then chooses to publish it.
 #
 # Run it FROM the tag (the "Use workflow from" choice is the tag itself), so this file is the copy the
-# tag holds, which the gates below require to be on main. It runs only on the public repository,
-# TemporaLabs/client-sdk; a copy anywhere else skips both jobs.
+# tag holds. It runs only on the public repository, TemporaLabs/client-sdk; a copy anywhere else skips
+# both jobs.
+#
+# Two kinds of tag publish, and nothing else (typescript/scripts/release-tag.mjs decides):
+#   - a release, vX.Y.Z, must be on main and is published under the npm dist-tag `latest`;
+#   - a prerelease, vX.Y.Z-rc.N, must be on its release branch, release/vX.Y.Z, and is published under
+#     `next`, so `latest` never moves to a prerelease.
 #
 # Two jobs, so that nothing but the publish holds the publishing identity:
 #   - verify: every gate, the full check and the build, run from the tag with no id-token. It packs
@@ -31,7 +36,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "the existing tag to publish, e.g. v0.1.0. Run the workflow from that same tag."
+        description: "the existing tag to publish, e.g. v0.2.2 or v0.2.2-rc.1. Run the workflow from that same tag."
         type: string
         required: true
       dry_run:
@@ -59,6 +64,7 @@ jobs:
       sha256: ${{ steps.pack.outputs.sha256 }}
       name: ${{ steps.pack.outputs.name }}
       version: ${{ steps.pack.outputs.version }}
+      dist_tag: ${{ steps.tag.outputs.dist_tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -67,16 +73,20 @@ jobs:
           ref: refs/tags/${{ inputs.tag }}
           persist-credentials: false
 
-      - name: the tag must agree with package.json, or this is the wrong one-shot version
+      # Before the gates, so the tag check runs on the pinned Node.js rather than the runner's own.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26.13.1
+
+      - name: the tag must be a release or a prerelease, and agree with package.json
+        id: tag
         env:
           TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          want="${TAG#v}"
-          got="$(node -p 'require("./package.json").version')"
-          [ "$want" = "$got" ] || {
-            echo "::error::tag ${TAG} carries version ${want} but package.json at that tag says ${got}; publishing would spend the wrong version number, permanently"; exit 1; }
-          echo "tag ${TAG} == package.json ${got}" >> "$GITHUB_STEP_SUMMARY"
+          out="$(node scripts/release-tag.mjs "$TAG")" || { echo "::error::tag ${TAG} cannot be published; see the line above"; exit 1; }
+          echo "$out" >> "$GITHUB_OUTPUT"
+          echo "tag ${TAG} == package.json; $(tr '\n' ' ' <<<"$out")" >> "$GITHUB_STEP_SUMMARY"
 
       - name: package.json must not be private
         run: |
@@ -96,17 +106,15 @@ jobs:
           fi
           echo "${name}@${ver} is not on the registry" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: the tag must be an ancestor of main — never publish off a branch that did not ship
+      - name: the tag must be on its branch (main for a release, release/vX.Y.Z for a prerelease)
+        env:
+          BRANCH: ${{ steps.tag.outputs.branch }}
         run: |
           set -euo pipefail
-          git fetch --no-tags --depth=200 origin main
+          git fetch --no-tags --depth=200 origin "refs/heads/${BRANCH}"
           git merge-base --is-ancestor HEAD FETCH_HEAD || {
-            echo "::error::this tag is not reachable from origin/main; it names a tree that was never merged"; exit 1; }
-          echo "tag is an ancestor of main" >> "$GITHUB_STEP_SUMMARY"
-
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 26.13.1
+            echo "::error::this tag is not reachable from origin/${BRANCH}; it names a tree that was never merged there"; exit 1; }
+          echo "tag is an ancestor of ${BRANCH}" >> "$GITHUB_STEP_SUMMARY"
 
       - run: npm ci --ignore-scripts
 
@@ -191,17 +199,19 @@ jobs:
         if: ${{ inputs.dry_run }}
         env:
           FILE: ${{ needs.verify.outputs.file }}
+          DIST_TAG: ${{ needs.verify.outputs.dist_tag }}
         run: |
           set -euo pipefail
-          npm publish "./pkg/${FILE}" --access public --dry-run
+          npm publish "./pkg/${FILE}" --access public --tag "${DIST_TAG}" --dry-run
           echo "dry_run was true: every gate passed and nothing was published." >> "$GITHUB_STEP_SUMMARY"
 
       - name: publish (trusted publishing; provenance from this job's OIDC identity)
         if: ${{ !inputs.dry_run }}
         env:
           FILE: ${{ needs.verify.outputs.file }}
+          DIST_TAG: ${{ needs.verify.outputs.dist_tag }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish "./pkg/${FILE}" --access public --provenance
+        run: npm publish "./pkg/${FILE}" --access public --tag "${DIST_TAG}" --provenance
 
       # The registry can take minutes to serve a freshly published scoped package. This step polls for
       # ten minutes and, if the version has still not resolved, records a WARNING rather than a failure:

@@ -59,4 +59,10 @@ The TypeScript package is published to npm as `@temporalabs/client` at the same 
 on PyPI: it installs from the tag, starting with `v0.1.1`, the first release that has it. See
 [Install](../README.md#install).
 
+A release can be preceded by prereleases, tagged `vX.Y.Z-rc.N` on that release's branch, `release/vX.Y.Z`. A
+prerelease is published to npm at its own version, such as `0.2.2-rc.1`, under the dist-tag `next`, so
+`npm install @temporalabs/client` keeps installing the latest release; install a prerelease by its exact version. The
+Python package installs from the prerelease tag in the same way as from a release tag. A prerelease is for testing
+against a matching API prerelease, and pinning it exactly; it is not a supported release.
+
 What changed in each release is in the [changelog](../CHANGELOG.md).
