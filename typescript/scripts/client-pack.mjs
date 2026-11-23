@@ -14,6 +14,8 @@ const DECLARATIONS = readdirSync(join(root, 'src'), { recursive: true })
   .map((f) => `build/${f.replace(/\.ts$/, '.d.ts')}`)
 const ALLOWED = ['package.json', 'README.md', 'LICENSE', 'NOTICE', 'llms.txt', 'build/index.js', 'build/mcp.js', ...DECLARATIONS]
 const BUILT = ALLOWED.filter((f) => f.startsWith('build/'))
+// The oldest TypeScript the published types support: the first stable 6.x release.
+const OLDEST_TS = '6.0.2'
 const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] })
 const fail = (why) => {
   console.error(`client-pack: ${why}`)
@@ -47,7 +49,7 @@ try {
   const app = join(work, 'app')
   run('mkdir', ['-p', app], work)
   writeFileSync(join(app, 'package.json'), JSON.stringify({ name: 'clean-install', private: true, type: 'module' }))
-  run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', join(work, packed.filename), `typescript@${readTs()}`], app)
+  run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', join(work, packed.filename)], app)
   writeFileSync(
     join(app, 'index.ts'),
     [
@@ -70,12 +72,19 @@ try {
     join(app, 'tsconfig.json'),
     JSON.stringify({ compilerOptions: { strict: true, module: 'nodenext', moduleResolution: 'nodenext', target: 'es2022', noEmit: true, skipLibCheck: false, lib: ['es2022', 'dom'] }, files: ['index.ts'] }),
   )
-  run(join(app, 'node_modules', '.bin', 'tsc'), ['-p', '.'], app)
+  // The types are checked with the oldest TypeScript a user may have and with the one this package builds with.
+  for (const ts of [OLDEST_TS, readTs()]) {
+    run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--no-save', `typescript@${ts}`], app)
+    const tsc = join(app, 'node_modules', 'typescript', 'bin', 'tsc')
+    const got = run('node', [tsc, '--version'], app).trim()
+    if (got !== `Version ${ts}`) fail(`asked for TypeScript ${ts}, got ${got}`)
+    run('node', [tsc, '-p', '.'], app)
+  }
   const loaded = run('node', ['--input-type=module', '-e', "import('@temporalabs/client').then((m) => console.log(typeof m.createClient))"], app).trim()
   if (loaded !== 'function') fail(`import gave ${loaded}`)
   const loadedMcp = run('node', ['--input-type=module', '-e', "import('@temporalabs/client/mcp').then((m) => console.log(typeof m.createMcpClient, typeof m.toolBreaks))"], app).trim()
   if (loadedMcp !== 'function function') fail(`import of /mcp gave ${loadedMcp}`)
-  console.log(`client-pack: ${packed.filename} has ${files.length} files, builds identically twice, scans clean, installs and type-checks in a clean project`)
+  console.log(`client-pack: ${packed.filename} has ${files.length} files, builds identically twice, scans clean, installs and type-checks with TypeScript ${OLDEST_TS} and ${readTs()} in a clean project`)
 } finally {
   rmSync(work, { recursive: true, force: true })
 }

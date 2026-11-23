@@ -16,7 +16,7 @@ and withdrawals into its vaults and portfolios, over the API's HTTP routes or it
 | | TypeScript | Python |
 |---|---|---|
 | Package | `@temporalabs/client` | `temporalabs-client` (imported as `temporalabs_client`) |
-| Needs | Node.js 26 or later; an ES module | Python 3.14 or later |
+| Needs | Node.js 22.12 or later; an ES module | Python 3.13 or later |
 | Runtime dependencies | `zod`; no install scripts | `httpx`, `pydantic` |
 | Published to | npm | this repository, at a release tag (not on PyPI) |
 | Package guide | [typescript/README.md](typescript/README.md) | [python/README.md](python/README.md) |
@@ -26,7 +26,7 @@ Pin an exact version in both languages.
 ### TypeScript
 
 ```bash
-npm install --save-exact @temporalabs/client@0.2.0
+npm install --save-exact @temporalabs/client@0.2.1
 ```
 
 The package has two entry points: `@temporalabs/client` for the HTTP API and `@temporalabs/client/mcp` for the MCP
@@ -41,21 +41,21 @@ node -e "import('@temporalabs/client').then((m) => console.log(m.API_VERSION))" 
 Install from this repository at the release tag. With pip:
 
 ```bash
-pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.0#subdirectory=python"
+pip install "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.1#subdirectory=python"
 ```
 
 With uv:
 
 ```bash
-uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.0#subdirectory=python"
+uv add "temporalabs-client @ git+https://github.com/TemporaLabs/client-sdk.git@v0.2.1#subdirectory=python"
 ```
 
 In a `requirements.txt`, or under `dependencies` in a `pyproject.toml`, use the same quoted string. Keep the
-`@v0.2.0` tag: without it, pip installs whatever `main` holds at the time. The MCP client is in
+`@v0.2.1` tag: without it, pip installs whatever `main` holds at the time. The MCP client is in
 `temporalabs_client.mcp`. Check the install:
 
 ```bash
-python -c "import temporalabs_client as t; print(t.__version__, t.API_VERSION)"     # prints 0.2.0 0.2.0
+python -c "import temporalabs_client as t; print(t.__version__, t.API_VERSION)"     # prints 0.2.1 0.2.0
 ```
 
 ## Quick start
@@ -137,7 +137,7 @@ print([p.id for p in r.body.products] if isinstance(r, Ok) else (r.error.code, r
 
 ## Contributing
 
-You need Node.js 26 or later (`typescript/.nvmrc` names it), Python 3.14 or later and git. The tests make no network calls
+To work on the repository you need Node.js 26 (`typescript/.nvmrc` names it), Python 3.14 and git. The tests make no network calls
 and need no key.
 
 ```bash

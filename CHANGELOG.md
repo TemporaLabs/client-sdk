@@ -7,6 +7,17 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ### Changed
 
+- **Runs on Node.js 22.12 or later** (`engines` is `>=22.12`) **and Python 3.13 or later** (`requires-python` is
+  `>=3.13`), where 0.2.0 needed Node.js 26 and Python 3.14. CI runs the tests on Node.js 22.12.0, 22, 24 and 26 and on
+  Python 3.13 and 3.14, and on each Node.js version builds the package and loads both entry points with `import` and
+  `require()`. The package is still built with TypeScript 7.0.2 on Node.js 26.13.1.
+- **The types are checked with TypeScript 6.0 and 7.0.** The package check installs the packed package into a clean
+  project and type-checks it with TypeScript 6.0.2 and 7.0.2 (`skipLibCheck: false`).
+
+## [v0.2.0] - 2026-11-22
+
+### Changed
+
 - **Generated from API 0.2.0** (`API_VERSION` is `0.2.0`). The API document and its tool list are unchanged from
   0.1.6 apart from their version, so every call, shape and tool is the same, and a client generated from 0.1.6
   works with an API 0.2.0 server.
