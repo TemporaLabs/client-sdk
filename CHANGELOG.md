@@ -5,6 +5,15 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
 
 ## [Unreleased]
 
+### Added
+
+- **Generated from API 0.2.1** (`API_VERSION` is `0.2.1`). Three additions, each optional, so a client generated from
+  0.2.0 works with an API 0.2.1 server:
+  - the enrol signature step may name its agent in `agentAccountId`, a CAIP-10 account, on the step and outside its
+    `payload`; the checks before signing are unchanged;
+  - the error code `agent_busy`;
+  - `retryAfterMs` on an error, the wait the API asks for before trying again.
+
 ## [v0.2.1] - 2026-11-23
 
 ### Changed

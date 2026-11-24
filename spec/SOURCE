@@ -1,4 +1,4 @@
 The Tempora API document this client is generated from.
-api-version: 0.2.0
-sha256: a0f941cc5bf4553f42e496c7e4415e32ed5f462b7823d107dd5e2cfe46e52e3f
-tools-sha256: 04bd986c6cfc7d0de2ff63e70337f6007c40b43089ca5b5ecd4b33ccd923805f
+api-version: 0.2.1
+sha256: 51a7f9bfde30b32aece226c6ba4a364f6d24198138c810e333eb6a70de81f695
+tools-sha256: ba09ae1d140395a5dfd8f219ed95c37c1cb7600c8a48f6b99bcf357ae3aa32f4
