@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "tools": [
     {
       "name": "products",
@@ -3624,6 +3624,11 @@
                       "type": "string",
                       "minLength": 1
                     },
+                    "agentAccountId": {
+                      "description": "An enrolment's agent: the account the signature lets act on the owner's smart account, as CAIP-10. A client may check it against the agents it trusts before the wallet opens.",
+                      "type": "string",
+                      "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+                    },
                     "payload": {
                       "type": "object",
                       "properties": {
@@ -5309,6 +5314,11 @@
                     "purpose": {
                       "type": "string",
                       "minLength": 1
+                    },
+                    "agentAccountId": {
+                      "description": "An enrolment's agent: the account the signature lets act on the owner's smart account, as CAIP-10. A client may check it against the agents it trusts before the wallet opens.",
+                      "type": "string",
+                      "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
                     },
                     "payload": {
                       "type": "object",
@@ -7014,6 +7024,11 @@
                       "type": "string",
                       "minLength": 1
                     },
+                    "agentAccountId": {
+                      "description": "An enrolment's agent: the account the signature lets act on the owner's smart account, as CAIP-10. A client may check it against the agents it trusts before the wallet opens.",
+                      "type": "string",
+                      "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+                    },
                     "payload": {
                       "type": "object",
                       "properties": {
@@ -8575,6 +8590,11 @@
                       "type": "string",
                       "minLength": 1
                     },
+                    "agentAccountId": {
+                      "description": "An enrolment's agent: the account the signature lets act on the owner's smart account, as CAIP-10. A client may check it against the agents it trusts before the wallet opens.",
+                      "type": "string",
+                      "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
+                    },
                     "payload": {
                       "type": "object",
                       "properties": {
@@ -10124,6 +10144,11 @@
                     "purpose": {
                       "type": "string",
                       "minLength": 1
+                    },
+                    "agentAccountId": {
+                      "description": "An enrolment's agent: the account the signature lets act on the owner's smart account, as CAIP-10. A client may check it against the agents it trusts before the wallet opens.",
+                      "type": "string",
+                      "pattern": "^eip155:\\d{1,20}:0x[0-9a-fA-F]{40}$"
                     },
                     "payload": {
                       "type": "object",
