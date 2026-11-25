@@ -67,8 +67,8 @@ function call(opts: ClientOptions, name: string, op: Op) {
     let res: Answer
     try {
       res = await send(opts, url, op.method, headers, body, o.signal)
-    } catch {
-      return { ok: false, status: 0, error: noAnswer(op.method, name) } as const
+    } catch (e) {
+      return { ok: false, status: 0, error: noAnswer(op.method, name, e) } as const
     }
     const traceId = res.headers.get(TRACE_HEADER) ?? undefined
     const json: unknown = await res.json().catch(() => undefined)

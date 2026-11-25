@@ -158,8 +158,8 @@ def _call(opts: internal.Options, name: str, op: Operation) -> Callable[..., Res
             return _err(0, internal.unwritable_body(name))
         try:
             res = internal.send(opts, url, op.method, headers, text)
-        except Exception:
-            return _err(0, internal.local(op.method, "network_error", f"The {name} call got no answer."))
+        except Exception as e:
+            return _err(0, internal.no_answer(op.method, name, e))
         trace_id = res.headers.get(internal.TRACE_HEADER)
         value = res.json()
         if res.ok:

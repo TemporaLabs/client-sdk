@@ -312,6 +312,33 @@ class NoAnswer(Exception):
     no response."""
 
 
+class TimedOut(NoAnswer):
+    """The request got no answer before the client's timeout."""
+
+
+def _in_chain(e: BaseException | None, kinds: tuple[type[BaseException], ...]) -> bool:
+    """Whether e, or an exception it was raised from or during, is one of kinds."""
+    seen = 0
+    while e is not None and seen < 8:
+        if isinstance(e, kinds):
+            return True
+        e = e.__cause__ or e.__context__
+        seen += 1
+    return False
+
+
+def no_answer(method: str, name: str, e: BaseException | None = None) -> ApiError:
+    """A call that got no answer. A refused connection and the client's timeout say so, so a caller can tell
+    nothing listening from no answer in time. Its outcome follows the method (see `local`) either way."""
+    if _in_chain(e, (TimedOut, httpx.TimeoutException)):
+        return local(method, "network_error", f"The {name} call got no answer before the timeout.")
+    if _in_chain(e, (ConnectionRefusedError,)):
+        return local(
+            method, "network_error", f"The {name} call could not connect: the connection was refused."
+        )
+    return local(method, "network_error", f"The {name} call got no answer.")
+
+
 @dataclass
 class Answer:
     """The parts of an answer the clients read. The body is read under the same deadline as the request."""
@@ -388,7 +415,7 @@ def send(opts: Options, url: str, method: str, headers: dict[str, str], body: st
         kind, value = results.get(timeout=opts.timeout_s)
     except queue.Empty:
         stop.set()
-        raise NoAnswer("no answer before the timeout") from None
+        raise TimedOut("no answer before the timeout") from None
     if kind != "response":
         raise NoAnswer("no answer") from value if isinstance(value, BaseException) else None
     return Answer(

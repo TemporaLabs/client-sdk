@@ -101,6 +101,25 @@ jobs:
           fi
           echo "${name}@${ver} is not on the registry" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: this version must be above the registry's latest — publishing never moves latest back
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          name="$(node -p 'require("./package.json").name')"
+          # A package that does not exist yet answers E404: that is a first publish, and nothing is latest.
+          # Any other failure to read the registry stops the publish rather than skip the check.
+          if out="$(npm view "${name}" dist-tags.latest 2>"${RUNNER_TEMP}/latest.err")"; then
+            latest="${out}"
+          elif grep -q E404 "${RUNNER_TEMP}/latest.err"; then
+            latest=""
+          else
+            cat "${RUNNER_TEMP}/latest.err"; echo "::error::could not read ${name}'s current latest from the registry"; exit 1
+          fi
+          node scripts/release-tag.mjs "$TAG" --latest "${latest}" || {
+            echo "::error::${TAG} is not above ${name}@${latest:-nothing}; see the line above"; exit 1; }
+          echo "${TAG} is above the registry's latest (${latest:-none yet})" >> "$GITHUB_STEP_SUMMARY"
+
       - name: the tag must be an ancestor of main — never publish off a branch that did not ship
         run: |
           set -euo pipefail

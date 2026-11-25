@@ -94,6 +94,16 @@ def _unreadable(method: str, name: str) -> ApiError:
     return internal.local(method, "unreadable_answer", f"The {name} answer was not readable.")
 
 
+def _unreadable_at(res: internal.Answer, error: ApiError) -> Err:
+    """An answer that is not the endpoint's (a gateway's raw 429 or 503, a page) as a Result. It keeps what
+    the HTTP layer said, the trace id and, on an error status, the Retry-After wait, as the HTTP client
+    does."""
+    wait = None if res.ok else _seconds(res.headers.get(internal.RETRY_AFTER_HEADER))
+    return Err(
+        status=res.status, error=error, trace_id=res.headers.get(internal.TRACE_HEADER), retry_after=wait
+    )
+
+
 def _api_error(value: Any) -> ApiError | None:
     """An API error, if the value is one the document allows (the same rule as the HTTP client)."""
     return internal.api_error_in({"error": value}) if value is not _U else None
@@ -129,7 +139,7 @@ def _rpc_error(res: internal.Answer, error: Any, method: str, name: str) -> Err:
         api = _api_error(error)
     wait = _seconds(res.headers.get(internal.RETRY_AFTER_HEADER))
     if api is None:
-        return Err(status=res.status, error=_unreadable(method, name))
+        return _unreadable_at(res, _unreadable(method, name))
     return Err(status=res.status, error=api, trace_id=api.traceId, retry_after=wait)
 
 
@@ -206,13 +216,11 @@ def _call_tool(
             return Err(status=0, error=internal.unwritable_body(name))
         try:
             res = internal.send(opts, opts.url, "POST", headers, rpc_body)
-        except Exception:
-            return Err(
-                status=0, error=internal.local(op.method, "network_error", f"The {name} call got no answer.")
-            )
+        except Exception as e:
+            return Err(status=0, error=internal.no_answer(op.method, name, e))
         # The endpoint answers in JSON; anything else (a stream, a page) is not its answer.
         if not _is_json(res):
-            return Err(status=res.status, error=_unreadable(op.method, name))
+            return _unreadable_at(res, _unreadable(op.method, name))
         rpc = res.json()
         error = _get(rpc, "error")
         if _truthy(error):
@@ -239,7 +247,7 @@ def _call_tool(
                 return Err(status=status, error=_unreadable(op.method, name))
             return Err(status=status, error=api, trace_id=api.traceId, retry_after=wait)
         if not res.ok:
-            return Err(status=res.status, error=_unreadable(op.method, name))
+            return _unreadable_at(res, _unreadable(op.method, name))
         schema = internal.answer_schema(op, path)
         ok, data = (False, None) if schema is _U or value is _U else internal.check(schema, value)
         trace_id = res.headers.get(internal.TRACE_HEADER)
@@ -261,13 +269,10 @@ def _list_tools(opts: internal.Options) -> Callable[..., Result[tuple[dict[str, 
         body = json.dumps({**_JSON_RPC, "method": "tools/list", "params": {"_meta": META}}, default=dict)
         try:
             res = internal.send(opts, opts.url, "POST", headers, body)
-        except Exception:
-            return Err(
-                status=0, error=internal.local(_LIST_METHOD, "network_error", "The tool list got no answer.")
-            )
-        unreadable = Err(
-            status=res.status,
-            error=internal.local(_LIST_METHOD, "unreadable_answer", "The tool list was not readable."),
+        except Exception as e:
+            return Err(status=0, error=internal.no_answer(_LIST_METHOD, "tool list", e))
+        unreadable = _unreadable_at(
+            res, internal.local(_LIST_METHOD, "unreadable_answer", "The tool list was not readable.")
         )
         # The endpoint answers in JSON, and every item of the list must be a tool.
         if not _is_json(res):

@@ -53,3 +53,47 @@ describe('which tags the publish workflow accepts', () => {
     expect(run().status).toBe(1)
   })
 })
+
+describe('a release must be above the version npm installs today', () => {
+  it.each([
+    ['v0.2.2', '0.2.2', '0.2.1'],
+    ['v0.3.0', '0.3.0', '0.2.9'],
+    ['v1.0.0', '1.0.0', '0.9.9'],
+    ['v0.10.0', '0.10.0', '0.9.0'],
+    ['v0.2.10', '0.2.10', '0.2.9'],
+  ])('publishes %s over latest %s', (tag, version, latest) => {
+    const r = run(tag, version, '--latest', latest)
+    expect(r.status).toBe(0)
+    expect(r.stdout).toBe('')
+    expect(r.stderr).toBe('')
+  })
+
+  it('publishes the first release when nothing is published yet', () => {
+    const r = run('v0.0.1', '0.0.1', '--latest', '')
+    expect(r.status).toBe(0)
+    expect(r.stderr).toBe('')
+  })
+
+  it.each([
+    ['v0.2.1', '0.2.1', '0.2.2'],
+    ['v0.2.2', '0.2.2', '0.2.2'],
+    ['v0.9.0', '0.9.0', '0.10.0'],
+    ['v0.2.9', '0.2.9', '0.2.10'],
+    ['v0.9.9', '0.9.9', '1.0.0'],
+  ])('refuses %s when latest is %s', (tag, version, latest) => {
+    const r = run(tag, version, '--latest', latest)
+    expect(r.status).toBe(1)
+    expect(r.stdout).toBe('')
+    expect(r.stderr).toMatch(/not above the current latest/)
+  })
+
+  it.each(['0.2', 'v0.2.2', '0.2.2-rc.1', 'garbage'])('refuses an unreadable latest %j rather than guess', (latest) => {
+    const r = run('v0.2.2', '0.2.2', '--latest', latest)
+    expect(r.status).toBe(1)
+    expect(r.stderr).toMatch(/cannot read the current latest/)
+  })
+
+  it('refuses --latest with no value', () => {
+    expect(run('v0.2.2', '0.2.2', '--latest').status).toBe(1)
+  })
+})

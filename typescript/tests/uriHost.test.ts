@@ -28,3 +28,44 @@ describe('the host of a uri answer', () => {
     expect(ok({ type: 'string' }, 'https://xn--abc.com')).toBe(true)
   })
 })
+
+describe('a uri under nested unions whose branches overlap', () => {
+  // Each level is a union of two branches that both fit, over the same next level: a walk that re-checks every
+  // fitting branch does 2^depth work when the host is bad.
+  const chain = (depth: number): unknown => {
+    let s: unknown = url
+    for (let i = 0; i < depth; i++) {
+      const next = s
+      s = { anyOf: [{ type: 'object', properties: { a: next } }, { type: 'object', properties: { a: next, b: { type: 'string' } } }] }
+    }
+    return s
+  }
+  const value = (depth: number, leaf: string): unknown => {
+    let v: unknown = leaf
+    for (let i = 0; i < depth; i++) v = { a: v }
+    return v
+  }
+  // The walk judges the host only where the runtime's URL parser accepts it (Node 26). Elsewhere zod refuses the host
+  // first, so the walk never runs, and zod's own refusal under these unions is slow and, under jest on Node 22, leaves
+  // its later url checks wrong for the rest of the run. The case runs only where the walk is what decides.
+  const host = 'https://xn--abc.com/'
+  const walkDecides = (() => {
+    try {
+      new URL(host)
+      return true
+    } catch {
+      return false
+    }
+  })()
+  ;(walkDecides ? it : it.skip)('is judged in time that grows with the depth, not doubles with it', () => {
+    const schema = chain(14)
+    // The first checks build the validators, once per branch; what is timed is the walk over a bad host after that.
+    const good = value(14, 'https://example.com/')
+    const bad = value(14, host)
+    expect(ok(schema, good)).toBe(true)
+    ok(schema, bad)
+    const started = performance.now()
+    expect(ok(schema, bad)).toBe(false)
+    expect(performance.now() - started).toBeLessThan(50)
+  })
+})
