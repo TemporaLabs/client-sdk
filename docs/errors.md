@@ -85,8 +85,9 @@ Every other call is a read.
 ## Rate limits
 
 For `rate_limited`, wait before trying again. When the API says how long, the result carries `retryAfter`,
-in whole seconds (at most one day), read from its `Retry-After` header. If the error's `gates` carry a `satisfy` of kind
-`wait` with an `until`, wait until then.
+in whole seconds (at most one day), read from its `Retry-After` header. The error itself may also carry
+`retryAfterMs`, the wait the API asks for in milliseconds. If the error's `gates` carry a `satisfy` of kind `wait` with
+an `until`, wait until then.
 
 ## What is safe to try again
 
@@ -110,7 +111,7 @@ in whole seconds (at most one day), read from its `Retry-After` header. If the e
 `unknown_origin`, `gate_failed`, `not_invited`, `unknown_product`, `not_found`, `no_account`,
 `already_enrolled`, `account_updating`, `transfer_claimed`, `upstream_refused`, `authorization_rejected`,
 `authorization_other_account`, `pays_someone_else`, `transfer_mismatch`, `nothing_to_withdraw`,
-`request_expired`, `rate_limited`, `enrolment_check_failed`, `internal_error`, `upstream_in_progress`,
+`request_expired`, `rate_limited`, `agent_busy`, `enrolment_check_failed`, `internal_error`, `upstream_in_progress`,
 `upstream_unavailable`, `upstream_unreadable`, `unexpected_answer`, `unknown_agent`, `live_key_missing`,
 `upstream_not_sent`, `reasoning_unreadable`, `upstream_timeout`, `not_permitted`.
 
