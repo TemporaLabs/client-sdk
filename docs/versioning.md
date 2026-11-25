@@ -56,7 +56,8 @@ speaks; the package version says which release of the client it is. Before `1.0.
 ## Release tags
 
 Each release is tagged `vX.Y.Z` on this repository, and the tag is that version's source. The first is `v0.1.0`.
-The TypeScript package is published to npm as `@temporalabs/client` at the same version. The Python package is not
+The TypeScript package is published to npm as `@temporalabs/client` at the same version, under npm's `latest`. Only a
+release tag on `main` is published: a prerelease tag such as `v0.2.2-rc.1` never is. The Python package is not
 on PyPI: it installs from the tag, starting with `v0.1.1`, the first release that has it. See
 [Install](../README.md#install).
 

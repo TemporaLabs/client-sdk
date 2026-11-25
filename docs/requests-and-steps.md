@@ -242,7 +242,9 @@ The intent (`PortfolioDepositIntent`) is `chain`, `tokenAddress` (the deposit to
 (the request's), and `amount`, in the token's raw units (left out for an enrol-only request). The transfer must
 be exactly `transfer(smartAccount, amount)` on the token, with no value, in its canonical encoding. Each payload holds
 only the API's own fields: `bytes` for the enrol signature, `to`, `data` and `value` for the transfer, each with
-`generation` and `expiresAt`.
+`generation` and `expiresAt`. The enrol step may also name its agent in `agentAccountId`, the account the signature lets act on the owner's smart
+account, as a CAIP-10 id (`eip155:<chain>:<address>`). It sits on the step, outside the payload, and the checks before
+signing do not read it: if you keep a list of the agents you trust, compare it before the wallet opens.
 
 The check pays whatever `smartAccount` you pass it. It comes from the API's answer, and the check cannot vouch
 for it: like the vault check, it catches a wrong step, never a wrong record. If you hold your own record of the
