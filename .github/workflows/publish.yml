@@ -16,8 +16,9 @@
 #     the tarball once and hands it on with its sha256. The check runs devDependency code, and none of
 #     it can mint a token.
 #   - publish: runs in the npm-publish environment, which is limited to release tags and needs a
-#     maintainer's approval. It checks out nothing and installs nothing from the package: it checks
-#     the tarball's sha256 and publishes exactly that file. On a dry run it does all of that and
+#     maintainer's approval, one run at a time. It checks out nothing and installs nothing from the
+#     package: it checks the tarball's sha256, checks again that the version is above npm's latest
+#     (which can move during the approval wait), and publishes exactly that file. On a dry run it does all of that and
 #     stops at `npm publish --dry-run`.
 #
 # Authentication is npm trusted publishing: the publish job's GitHub OIDC identity, with no long-lived
@@ -60,6 +61,7 @@ jobs:
     outputs:
       file: ${{ steps.pack.outputs.file }}
       sha256: ${{ steps.pack.outputs.sha256 }}
+      script_sha256: ${{ steps.pack.outputs.script_sha256 }}
       name: ${{ steps.pack.outputs.name }}
       version: ${{ steps.pack.outputs.version }}
     steps:
@@ -107,18 +109,12 @@ jobs:
         run: |
           set -euo pipefail
           name="$(node -p 'require("./package.json").name')"
-          # A package that does not exist yet answers E404: that is a first publish, and nothing is latest.
-          # Any other failure to read the registry stops the publish rather than skip the check.
-          if out="$(npm view "${name}" dist-tags.latest 2>"${RUNNER_TEMP}/latest.err")"; then
-            latest="${out}"
-          elif grep -q E404 "${RUNNER_TEMP}/latest.err"; then
-            latest=""
-          else
-            cat "${RUNNER_TEMP}/latest.err"; echo "::error::could not read ${name}'s current latest from the registry"; exit 1
-          fi
-          node scripts/release-tag.mjs "$TAG" --latest "${latest}" || {
-            echo "::error::${TAG} is not above ${name}@${latest:-nothing}; see the line above"; exit 1; }
-          echo "${TAG} is above the registry's latest (${latest:-none yet})" >> "$GITHUB_STEP_SUMMARY"
+          # A package npm does not have yet (E404) is a first publish, with no latest; any other failure to
+          # read the registry stops the publish rather than skip the check. The publish job checks again
+          # just before it publishes, because latest can move while it waits for approval.
+          node scripts/release-tag.mjs "$TAG" --registry "${name}" || {
+            echo "::error::${TAG} cannot be published over ${name}'s current latest; see the line above"; exit 1; }
+          echo "${TAG} is above the registry's latest at verify time" >> "$GITHUB_STEP_SUMMARY"
 
       - name: the tag must be an ancestor of main — never publish off a branch that did not ship
         run: |
@@ -152,9 +148,13 @@ jobs:
             grep -qx "$f" <<<"$files" || { echo "::error::the tarball is missing $f"; exit 1; }
           done
           sum="$(sha256sum "dist-pack/${file}" | cut -d' ' -f1)"
+          # The publish job checks out nothing, so it gets the latest check from here, beside the tarball.
+          cp scripts/release-tag.mjs dist-pack/release-tag.mjs
+          script_sum="$(sha256sum dist-pack/release-tag.mjs | cut -d' ' -f1)"
           {
             echo "file=${file}"
             echo "sha256=${sum}"
+            echo "script_sha256=${script_sum}"
             echo "name=$(node -p 'require("./package.json").name')"
             echo "version=$(node -p 'require("./package.json").version')"
           } >> "$GITHUB_OUTPUT"
@@ -163,7 +163,9 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package
-          path: typescript/dist-pack/${{ steps.pack.outputs.file }}
+          path: |
+            typescript/dist-pack/${{ steps.pack.outputs.file }}
+            typescript/dist-pack/release-tag.mjs
           if-no-files-found: error
           retention-days: 7
 
@@ -176,6 +178,11 @@ jobs:
     # Limited to release tags and a maintainer's approval in the repository's settings; npm's trusted
     # publisher names this environment, so only a job in it can publish.
     environment: npm-publish
+    # One publish at a time, never cancelled once started, so two runs cannot both pass the latest check
+    # below and then publish in either order. (A newer run waiting here replaces an older one still waiting.)
+    concurrency:
+      group: npm-publish
+      cancel-in-progress: false
     permissions:
       contents: read
       # Trusted publishing and npm provenance are both minted from this OIDC identity.
@@ -199,13 +206,31 @@ jobs:
           name: package
           path: pkg
 
-      - name: the tarball is the one verify packed
+      - name: the tarball and the latest check are the ones verify packed
         env:
           FILE: ${{ needs.verify.outputs.file }}
           SUM: ${{ needs.verify.outputs.sha256 }}
+          SCRIPT_SUM: ${{ needs.verify.outputs.script_sha256 }}
         run: |
           set -euo pipefail
           echo "${SUM}  pkg/${FILE}" | sha256sum -c -
+          echo "${SCRIPT_SUM}  pkg/release-tag.mjs" | sha256sum -c -
+
+      # latest can move while this job waits for its approval, and verify's check is as old as that wait. So
+      # read it again here, after the approval and just before publishing, with the same rule: not above
+      # latest, or a registry that cannot be read, stops the publish. It runs on a dry run too.
+      - name: still above the registry's latest, read again just before publishing
+        env:
+          TAG: ${{ inputs.tag }}
+          NAME: ${{ needs.verify.outputs.name }}
+          VER: ${{ needs.verify.outputs.version }}
+          # Read the public registry without the publish credentials setup-node configures.
+          NPM_CONFIG_USERCONFIG: /dev/null
+        run: |
+          set -euo pipefail
+          node pkg/release-tag.mjs "$TAG" "$VER" --registry "$NAME" || {
+            echo "::error::${TAG} is no longer above ${NAME}'s current latest; nothing was published"; exit 1; }
+          echo "${TAG} is above the registry's latest just before publishing" >> "$GITHUB_STEP_SUMMARY"
 
       - name: dry run — nothing is published
         if: ${{ inputs.dry_run }}
