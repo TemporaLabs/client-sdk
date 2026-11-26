@@ -109,9 +109,10 @@ jobs:
         run: |
           set -euo pipefail
           name="$(node -p 'require("./package.json").name')"
-          # A package npm does not have yet (E404) is a first publish, with no latest; any other failure to
-          # read the registry stops the publish rather than skip the check. The publish job checks again
-          # just before it publishes, because latest can move while it waits for approval.
+          # The package is already on npm, so an E404 is refused like any other failure to read the registry, never
+          # read as "no latest" (release-tag.mjs takes that only with --first-publish, which this workflow never
+          # passes). The publish job checks again just before it publishes, because latest can move while it waits
+          # for approval.
           node scripts/release-tag.mjs "$TAG" --registry "${name}" || {
             echo "::error::${TAG} cannot be published over ${name}'s current latest; see the line above"; exit 1; }
           echo "${TAG} is above the registry's latest at verify time" >> "$GITHUB_STEP_SUMMARY"

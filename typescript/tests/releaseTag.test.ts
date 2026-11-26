@@ -133,7 +133,6 @@ process.stderr.write('npm error code ' + value + '\\n'); process.exit(1)
 
   it.each([
     ['latest is lower', 'ok:0.2.1'],
-    ['npm does not have the package yet', 'err:E404'],
   ])('publishes when %s', (_, answer) => {
     const r = withNpm(answer, fake, 'v0.2.2', '0.2.2', '--registry', 'p')
     expect(r.status).toBe(0)
@@ -145,12 +144,20 @@ process.stderr.write('npm error code ' + value + '\\n'); process.exit(1)
     ['latest is higher', 'ok:0.2.3', /not above the current latest/],
     ['latest is unreadable', 'ok:0.2', /cannot read the current latest/],
     ['npm answers with no latest for a package it has', 'ok:', /npm answered with no latest for p/],
+    ['npm answers E404 without --first-publish', 'err:E404', /npm answered E404 for p/],
     ['the registry fails', 'err:E500', /could not read p's current latest/],
     ['the registry times out', 'err:ETIMEDOUT', /could not read p's current latest/],
   ])('refuses when %s', (_, answer, why) => {
     const r = withNpm(answer, fake, 'v0.2.2', '0.2.2', '--registry', 'p')
     expect(r.status).toBe(1)
     expect(r.stderr).toMatch(why)
+  })
+
+  it('reads E404 as no latest only with --first-publish', () => {
+    const r = withNpm('err:E404', fake, 'v0.0.1', '0.0.1', '--registry', 'p', '--first-publish')
+    expect(r.status).toBe(0)
+    expect(r.stderr).toBe('')
+    expect(withNpm('ok:0.2.2', fake, 'v0.2.1', '0.2.1', '--first-publish', '--registry', 'p').status).toBe(1)
   })
 
   it('refuses when npm cannot be run at all', () => {
@@ -163,6 +170,8 @@ process.stderr.write('npm error code ' + value + '\\n'); process.exit(1)
     [['v0.2.2', '0.2.2', '--registry']],
     [['v0.2.2', '0.2.2', '--registry', '']],
     [['v0.2.2', '0.2.2', '--latest', '0.2.1', '--registry', 'p']],
+    [['v0.0.1', '0.0.1', '--first-publish']],
+    [['v0.0.1', '0.0.1', '--latest', '', '--first-publish']],
   ])('refuses %j', (args) => {
     expect(withNpm('ok:0.2.1', fake, ...args).status).toBe(1)
   })

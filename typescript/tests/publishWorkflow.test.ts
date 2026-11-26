@@ -62,6 +62,10 @@ describe('the publish workflow', () => {
     expect(step).toMatch(/\n {10}\[ "\$NAME" = "@temporalabs\/client" \] \|\| \{ echo "::error::[^"]*"; exit 1; \}\n/)
   })
 
+  it('never passes --first-publish: @temporalabs/client is already on npm, so an E404 is refused, not read as no latest', () => {
+    expect(workflow).not.toMatch(/--first-publish/)
+  })
+
   it('publishes one run at a time and never cancels a publish under way', () => {
     expect(publish).toMatch(/\n {4}concurrency:\n {6}group: npm-publish\n {6}cancel-in-progress: false\n/)
   })
