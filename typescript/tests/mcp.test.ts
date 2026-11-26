@@ -193,6 +193,22 @@ describe('createMcpClient', () => {
     expect(await client.listTools()).toEqual({ ok: false, status, error: expect.objectContaining({ code: 'unreadable_answer' }), traceId: 't-raw', retryAfter: 30 })
   })
 
+  it.each([
+    ['one attempt refused and one unreachable', new AggregateError([Object.assign(new Error('v6'), { code: 'ECONNREFUSED' }), Object.assign(new Error('v4'), { code: 'ENETUNREACH' })])],
+    ['no attempts', new AggregateError([])],
+  ])('a failed fetch with %s is not a refused connection', async (_, cause) => {
+    const { client } = make(() => {
+      throw new TypeError('fetch failed', { cause })
+    })
+    expect(await client.products({})).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', message: 'The products call got no answer.' } })
+  })
+
+  it('a JSON-RPC error with no API error keeps the trace id, and the wait only on an error status', async () => {
+    const rpc = (status: number) => () => new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32020, message: 'Header mismatch' } }), { status, headers: { 'content-type': 'application/json', 'retry-after': '30', 'x-trace-id': 't-rpc' } })
+    expect(await make(rpc(429)).client.products({})).toEqual({ ok: false, status: 429, error: expect.objectContaining({ code: 'unreadable_answer' }), traceId: 't-rpc', retryAfter: 30 })
+    expect(await make(rpc(200)).client.products({})).toEqual({ ok: false, status: 200, error: expect.objectContaining({ code: 'unreadable_answer' }), traceId: 't-rpc' })
+  })
+
   it('an unreadable 2xx answer keeps its trace id but never a wait', async () => {
     const { client } = make(() => new Response('<p>ok</p>', { status: 200, headers: { 'content-type': 'text/html', 'retry-after': '30', 'x-trace-id': 't-ok' } }))
     expect(await client.products({})).toEqual({ ok: false, status: 200, error: expect.objectContaining({ code: 'unreadable_answer' }), traceId: 't-ok' })

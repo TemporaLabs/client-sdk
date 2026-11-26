@@ -114,6 +114,67 @@ class TestTheClient:
         r = client.withdraw(body=WITHDRAW_ALL) if name == "withdraw" else client.positions()
         assert code_outcome(r) == (0, "network_error", outcome)
 
+    def test_a_refused_connection_and_a_timeout_each_say_so_the_outcome_still_follows_the_call(self) -> None:
+        def refused(_: httpx.Request) -> httpx.Response:
+            try:
+                raise ConnectionRefusedError(111, "Connection refused")
+            except ConnectionRefusedError as e:
+                raise httpx.ConnectError("[Errno 111] Connection refused") from e
+
+        client, _ = make(refused)
+        e = err(client.positions())
+        assert (e.status, e.error.code, e.error.outcome, e.error.message) == (
+            0,
+            "network_error",
+            "failed",
+            "The positions call could not connect: the connection was refused.",
+        )
+        e = err(client.withdraw(body=WITHDRAW_ALL))
+        assert (e.error.outcome, e.error.message) == (
+            "unknown",
+            "The withdraw call could not connect: the connection was refused.",
+        )
+
+        def slow(_: httpx.Request) -> httpx.Response:
+            raise httpx.ReadTimeout("timed out")
+
+        client, _ = make(slow)
+        e = err(client.positions())
+        assert (e.error.outcome, e.error.message) == (
+            "failed",
+            "The positions call got no answer before the timeout.",
+        )
+
+        def hangs(_: httpx.Request) -> httpx.Response:
+            time.sleep(1.0)
+            return answer(200, [])
+
+        client, _ = make(hangs, timeout_s=0.2)
+        assert err(client.positions()).error.message == "The positions call got no answer before the timeout."
+
+    def test_a_refusal_raised_while_handling_another_error_still_reads_as_refused(self) -> None:
+        def refused(_: httpx.Request) -> httpx.Response:
+            try:
+                raise ConnectionRefusedError(111, "Connection refused")
+            except ConnectionRefusedError:
+                raise httpx.ConnectError("[Errno 111] Connection refused")  # noqa: B904
+
+        client, _ = make(refused)
+        assert (
+            err(client.positions()).error.message
+            == "The positions call could not connect: the connection was refused."
+        )
+
+    def test_another_socket_error_is_not_a_refused_connection(self) -> None:
+        def reset(_: httpx.Request) -> httpx.Response:
+            try:
+                raise ConnectionResetError(104, "Connection reset by peer")
+            except ConnectionResetError as e:
+                raise httpx.ConnectError("[Errno 104] Connection reset by peer") from e
+
+        client, _ = make(reset)
+        assert err(client.positions()).error.message == "The positions call got no answer."
+
     def test_treats_an_answer_that_is_not_the_contract_as_unreadable_unknown_on_a_write(self) -> None:
         client, _ = make(lambda _: answer(502, "<html>bad gateway</html>"))
         assert code_outcome(client.withdraw(body=WITHDRAW_ALL)) == (502, "unreadable_answer", "unknown")
