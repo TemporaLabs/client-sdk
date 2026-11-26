@@ -77,6 +77,15 @@ describe('the client', () => {
     expect(r).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome, message: `The ${name} call got no answer.` } })
   })
 
+  it('a refused connection and a timeout each say so; the outcome still follows the call', async () => {
+    const refused = () => new TypeError('fetch failed', { cause: Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:1'), { code: 'ECONNREFUSED' }) })
+    const { client: r } = make(() => Promise.reject(refused()))
+    expect(await r.positions({})).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome: 'failed', message: 'The positions call could not connect: the connection was refused.' } })
+    expect(await r.withdraw({ body: { product: 'example-product', amount: { kind: 'all' } } })).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome: 'unknown', message: 'The withdraw call could not connect: the connection was refused.' } })
+    const { client: t } = make(() => Promise.reject(new DOMException('The operation timed out.', 'TimeoutError')))
+    expect(await t.positions({})).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome: 'failed', message: 'The positions call got no answer before the timeout.' } })
+  })
+
   it('treats an answer that is not the contract as unreadable, unknown on a write', async () => {
     const { client } = make(() => answer(502, '<html>bad gateway</html>'))
     const r = await client.withdraw({ body: { product: 'example-product', amount: { kind: 'all' } } })

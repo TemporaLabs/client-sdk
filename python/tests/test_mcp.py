@@ -177,6 +177,23 @@ class TestCreateMcpClient:
         e = err(client.products())
         assert (e.status, e.error.code) == (400, "unreadable_answer")
 
+    def test_a_json_rpc_error_with_no_api_error_keeps_the_trace_id_and_the_wait_only_on_an_error_status(
+        self,
+    ) -> None:
+        rpc = {"jsonrpc": "2.0", "id": 1, "error": {"code": -32020, "message": "Header mismatch"}}
+        headers = {"retry-after": "30", "x-trace-id": "t-rpc"}
+        client, _ = make(lambda _: json_response(rpc, 429, headers=headers))
+        e = err(client.products())
+        assert (e.status, e.error.code, e.trace_id, e.retry_after) == (429, "unreadable_answer", "t-rpc", 30)
+        client, _ = make(lambda _: json_response(rpc, 200, headers=headers))
+        e = err(client.products())
+        assert (e.status, e.error.code, e.trace_id, e.retry_after) == (
+            200,
+            "unreadable_answer",
+            "t-rpc",
+            None,
+        )
+
     def test_a_streamed_answer_is_unreadable_answer(self) -> None:
         client, _ = make(
             lambda _: httpx.Response(

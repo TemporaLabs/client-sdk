@@ -93,6 +93,13 @@ describe('a release must be above the version npm installs today', () => {
     expect(r.stderr).toMatch(/cannot read the current latest/)
   })
 
+  it('reads --latest wherever it comes in the arguments', () => {
+    expect(run('--latest', '0.2.1', 'v0.2.2', '0.2.2').status).toBe(0)
+    const r = run('--latest', '0.2.2', 'v0.2.1', '0.2.1')
+    expect(r.status).toBe(1)
+    expect(r.stderr).toMatch(/not above the current latest/)
+  })
+
   it('refuses --latest with no value', () => {
     expect(run('v0.2.2', '0.2.2', '--latest').status).toBe(1)
   })
