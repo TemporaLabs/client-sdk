@@ -13,8 +13,9 @@ const steps = (body: string): string[] => body.split(/\n(?= {6}- )/).slice(1)
 
 describe('the publish workflow', () => {
   const publish = job('publish')
+  const verifyJob = job('verify')
   const all = steps(publish)
-  const recheck = all.findIndex((s) => /node pkg\/release-tag\.mjs "\$TAG" "\$VER" --registry "\$NAME"/.test(s))
+  const recheck = all.findIndex((s) => /node gate\/typescript\/scripts\/release-tag\.mjs "\$TAG" "\$VER" --registry "\$NAME"/.test(s))
   const publishes = all.flatMap((s, i) => (/npm publish /.test(s) ? [i] : []))
 
   it('checks latest again in the publish job, before every npm publish, dry run or not', () => {
@@ -25,14 +26,25 @@ describe('the publish workflow', () => {
     expect(all[recheck]).not.toMatch(/continue-on-error/)
   })
 
-  it('runs the check verify packed, after checking its sha256', () => {
-    const sums = all.findIndex((s) => /sha256sum -c -/.test(s) && /pkg\/release-tag\.mjs/.test(s))
-    expect(sums).toBeGreaterThan(-1)
-    expect(sums).toBeLessThan(recheck)
-    const verify = job('verify')
-    expect(verify).toMatch(/cp scripts\/release-tag\.mjs dist-pack\/release-tag\.mjs/)
-    expect(verify).toMatch(/typescript\/dist-pack\/release-tag\.mjs/)
-    expect(verify).toMatch(/node scripts\/release-tag\.mjs "\$TAG" --registry "\$\{name\}"/)
+  it('takes the check from git at this run\'s commit, never from verify\'s artifact', () => {
+    const checkout = all.findIndex((s) => /uses: actions\/checkout@/.test(s))
+    expect(checkout).toBeGreaterThan(-1)
+    expect(checkout).toBeLessThan(recheck)
+    const step = all[checkout]
+    expect(step).toMatch(/\n {10}ref: \$\{\{ github\.sha \}\}\n/)
+    expect(step).toMatch(/\n {10}path: gate\n/)
+    expect(step).toMatch(/\n {10}persist-credentials: false\n/)
+    expect(step).toMatch(/\n {10}sparse-checkout: typescript\/scripts\/release-tag\.mjs\n/)
+    expect(step).toMatch(/\n {10}sparse-checkout-cone-mode: false\n/)
+    expect(all.filter((s) => /uses: actions\/checkout@/.test(s))).toHaveLength(1)
+    expect(verifyJob).not.toMatch(/release-tag\.mjs dist-pack/)
+    expect(verifyJob).toMatch(/node scripts\/release-tag\.mjs "\$TAG" --registry "\$\{name\}"/)
+  })
+
+  it('runs nothing from verify\'s artifact: the tarball is only hashed and published', () => {
+    const uses = publish.split('\n').filter((l) => /pkg\//.test(l) || /\bpkg\b/.test(l))
+    expect(uses.length).toBeGreaterThan(0)
+    for (const l of uses) expect(l).toMatch(/^\s+(?:run: )?(path: pkg|echo "\$\{SUM\}  pkg\/\$\{FILE\}" \| sha256sum -c -|npm publish "\.\/pkg\/\$\{FILE\}" )/)
   })
 
   it('publishes one run at a time and never cancels a publish under way', () => {
