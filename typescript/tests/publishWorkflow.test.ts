@@ -63,7 +63,9 @@ describe('the publish workflow', () => {
   })
 
   it('never passes --first-publish: @temporalabs/client is already on npm, so an E404 is refused, not read as no latest', () => {
-    expect(workflow).not.toMatch(/--first-publish/)
+    const code = workflow.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n')
+    expect(code).not.toMatch(/--first-publish/)
+    expect(code).toMatch(/release-tag\.mjs "\$TAG" --registry/)
   })
 
   it('publishes one run at a time and never cancels a publish under way', () => {
