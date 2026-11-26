@@ -9,7 +9,7 @@
 // above the registry's current `latest`, so publishing never moves `latest` back to an older version; an empty
 // value means nothing is published yet. --registry <package> reads that `latest` from npm itself
 // (`npm view <package> dist-tags.latest`; the npm binary is $NPM_BIN when set): a package npm does not have
-// (E404) has no latest, and any other failure to read the registry is refused rather than skipped. The
+// (E404) has no latest; an empty answer for a package it has, and any other failure to read the registry is refused rather than skipped. The
 // publish workflow runs it twice, once in `verify` and again just before `npm publish`, because `latest` can
 // move while the publish waits for its approval. On success it prints nothing and exits 0; otherwise it
 // prints why and exits 1.
@@ -40,8 +40,11 @@ if (reg !== -1) {
   const name = args[reg + 1]
   args.splice(reg, 2)
   const r = spawnSync(process.env.NPM_BIN || 'npm', ['view', name, 'dist-tags.latest'], { encoding: 'utf8' })
-  if (r.status === 0) latest = r.stdout.trim()
-  else if (/\bE404\b/.test(r.stderr ?? '')) latest = ''
+  if (r.status === 0) {
+    // A package npm has always carries a latest; an empty answer is not "nothing published", so refuse it.
+    latest = r.stdout.trim()
+    if (latest === '') fail(`npm answered with no latest for ${name}, which it does have; refusing rather than guess`)
+  } else if (/\bE404\b/.test(r.stderr ?? '')) latest = ''
   else fail(`could not read ${name}'s current latest from the registry; refusing rather than skip the check\n${(r.stderr || String(r.error ?? '')).trim()}`)
 }
 const [tag, given] = args

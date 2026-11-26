@@ -126,7 +126,6 @@ process.stderr.write('npm error code ' + value + '\\n'); process.exit(1)
 
   it.each([
     ['latest is lower', 'ok:0.2.1'],
-    ['the package has no latest', 'ok:'],
     ['npm does not have the package yet', 'err:E404'],
   ])('publishes when %s', (_, answer) => {
     const r = withNpm(answer, fake, 'v0.2.2', '0.2.2', '--registry', 'p')
@@ -138,6 +137,7 @@ process.stderr.write('npm error code ' + value + '\\n'); process.exit(1)
     ['latest is the same version', 'ok:0.2.2', /not above the current latest/],
     ['latest is higher', 'ok:0.2.3', /not above the current latest/],
     ['latest is unreadable', 'ok:0.2', /cannot read the current latest/],
+    ['npm answers with no latest for a package it has', 'ok:', /npm answered with no latest for p/],
     ['the registry fails', 'err:E500', /could not read p's current latest/],
     ['the registry times out', 'err:ETIMEDOUT', /could not read p's current latest/],
   ])('refuses when %s', (_, answer, why) => {

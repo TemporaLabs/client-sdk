@@ -44,7 +44,22 @@ describe('the publish workflow', () => {
   it('runs nothing from verify\'s artifact: the tarball is only hashed and published', () => {
     const uses = publish.split('\n').filter((l) => /pkg\//.test(l) || /\bpkg\b/.test(l))
     expect(uses.length).toBeGreaterThan(0)
-    for (const l of uses) expect(l).toMatch(/^\s+(?:run: )?(path: pkg|echo "\$\{SUM\}  pkg\/\$\{FILE\}" \| sha256sum -c -|npm publish "\.\/pkg\/\$\{FILE\}" )/)
+    const allowed = [
+      /^ {10}path: pkg$/,
+      /^ {10}echo "\$\{SUM\}  pkg\/\$\{FILE\}" \| sha256sum -c -$/,
+      /^ {10}manifest="\$\(tar -xOzf "pkg\/\$\{FILE\}" package\/package\.json\)"$/,
+      /^ {10}npm publish "\.\/pkg\/\$\{FILE\}" --access public --tag latest --dry-run$/,
+      /^ {8}run: npm publish "\.\/pkg\/\$\{FILE\}" --access public --tag latest --provenance$/,
+    ]
+    for (const l of uses) expect(allowed.some((a) => a.test(l)) ? l : `not allowed: ${l}`).toBe(l)
+  })
+
+  it('checks the name and version of the tarball it publishes, not the ones verify reported', () => {
+    const step = all[recheck]
+    expect(step).not.toMatch(/needs\.verify\.outputs\.(name|version)/)
+    expect(step).toMatch(/\n {10}NAME="\$\(node -e 'console\.log\(JSON\.parse\(process\.argv\[1\]\)\.name\)' "\$manifest"\)"\n/)
+    expect(step).toMatch(/\n {10}VER="\$\(node -e 'console\.log\(JSON\.parse\(process\.argv\[1\]\)\.version\)' "\$manifest"\)"\n/)
+    expect(step).toMatch(/\n {10}\[ "\$NAME" = "@temporalabs\/client" \] \|\| \{ echo "::error::[^"]*"; exit 1; \}\n/)
   })
 
   it('publishes one run at a time and never cancels a publish under way', () => {

@@ -225,14 +225,19 @@ jobs:
       - name: still above the registry's latest, read again just before publishing
         env:
           TAG: ${{ inputs.tag }}
-          NAME: ${{ needs.verify.outputs.name }}
-          VER: ${{ needs.verify.outputs.version }}
+          FILE: ${{ needs.verify.outputs.file }}
           # Read the public registry without the publish credentials setup-node configures.
           NPM_CONFIG_USERCONFIG: /dev/null
         run: |
           set -euo pipefail
+          # The name and version come from the tarball that is published, read as data, never from verify's
+          # outputs; the name must also be this package's.
+          manifest="$(tar -xOzf "pkg/${FILE}" package/package.json)"
+          NAME="$(node -e 'console.log(JSON.parse(process.argv[1]).name)' "$manifest")"
+          VER="$(node -e 'console.log(JSON.parse(process.argv[1]).version)' "$manifest")"
+          [ "$NAME" = "@temporalabs/client" ] || { echo "::error::the tarball is ${NAME}, not @temporalabs/client"; exit 1; }
           node gate/typescript/scripts/release-tag.mjs "$TAG" "$VER" --registry "$NAME" || {
-            echo "::error::${TAG} is no longer above ${NAME}'s current latest; nothing was published"; exit 1; }
+            echo "::error::${TAG} cannot be published now (see the line above); nothing was published"; exit 1; }
           echo "${TAG} is above the registry's latest just before publishing" >> "$GITHUB_STEP_SUMMARY"
 
       - name: dry run — nothing is published
