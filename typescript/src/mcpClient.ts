@@ -48,6 +48,12 @@ type Input = { path?: Record<string, unknown>; query?: Record<string, unknown>; 
 type Rpc = { result?: { content?: Array<{ type?: string; text?: string }>; isError?: boolean; tools?: unknown }; error?: { code?: unknown; data?: unknown } }
 
 const unreadable = (method: string, name: string): ApiError => local(method, 'unreadable_answer', `The ${name} answer was not readable.`)
+/** An answer that is not the endpoint's (a gateway's raw 429 or 503, a page) as a Result. It keeps what the HTTP layer said, the trace id and, on an error status, the Retry-After wait, as the HTTP client does. */
+const unreadableAt = (res: Answer, error: ApiError) => {
+  const traceId = res.headers.get(TRACE_HEADER) ?? undefined
+  const retryAfter = res.ok ? undefined : retryAfterSeconds(res.headers.get(RETRY_AFTER_HEADER))
+  return { ok: false, status: res.status, error, ...(traceId !== undefined && { traceId }), ...(retryAfter !== undefined && { retryAfter }) } as const
+}
 
 /** An API error, if the value is one the document allows (the same rule as the HTTP client). */
 const apiError = (value: unknown): ApiError | undefined => apiErrorIn({ error: value })
@@ -67,7 +73,7 @@ function rpcError(res: Answer, error: NonNullable<Rpc['error']>, method: string,
   const retryAfter = retryAfterSeconds(res.headers.get(RETRY_AFTER_HEADER))
   return api
     ? { ok: false, status: res.status, error: api, ...(api.traceId !== undefined && { traceId: api.traceId }), ...(retryAfter !== undefined && { retryAfter }) }
-    : { ok: false, status: res.status, error: unreadable(method, name) }
+    : unreadableAt(res, unreadable(method, name))
 }
 
 const post = (opts: McpClientOptions, headers: Record<string, string>, body: string, signal?: AbortSignal): Promise<Answer> =>
@@ -105,11 +111,11 @@ function callTool(opts: McpClientOptions, tool: Tool, name: string, op: Op) {
     let res: Answer
     try {
       res = await post(opts, headers, rpcBody, o.signal)
-    } catch {
-      return { ok: false, status: 0, error: noAnswer(op.method, name) }
+    } catch (e) {
+      return { ok: false, status: 0, error: noAnswer(op.method, name, e) }
     }
     // The endpoint answers in JSON; anything else (a stream, a page) is not its answer.
-    if (!(res.headers.get('content-type') ?? '').includes('application/json')) return { ok: false, status: res.status, error: unreadable(op.method, name) }
+    if (!(res.headers.get('content-type') ?? '').includes('application/json')) return unreadableAt(res, unreadable(op.method, name))
     const rpc = (await res.json().catch(() => undefined)) as Rpc | undefined
     if (rpc?.error) return rpcError(res, rpc.error, op.method, name)
     const text = rpc?.result?.content?.[0]?.text
@@ -129,7 +135,7 @@ function callTool(opts: McpClientOptions, tool: Tool, name: string, op: Op) {
         ? { ok: false, status, error, ...(error.traceId !== undefined && { traceId: error.traceId }), ...(retryAfter !== undefined && { retryAfter }) }
         : { ok: false, status, error: unreadable(op.method, name) }
     }
-    if (!res.ok) return { ok: false, status: res.status, error: unreadable(op.method, name) }
+    if (!res.ok) return unreadableAt(res, unreadable(op.method, name))
     const schema = answerSchema(op, input.path)
     const body = schema === undefined || value === undefined ? { success: false as const } : check(schema, value)
     const traceId = res.headers.get(TRACE_HEADER) ?? undefined
@@ -147,10 +153,10 @@ function listTools(opts: McpClientOptions) {
     let res: Answer
     try {
       res = await post(opts, headers, JSON.stringify({ ...JSON_RPC, method: 'tools/list', params: { _meta: META } }), o.signal)
-    } catch {
-      return { ok: false, status: 0, error: local(LIST_METHOD, 'network_error', 'The tool list got no answer.') }
+    } catch (e) {
+      return { ok: false, status: 0, error: noAnswer(LIST_METHOD, 'tool list', e) }
     }
-    const unreadableList = { ok: false, status: res.status, error: local(LIST_METHOD, 'unreadable_answer', 'The tool list was not readable.') } as const
+    const unreadableList = unreadableAt(res, local(LIST_METHOD, 'unreadable_answer', 'The tool list was not readable.'))
     // The endpoint answers in JSON, and every item of the list must be a tool.
     if (!(res.headers.get('content-type') ?? '').includes('application/json')) return unreadableList
     const rpc = (await res.json().catch(() => undefined)) as Rpc | undefined

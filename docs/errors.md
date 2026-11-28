@@ -65,8 +65,8 @@ Some errors come from the client, not the API:
 
 | `code` | When | `outcome` | `status` |
 |---|---|---|---|
-| `network_error` | No answer arrived: the network failed, the call timed out (`timeoutMs`; a timeout after the answer has started arriving reads as `unreadable_answer`), your `signal` aborted it, or the API answered with a redirect, which the client never follows. A call's own `ownerToken` that is not a valid header value (a line break, a control character) is not sent at all, and that call is `failed` whatever its method. | `unknown` on a write (`POST`), `failed` on a read (`GET`) | `0` |
-| `unreadable_answer` | An answer arrived but did not match the API document's schema, or an error body could not be read. | `unknown` on a write, `failed` on a read | the answer's status |
+| `network_error` | No answer arrived: the network failed, the call timed out (`timeoutMs`; a timeout after the answer has started arriving reads as `unreadable_answer`), your `signal` aborted it, or the API answered with a redirect, which the client never follows. The message says when the connection was refused (nothing is listening at `baseUrl`, or the MCP client's `url`) and when the client's timeout ran out, so the two can be told apart. A call's own `ownerToken` that is not a valid header value (a line break, a control character) is not sent at all, and that call is `failed` whatever its method. | `unknown` on a write (`POST`), `failed` on a read (`GET`) | `0` |
+| `unreadable_answer` | An answer arrived but did not match the API document's schema, or an error body could not be read. It still carries the answer's `traceId` and, on an error status, its `retryAfter`, through either client: a gateway's raw 429 or 503 keeps its wait. | `unknown` on a write, `failed` on a read | the answer's status |
 | `wrong_origin` | The call's URL would have left `baseUrl`'s origin. Nothing was sent. | `failed` | `0` |
 | `invalid_path_value` | A path value was missing, empty, not a string, `.` or `..`, or could not be written into a URL. Nothing was sent. | `failed` | `0` |
 | `challenge_refused` | `signIn`'s `check` refused the challenge. Nothing was signed. | `failed` | `0` |
@@ -85,8 +85,9 @@ Every other call is a read.
 ## Rate limits
 
 For `rate_limited`, wait before trying again. When the API says how long, the result carries `retryAfter`,
-in whole seconds (at most one day), read from its `Retry-After` header. If the error's `gates` carry a `satisfy` of kind
-`wait` with an `until`, wait until then.
+in whole seconds (at most one day), read from its `Retry-After` header. The error itself may also carry
+`retryAfterMs`, the wait the API asks for in milliseconds. If the error's `gates` carry a `satisfy` of kind `wait` with
+an `until`, wait until then.
 
 ## What is safe to try again
 
@@ -110,7 +111,7 @@ in whole seconds (at most one day), read from its `Retry-After` header. If the e
 `unknown_origin`, `gate_failed`, `not_invited`, `unknown_product`, `not_found`, `no_account`,
 `already_enrolled`, `account_updating`, `transfer_claimed`, `upstream_refused`, `authorization_rejected`,
 `authorization_other_account`, `pays_someone_else`, `transfer_mismatch`, `nothing_to_withdraw`,
-`request_expired`, `rate_limited`, `enrolment_check_failed`, `internal_error`, `upstream_in_progress`,
+`request_expired`, `rate_limited`, `agent_busy`, `enrolment_check_failed`, `internal_error`, `upstream_in_progress`,
 `upstream_unavailable`, `upstream_unreadable`, `unexpected_answer`, `unknown_agent`, `live_key_missing`,
 `upstream_not_sent`, `reasoning_unreadable`, `upstream_timeout`, `not_permitted`.
 

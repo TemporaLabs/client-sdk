@@ -8,13 +8,18 @@
 # tag holds, which the gates below require to be on main. It runs only on the public repository,
 # TemporaLabs/client-sdk; a copy anywhere else skips both jobs.
 #
+# Only a release is published: a tag vX.Y.Z, on main, under the npm dist-tag `latest`. Any other tag
+# shape, a prerelease such as vX.Y.Z-rc.N included, is refused (typescript/scripts/release-tag.mjs).
+#
 # Two jobs, so that nothing but the publish holds the publishing identity:
 #   - verify: every gate, the full check and the build, run from the tag with no id-token. It packs
 #     the tarball once and hands it on with its sha256. The check runs devDependency code, and none of
 #     it can mint a token.
 #   - publish: runs in the npm-publish environment, which is limited to release tags and needs a
-#     maintainer's approval. It checks out nothing and installs nothing from the package: it checks
-#     the tarball's sha256 and publishes exactly that file. On a dry run it does all of that and
+#     maintainer's approval, one run at a time. It installs nothing and runs nothing from verify's
+#     artifact: it checks the tarball's sha256, checks out only release-tag.mjs from git at this run's
+#     commit to check again that the version is above npm's latest (which can move during the approval
+#     wait), and publishes exactly that file. On a dry run it does all of that and
 #     stops at `npm publish --dry-run`.
 #
 # Authentication is npm trusted publishing: the publish job's GitHub OIDC identity, with no long-lived
@@ -31,7 +36,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "the existing tag to publish, e.g. v0.1.0. Run the workflow from that same tag."
+        description: "the existing tag to publish, e.g. v0.2.2. Run the workflow from that same tag."
         type: string
         required: true
       dry_run:
@@ -67,16 +72,18 @@ jobs:
           ref: refs/tags/${{ inputs.tag }}
           persist-credentials: false
 
-      - name: the tag must agree with package.json, or this is the wrong one-shot version
+      # Before the gates, so the tag check runs on the pinned Node.js rather than the runner's own.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26.13.1
+
+      - name: the tag must be a release, vX.Y.Z, and agree with package.json
         env:
           TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          want="${TAG#v}"
-          got="$(node -p 'require("./package.json").version')"
-          [ "$want" = "$got" ] || {
-            echo "::error::tag ${TAG} carries version ${want} but package.json at that tag says ${got}; publishing would spend the wrong version number, permanently"; exit 1; }
-          echo "tag ${TAG} == package.json ${got}" >> "$GITHUB_STEP_SUMMARY"
+          node scripts/release-tag.mjs "$TAG" || { echo "::error::tag ${TAG} cannot be published; see the line above"; exit 1; }
+          echo "tag ${TAG} is a release and matches package.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: package.json must not be private
         run: |
@@ -96,6 +103,20 @@ jobs:
           fi
           echo "${name}@${ver} is not on the registry" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: this version must be above the registry's latest — publishing never moves latest back
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          name="$(node -p 'require("./package.json").name')"
+          # The package is already on npm, so an E404 is refused like any other failure to read the registry, never
+          # read as "no latest" (release-tag.mjs takes that only with --first-publish, which this workflow never
+          # passes). The publish job checks again just before it publishes, because latest can move while it waits
+          # for approval.
+          node scripts/release-tag.mjs "$TAG" --registry "${name}" || {
+            echo "::error::${TAG} cannot be published over ${name}'s current latest; see the line above"; exit 1; }
+          echo "${TAG} is above the registry's latest at verify time" >> "$GITHUB_STEP_SUMMARY"
+
       - name: the tag must be an ancestor of main — never publish off a branch that did not ship
         run: |
           set -euo pipefail
@@ -103,10 +124,6 @@ jobs:
           git merge-base --is-ancestor HEAD FETCH_HEAD || {
             echo "::error::this tag is not reachable from origin/main; it names a tree that was never merged"; exit 1; }
           echo "tag is an ancestor of main" >> "$GITHUB_STEP_SUMMARY"
-
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 26.13.1
 
       - run: npm ci --ignore-scripts
 
@@ -156,6 +173,11 @@ jobs:
     # Limited to release tags and a maintainer's approval in the repository's settings; npm's trusted
     # publisher names this environment, so only a job in it can publish.
     environment: npm-publish
+    # One publish at a time, never cancelled once started, so two runs cannot both pass the latest check
+    # below and then publish in either order. (A newer run waiting here replaces an older one still waiting.)
+    concurrency:
+      group: npm-publish
+      cancel-in-progress: false
     permissions:
       contents: read
       # Trusted publishing and npm provenance are both minted from this OIDC identity.
@@ -187,13 +209,45 @@ jobs:
           set -euo pipefail
           echo "${SUM}  pkg/${FILE}" | sha256sum -c -
 
+      # The latest check below runs beside the publishing identity, so it comes from git at the commit this run
+      # started from, never from verify's artifact: verify runs devDependency code, which could rewrite anything
+      # it hands on. Only this one file is checked out, with no credentials kept, and nothing is installed.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: gate
+          persist-credentials: false
+          sparse-checkout: typescript/scripts/release-tag.mjs
+          sparse-checkout-cone-mode: false
+
+      # latest can move while this job waits for its approval, and verify's check is as old as that wait. So
+      # read it again here, after the approval and just before publishing, with the same rule: not above
+      # latest, or a registry that cannot be read, stops the publish. It runs on a dry run too.
+      - name: still above the registry's latest, read again just before publishing
+        env:
+          TAG: ${{ inputs.tag }}
+          FILE: ${{ needs.verify.outputs.file }}
+          # Read the public registry without the publish credentials setup-node configures.
+          NPM_CONFIG_USERCONFIG: /dev/null
+        run: |
+          set -euo pipefail
+          # The name and version come from the tarball that is published, read as data, never from verify's
+          # outputs; the name must also be this package's.
+          manifest="$(tar -xOzf "pkg/${FILE}" package/package.json)"
+          NAME="$(node -e 'console.log(JSON.parse(process.argv[1]).name)' "$manifest")"
+          VER="$(node -e 'console.log(JSON.parse(process.argv[1]).version)' "$manifest")"
+          [ "$NAME" = "@temporalabs/client" ] || { echo "::error::the tarball is ${NAME}, not @temporalabs/client"; exit 1; }
+          node gate/typescript/scripts/release-tag.mjs "$TAG" "$VER" --registry "$NAME" || {
+            echo "::error::${TAG} cannot be published now (see the line above); nothing was published"; exit 1; }
+          echo "${TAG} is above the registry's latest just before publishing" >> "$GITHUB_STEP_SUMMARY"
+
       - name: dry run — nothing is published
         if: ${{ inputs.dry_run }}
         env:
           FILE: ${{ needs.verify.outputs.file }}
         run: |
           set -euo pipefail
-          npm publish "./pkg/${FILE}" --access public --dry-run
+          npm publish "./pkg/${FILE}" --access public --tag latest --dry-run
           echo "dry_run was true: every gate passed and nothing was published." >> "$GITHUB_STEP_SUMMARY"
 
       - name: publish (trusted publishing; provenance from this job's OIDC identity)
@@ -201,7 +255,7 @@ jobs:
         env:
           FILE: ${{ needs.verify.outputs.file }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish "./pkg/${FILE}" --access public --provenance
+        run: npm publish "./pkg/${FILE}" --access public --tag latest --provenance
 
       # The registry can take minutes to serve a freshly published scoped package. This step polls for
       # ten minutes and, if the version has still not resolved, records a WARNING rather than a failure:
@@ -218,11 +272,13 @@ jobs:
           set -euo pipefail
           for i in $(seq 1 40); do
             got="$(timeout 30 npm view "${NAME}@${VER}" version 2>/dev/null || true)"
-            if [ "$got" = "$VER" ]; then
+            # Also wait for latest to name it, so a publish queued behind this one reads the new latest.
+            latest="$(timeout 30 npm view "${NAME}" dist-tags.latest 2>/dev/null || true)"
+            if [ "$got" = "$VER" ] && [ "$latest" = "$VER" ]; then
               echo "published ${NAME}@${VER}, resolved after about $(( (i - 1) * 15 ))s" >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
             sleep 15
           done
-          echo "::warning::${NAME}@${VER} did not resolve within 10 minutes; the publish step succeeded, so check the registry by hand: npm view ${NAME}@${VER} version"
+          echo "::warning::${NAME}@${VER} did not resolve, or latest did not name it, within 10 minutes; the publish step succeeded, so check the registry by hand: npm view ${NAME} dist-tags.latest"
           echo "published ${NAME}@${VER}, NOT yet resolving after 10 minutes; check by hand" >> "$GITHUB_STEP_SUMMARY"

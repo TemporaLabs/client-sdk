@@ -39,7 +39,7 @@ Copy no fact from prose. Read it from its source.
 | Which commits need a sign-off, and which are exempt | `.github/scripts/dco-check.sh` and its test `.github/scripts/dco-check.test.sh`; the signing key it trusts for the dependency bot's commits is `.github/keys/github-web-flow.asc` |
 | Where dependency-update pull requests go | `.github/workflows/dependabot-to-cycle-branch.yml` (a sweep, daily and when a version branch is created, moves them onto the current `release/vX.Y.Z` branch) and `.github/dependabot.yml` |
 | What CI runs | `.github/workflows/ci-repo.yml` (the whole repository), `.github/workflows/ci-typescript.yml` (the npm package), `.github/workflows/ci-python.yml` (the Python package) and `.github/workflows/dco.yml` (sign-offs), and the `check` script in `typescript/package.json` |
-| How a release is published | `.github/workflows/publish.yml`, run by hand from a release tag; nothing publishes on a merge |
+| How a release is published | `.github/workflows/publish.yml`, run by hand from a release tag (`vX.Y.Z` on `main`, npm `latest`; `typescript/scripts/release-tag.mjs` refuses any other tag, and any version not above npm's current `latest`, checked again just before publishing); nothing publishes on a merge |
 
 ## Binding rules
 

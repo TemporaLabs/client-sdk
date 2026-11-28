@@ -128,21 +128,31 @@ const punycodeHostOk = (value: string): boolean => {
 }
 type Node = Record<string, unknown>
 const isNode = (v: unknown): v is Node => typeof v === 'object' && v !== null && !Array.isArray(v)
-/** Whether every `uri` string in `data` that `schema` places has a host `punycodeHostOk` accepts. It only narrows what zod accepted. A union passes when a branch the data fits does. */
-const uriHostsOk = (schema: unknown, data: unknown): boolean => {
+/** Whether every `uri` string in `data` that `schema` places has a host `punycodeHostOk` accepts. It only narrows what zod accepted. A union passes when a branch the data fits does.
+ * Each schema node and value is judged once per check: branches of a union that overlap reach the same nodes again, and without the memo that work doubles with every level of nesting. */
+const uriHostsOk = (schema: unknown, data: unknown, seen: Map<unknown, Map<unknown, boolean>> = new Map()): boolean => {
   if (!isNode(schema)) return true
+  let bySchema = seen.get(schema)
+  const known = bySchema?.get(data)
+  if (known !== undefined) return known
+  const result = walk(schema, data, seen)
+  if (!bySchema) seen.set(schema, (bySchema = new Map()))
+  bySchema.set(data, result)
+  return result
+}
+const walk = (schema: Node, data: unknown, seen: Map<unknown, Map<unknown, boolean>>): boolean => {
   const ref = schema.$ref
-  if (typeof ref === 'string') return uriHostsOk((DEFS as Record<string, unknown>)[ref.slice('#/$defs/'.length)], data)
+  if (typeof ref === 'string') return uriHostsOk((DEFS as Record<string, unknown>)[ref.slice('#/$defs/'.length)], data, seen)
   for (const key of ['anyOf', 'oneOf'] as const) {
     const branches = schema[key]
-    if (Array.isArray(branches) && !branches.some((b) => validator(b).safeParse(data).success && uriHostsOk(b, data))) return false
+    if (Array.isArray(branches) && !branches.some((b) => validator(b).safeParse(data).success && uriHostsOk(b, data, seen))) return false
   }
-  if (Array.isArray(schema.allOf) && !schema.allOf.every((b) => uriHostsOk(b, data))) return false
+  if (Array.isArray(schema.allOf) && !schema.allOf.every((b) => uriHostsOk(b, data, seen))) return false
   if (typeof data === 'string') return schema.format !== 'uri' || punycodeHostOk(data)
-  if (Array.isArray(data)) return !isNode(schema.items) || data.every((d) => uriHostsOk(schema.items, d))
+  if (Array.isArray(data)) return !isNode(schema.items) || data.every((d) => uriHostsOk(schema.items, d, seen))
   if (isNode(data)) {
     const props = isNode(schema.properties) ? schema.properties : {}
-    return Object.entries(data).every(([k, v]) => uriHostsOk(Object.hasOwn(props, k) ? props[k] : schema.additionalProperties, v))
+    return Object.entries(data).every(([k, v]) => uriHostsOk(Object.hasOwn(props, k) ? props[k] : schema.additionalProperties, v, seen))
   }
   return true
 }
@@ -174,8 +184,20 @@ export const unwritableBody = (name: string): ApiError => ({ code: 'network_erro
 export const MAX_RETRY_AFTER_S = 86_400
 export const unsentHeader = (name: string): ApiError => ({ code: 'network_error', message: `The ${name} call was not sent: a key or token is not a valid header value.`, outcome: 'failed' })
 export const schemaMismatch = (method: string, name: string): ApiError => local(method, 'unreadable_answer', `The ${name} answer did not match its schema.`)
-/** A call that went out and got no answer: its outcome follows the method (see `local`). */
-export const noAnswer = (method: string, name: string): ApiError => local(method, 'network_error', `The ${name} call got no answer.`)
+/** Whether a failed fetch was a refused connection: Node puts the socket's code on the error's cause, or on each attempt of an AggregateError. */
+const refused = (e: unknown, depth = 0): boolean => {
+  if (depth > 4 || typeof e !== 'object' || e === null) return false
+  const v = e as { code?: unknown; cause?: unknown; errors?: unknown }
+  if (v.code === 'ECONNREFUSED') return true
+  if (Array.isArray(v.errors) && v.errors.length > 0 && v.errors.every((x) => refused(x, depth + 1))) return true
+  return refused(v.cause, depth + 1)
+}
+/** A call that got no answer. A refused connection and the client's timeout say so, so a caller can tell nothing listening from no answer in time. Its outcome follows the method (see `local`) either way. */
+export const noAnswer = (method: string, name: string, cause?: unknown): ApiError => {
+  if (typeof cause === 'object' && cause !== null && (cause as { name?: unknown }).name === 'TimeoutError') return local(method, 'network_error', `The ${name} call got no answer before the timeout.`)
+  if (refused(cause)) return local(method, 'network_error', `The ${name} call could not connect: the connection was refused.`)
+  return local(method, 'network_error', `The ${name} call got no answer.`)
+}
 /** Retry-After in whole seconds, up to a day; a date, or anything longer or not a whole number, is left out. */
 export const retryAfterSeconds = (v: unknown): number | undefined => {
   const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : NaN

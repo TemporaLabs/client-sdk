@@ -1,6 +1,6 @@
 # @temporalabs/client
 
-> The typed client for the Tempora API 0.2.0, over HTTP and MCP. Every call returns a result and never throws; every answer is checked against the API's own schema.
+> The typed client for the Tempora API 0.2.1, over HTTP and MCP. Every call returns a result and never throws; every answer is checked against the API's own schema.
 
 This file is generated from the API document in spec/openapi.json. Do not edit it by hand.
 
@@ -44,7 +44,7 @@ A `?` marks an optional input.
 
 The codes the document names (a later API may add others):
 
-`invalid_input`, `invalid_wallet_view`, `invalid_nonce`, `unauthenticated`, `wallet_proof_required`, `challenge_invalid`, `challenge_other_site`, `signed_by_other_wallet`, `signature_not_owner`, `unknown_origin`, `not_permitted`, `gate_failed`, `not_invited`, `unknown_product`, `not_found`, `no_account`, `already_enrolled`, `account_updating`, `transfer_claimed`, `upstream_refused`, `authorization_rejected`, `authorization_other_account`, `pays_someone_else`, `transfer_mismatch`, `nothing_to_withdraw`, `request_expired`, `rate_limited`, `enrolment_check_failed`, `internal_error`, `upstream_in_progress`, `upstream_unavailable`, `upstream_unreadable`, `unexpected_answer`, `unknown_agent`, `live_key_missing`, `upstream_not_sent`, `reasoning_unreadable`, `upstream_timeout`
+`invalid_input`, `invalid_wallet_view`, `invalid_nonce`, `unauthenticated`, `wallet_proof_required`, `challenge_invalid`, `challenge_other_site`, `signed_by_other_wallet`, `signature_not_owner`, `unknown_origin`, `not_permitted`, `gate_failed`, `not_invited`, `unknown_product`, `not_found`, `no_account`, `already_enrolled`, `account_updating`, `transfer_claimed`, `upstream_refused`, `authorization_rejected`, `authorization_other_account`, `pays_someone_else`, `transfer_mismatch`, `nothing_to_withdraw`, `request_expired`, `rate_limited`, `agent_busy`, `enrolment_check_failed`, `internal_error`, `upstream_in_progress`, `upstream_unavailable`, `upstream_unreadable`, `unexpected_answer`, `unknown_agent`, `live_key_missing`, `upstream_not_sent`, `reasoning_unreadable`, `upstream_timeout`
 
 These always come with outcome `unknown` (a request may have moved; any other outcome for them reads as `unreadable_answer`): `upstream_in_progress`, `upstream_unavailable`, `upstream_timeout`, `upstream_unreadable`.
 

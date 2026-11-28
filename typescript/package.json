@@ -1,6 +1,6 @@
 {
   "name": "@temporalabs/client",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "The typed client for the Tempora API, over HTTP and MCP.",
   "keywords": ["tempora", "api-client", "mcp", "typescript"],
   "homepage": "https://github.com/TemporaLabs/client-sdk#readme",

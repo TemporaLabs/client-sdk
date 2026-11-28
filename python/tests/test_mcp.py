@@ -177,6 +177,23 @@ class TestCreateMcpClient:
         e = err(client.products())
         assert (e.status, e.error.code) == (400, "unreadable_answer")
 
+    def test_a_json_rpc_error_with_no_api_error_keeps_the_trace_id_and_the_wait_only_on_an_error_status(
+        self,
+    ) -> None:
+        rpc = {"jsonrpc": "2.0", "id": 1, "error": {"code": -32020, "message": "Header mismatch"}}
+        headers = {"retry-after": "30", "x-trace-id": "t-rpc"}
+        client, _ = make(lambda _: json_response(rpc, 429, headers=headers))
+        e = err(client.products())
+        assert (e.status, e.error.code, e.trace_id, e.retry_after) == (429, "unreadable_answer", "t-rpc", 30)
+        client, _ = make(lambda _: json_response(rpc, 200, headers=headers))
+        e = err(client.products())
+        assert (e.status, e.error.code, e.trace_id, e.retry_after) == (
+            200,
+            "unreadable_answer",
+            "t-rpc",
+            None,
+        )
+
     def test_a_streamed_answer_is_unreadable_answer(self) -> None:
         client, _ = make(
             lambda _: httpx.Response(
@@ -274,6 +291,84 @@ class TestCreateMcpClient:
         assert (e.status, e.error.code, e.error.outcome) == (0, "network_error", "failed")
         e = err(client.withdraw(body=WITHDRAW_ALL))
         assert (e.status, e.error.code, e.error.outcome) == (0, "network_error", "unknown")
+
+    def test_a_refused_connection_and_a_timeout_each_say_so_the_outcome_still_follows_the_call(self) -> None:
+        def refused(_: httpx.Request) -> httpx.Response:
+            try:
+                raise ConnectionRefusedError(111, "Connection refused")
+            except ConnectionRefusedError as e:
+                raise httpx.ConnectError("[Errno 111] Connection refused") from e
+
+        client, _ = make(refused)
+        e = err(client.products())
+        assert (e.status, e.error.code, e.error.outcome) == (0, "network_error", "failed")
+        assert e.error.message == "The products call could not connect: the connection was refused."
+        e = err(client.withdraw(body=WITHDRAW_ALL))
+        assert (e.error.outcome, e.error.message) == (
+            "unknown",
+            "The withdraw call could not connect: the connection was refused.",
+        )
+        assert (
+            err(client.list_tools()).error.message
+            == "The tool list call could not connect: the connection was refused."
+        )
+
+        def slow(_: httpx.Request) -> httpx.Response:
+            raise httpx.ReadTimeout("timed out")
+
+        client, _ = make(slow)
+        e = err(client.products())
+        assert (e.status, e.error.outcome, e.error.message) == (
+            0,
+            "failed",
+            "The products call got no answer before the timeout.",
+        )
+
+        def hangs(_: httpx.Request) -> httpx.Response:
+            time.sleep(1.0)
+            return tool_text(PRODUCTS)
+
+        client, _ = make(hangs, timeout_s=0.2)
+        assert (
+            err(client.list_tools()).error.message == "The tool list call got no answer before the timeout."
+        )
+
+    @pytest.mark.parametrize(
+        ("status", "kind", "text"),
+        [
+            (429, "text/html", "<h1>Too Many Requests</h1>"),
+            (503, "application/json", '{"message":"unavailable"}'),
+        ],
+    )
+    def test_a_raw_http_error_keeps_the_retry_after_wait_and_the_trace_id(
+        self, status: int, kind: str, text: str
+    ) -> None:
+        def raw(_: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                status, headers={"content-type": kind, "retry-after": "30", "x-trace-id": "t-raw"}, text=text
+            )
+
+        client, _ = make(raw)
+        for r in (client.products(), client.list_tools()):
+            e = err(r)
+            assert (e.status, e.error.code, e.trace_id, e.retry_after) == (
+                status,
+                "unreadable_answer",
+                "t-raw",
+                30,
+            )
+
+    def test_an_unreadable_2xx_answer_keeps_its_trace_id_but_never_a_wait(self) -> None:
+        def page(_: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                headers={"content-type": "text/html", "retry-after": "30", "x-trace-id": "t-ok"},
+                text="<p>ok</p>",
+            )
+
+        client, _ = make(page)
+        e = err(client.products())
+        assert (e.status, e.error.code, e.trace_id, e.retry_after) == (200, "unreadable_answer", "t-ok", None)
 
     def test_status_lookup_calls_the_status_tool_with_the_lookup_field_as_its_argument(self) -> None:
         client, seen = make(lambda _: tool_text({}, True))

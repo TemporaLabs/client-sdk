@@ -164,6 +164,56 @@ describe('createMcpClient', () => {
     expect(await client.withdraw({ body: { product: 'p', amount: { kind: 'all' } } } as never)).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome: 'unknown' } })
   })
 
+  it('a refused connection and a timeout each say so; the outcome still follows the call', async () => {
+    const refusedFetch = () => {
+      throw new TypeError('fetch failed', { cause: Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:1'), { code: 'ECONNREFUSED' }) })
+    }
+    const { client: r } = make(refusedFetch)
+    expect(await r.products({})).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome: 'failed', message: 'The products call could not connect: the connection was refused.' } })
+    expect(await r.withdraw({ body: { product: 'p', amount: { kind: 'all' } } } as never)).toMatchObject({ error: { code: 'network_error', outcome: 'unknown', message: 'The withdraw call could not connect: the connection was refused.' } })
+    expect(await r.listTools()).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', message: 'The tool list call could not connect: the connection was refused.' } })
+    const { client: both } = make(() => {
+      throw new TypeError('fetch failed', { cause: new AggregateError([Object.assign(new Error('v6'), { code: 'ECONNREFUSED' }), Object.assign(new Error('v4'), { code: 'ECONNREFUSED' })]) })
+    })
+    expect(await both.products({})).toMatchObject({ error: { message: 'The products call could not connect: the connection was refused.' } })
+    const { client: t } = make(() => {
+      throw new DOMException('The operation timed out.', 'TimeoutError')
+    })
+    expect(await t.products({})).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', outcome: 'failed', message: 'The products call got no answer before the timeout.' } })
+    expect(await t.listTools()).toMatchObject({ error: { message: 'The tool list call got no answer before the timeout.' } })
+  })
+
+  it.each([
+    ['a raw 429 page', 429, 'text/html', '<h1>Too Many Requests</h1>'],
+    ['a raw 503 with a JSON body that is not JSON-RPC', 503, 'application/json', '{"message":"unavailable"}'],
+  ])('%s keeps the Retry-After wait and the trace id', async (_, status, type, body) => {
+    const raw = () => new Response(body, { status, headers: { 'content-type': type, 'retry-after': '30', 'x-trace-id': 't-raw' } })
+    const { client } = make(raw)
+    expect(await client.products({})).toEqual({ ok: false, status, error: expect.objectContaining({ code: 'unreadable_answer' }), traceId: 't-raw', retryAfter: 30 })
+    expect(await client.listTools()).toEqual({ ok: false, status, error: expect.objectContaining({ code: 'unreadable_answer' }), traceId: 't-raw', retryAfter: 30 })
+  })
+
+  it.each([
+    ['one attempt refused and one unreachable', new AggregateError([Object.assign(new Error('v6'), { code: 'ECONNREFUSED' }), Object.assign(new Error('v4'), { code: 'ENETUNREACH' })])],
+    ['no attempts', new AggregateError([])],
+  ])('a failed fetch with %s is not a refused connection', async (_, cause) => {
+    const { client } = make(() => {
+      throw new TypeError('fetch failed', { cause })
+    })
+    expect(await client.products({})).toMatchObject({ ok: false, status: 0, error: { code: 'network_error', message: 'The products call got no answer.' } })
+  })
+
+  it('a JSON-RPC error with no API error keeps the trace id, and the wait only on an error status', async () => {
+    const rpc = (status: number) => () => new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32020, message: 'Header mismatch' } }), { status, headers: { 'content-type': 'application/json', 'retry-after': '30', 'x-trace-id': 't-rpc' } })
+    expect(await make(rpc(429)).client.products({})).toEqual({ ok: false, status: 429, error: expect.objectContaining({ code: 'unreadable_answer' }), traceId: 't-rpc', retryAfter: 30 })
+    expect(await make(rpc(200)).client.products({})).toEqual({ ok: false, status: 200, error: expect.objectContaining({ code: 'unreadable_answer' }), traceId: 't-rpc' })
+  })
+
+  it('an unreadable 2xx answer keeps its trace id but never a wait', async () => {
+    const { client } = make(() => new Response('<p>ok</p>', { status: 200, headers: { 'content-type': 'text/html', 'retry-after': '30', 'x-trace-id': 't-ok' } }))
+    expect(await client.products({})).toEqual({ ok: false, status: 200, error: expect.objectContaining({ code: 'unreadable_answer' }), traceId: 't-ok' })
+  })
+
   it('status_lookup calls the status tool with the lookup field as its argument', async () => {
     const { client, seen } = make(() => toolText({}, true))
     await client.status_lookup({ query: { nonce: '0x01' } } as never)
