@@ -68,6 +68,14 @@ describe('the publish workflow', () => {
     expect(code).toMatch(/release-tag\.mjs "\$TAG" --registry/)
   })
 
+  it('stops the job when any release-tag check fails', () => {
+    const code = workflow.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n')
+    const calls = code.match(/node \S*release-tag\.mjs [^\n]*/g) ?? []
+    expect(calls).toHaveLength(3)
+    const guarded = code.match(/node \S*release-tag\.mjs [^\n|]*\|\| \{\s*echo "::error::[^"\n]*"; exit 1; \}\n/g) ?? []
+    expect(guarded).toHaveLength(calls.length)
+  })
+
   it('publishes one run at a time and never cancels a publish under way', () => {
     expect(publish).toMatch(/\n {4}concurrency:\n {6}group: npm-publish\n {6}cancel-in-progress: false\n/)
   })
