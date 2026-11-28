@@ -14,6 +14,19 @@ All notable changes to `@temporalabs/client` and `temporalabs-client` are record
   - the error code `agent_busy`;
   - `retryAfterMs` on an error, the wait the API asks for before trying again.
 
+### Changed
+
+- **`network_error` says why.** When the connection is refused, or the client's own timeout runs out, the message
+  says so; any other failure still reads "got no answer". The code and the outcome are unchanged.
+- **The MCP client keeps what the HTTP layer said.** An `unreadable_answer` from the MCP client (a gateway's raw 429
+  or 503, a page instead of JSON) now carries the answer's `traceId` and, on an error status, `retryAfter`, as the
+  HTTP client's results do.
+
+### Fixed
+
+- **Checking `uri` hosts no longer slows down with nesting.** Each part of a schema is checked once per value, so
+  overlapping union branches no longer double the work at every level.
+
 ## [v0.2.1] - 2026-11-23
 
 ### Changed
